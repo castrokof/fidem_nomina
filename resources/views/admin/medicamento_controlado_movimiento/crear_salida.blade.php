@@ -3,126 +3,159 @@
 Registrar Salida de Medicamento
 @endsection
 
+@section('styles')
+<link href="{{asset('assets/css/custom/medicamentos-glassmorphism.css')}}" rel="stylesheet" type="text/css"/>
+<style>
+    .content-wrapper {
+        background: linear-gradient(-45deg, #f093fb, #f5576c, #fd5949, #fc6767);
+        background-size: 400% 400%;
+        animation: gradientBG 15s ease infinite;
+    }
+</style>
+@endsection
+
 @section('scripts')
+<script>
+    var guardarMovimientoUrl = "{{route('guardar_medicamento_controlado_movimiento')}}";
+</script>
 <script src="{{asset("assets/pages/scripts/admin/medicamento_controlado_movimiento/crear_salida.js")}}" type="text/javascript"></script>
 @endsection
 
 @section('contenido')
-<div class="row">
-    <div class="col-lg-12">
-        @include('includes.form-error')
-        @include('includes.form-mensaje')
+<div class="medicamentos-wrapper">
+    <div class="row">
+        <div class="col-lg-12">
+            @include('includes.form-error')
 
-        <div class="card card-danger">
-            <div class="card-header">
-                <h3 class="card-title">Registrar Salida de Medicamento Controlado</h3>
-                <div class="card-tools">
-                    <a href="{{route('medicamento_controlado_movimiento')}}" class="btn btn-info btn-sm">
-                        <i class="fas fa-list"></i> Ver Movimientos
-                    </a>
-                </div>
+            <!-- Mensaje de éxito AJAX -->
+            <div id="mensaje-ajax" class="glass-alert glass-alert-success" style="display: none;">
+                <i class="fas fa-check-circle mr-2"></i>
+                <span id="mensaje-texto"></span>
             </div>
 
-            <form action="{{route('guardar_medicamento_controlado_movimiento')}}" id="form-salida" class="form-horizontal" method="POST" enctype="multipart/form-data">
-                @csrf
-                <input type="hidden" name="tipo_movimiento" value="salida">
-
-                <div class="card-body">
-                    <div class="form-group row">
-                        <label for="fecha" class="col-lg-3 control-label requerido">Fecha</label>
-                        <div class="col-lg-8">
-                            <input type="date" name="fecha" id="fecha" class="form-control" value="{{old('fecha', date('Y-m-d'))}}" required>
-                        </div>
+            <div class="glass-card animate-in">
+                <div class="glass-card-header" style="background: var(--danger-gradient);">
+                    <div class="d-flex justify-content-between align-items-center flex-wrap">
+                        <h3><i class="fas fa-minus-circle mr-2"></i> Registrar Salida de Medicamento</h3>
+                        <a href="{{route('medicamento_controlado_movimiento')}}" class="glass-btn glass-btn-info mt-2 mt-md-0">
+                            <i class="fas fa-list"></i> Ver Movimientos
+                        </a>
                     </div>
+                </div>
 
-                    <div class="form-group row">
-                        <label for="medicamento_controlado_id" class="col-lg-3 control-label requerido">Medicamento</label>
-                        <div class="col-lg-8">
-                            <select name="medicamento_controlado_id" id="medicamento_controlado_id" class="form-control" required>
-                                <option value="">Seleccione un medicamento</option>
-                                @foreach($medicamentos as $med)
-                                    <option value="{{$med->id}}" data-saldo="{{$med->saldo_actual}}" {{old('medicamento_controlado_id') == $med->id ? 'selected' : ''}}>
-                                        {{$med->nombre}} (Saldo actual: {{$med->saldo_actual}})
-                                    </option>
-                                @endforeach
-                            </select>
-                        </div>
-                    </div>
+                <div class="glass-card-body">
+                    <form id="form-salida" enctype="multipart/form-data">
+                        @csrf
+                        <input type="hidden" name="tipo_movimiento" value="salida">
 
-                    <div class="form-group row">
-                        <label class="col-lg-3 control-label">Saldo Actual</label>
-                        <div class="col-lg-8">
-                            <h4><span class="badge badge-info" id="saldo-actual">0</span></h4>
-                        </div>
-                    </div>
+                        <div class="row">
+                            <!-- Columna izquierda: Datos del medicamento y paciente -->
+                            <div class="col-lg-6">
+                                <div class="form-group-glass">
+                                    <label for="fecha">
+                                        <i class="fas fa-calendar-alt mr-2"></i>Fecha *
+                                    </label>
+                                    <input type="date" name="fecha" id="fecha" class="form-control glass-input" value="{{date('Y-m-d')}}" required>
+                                </div>
 
-                    <div class="form-group row">
-                        <label for="nombre_paciente" class="col-lg-3 control-label requerido">Nombre del Paciente</label>
-                        <div class="col-lg-8">
-                            <input type="text" name="nombre_paciente" id="nombre_paciente" class="form-control" value="{{old('nombre_paciente')}}" required maxlength="200" placeholder="Nombre completo del paciente">
-                        </div>
-                    </div>
+                                <div class="form-group-glass">
+                                    <label for="medicamento_controlado_id">
+                                        <i class="fas fa-pills mr-2"></i>Medicamento *
+                                    </label>
+                                    <select name="medicamento_controlado_id" id="medicamento_controlado_id" class="form-control glass-select" required>
+                                        <option value="">Seleccione un medicamento</option>
+                                        @foreach($medicamentos as $med)
+                                            <option value="{{$med->id}}" data-saldo="{{$med->saldo_actual}}">
+                                                {{$med->nombre}} (Stock: {{$med->saldo_actual}})
+                                            </option>
+                                        @endforeach
+                                    </select>
+                                </div>
 
-                    <div class="form-group row">
-                        <label for="cedula_paciente" class="col-lg-3 control-label requerido">Cédula del Paciente</label>
-                        <div class="col-lg-8">
-                            <input type="text" name="cedula_paciente" id="cedula_paciente" class="form-control" value="{{old('cedula_paciente')}}" required maxlength="50" placeholder="Número de cédula">
-                        </div>
-                    </div>
+                                <div class="form-group-glass">
+                                    <label><i class="fas fa-warehouse mr-2"></i>Saldo Disponible</label>
+                                    <div class="text-center">
+                                        <span class="glass-badge glass-badge-info" style="font-size: 1.5rem; padding: 15px 30px;">
+                                            <i class="fas fa-box-open"></i> <span id="saldo-actual">0</span>
+                                        </span>
+                                    </div>
+                                </div>
 
-                    <div class="form-group row">
-                        <label for="numero_formula_control" class="col-lg-3 control-label">No. Fórmula de Control</label>
-                        <div class="col-lg-8">
-                            <input type="text" name="numero_formula_control" id="numero_formula_control" class="form-control" value="{{old('numero_formula_control')}}" maxlength="100" placeholder="Número del formulario de control (opcional)">
-                        </div>
-                    </div>
+                                <div class="form-group-glass">
+                                    <label for="nombre_paciente">
+                                        <i class="fas fa-user-injured mr-2"></i>Nombre del Paciente *
+                                    </label>
+                                    <input type="text" name="nombre_paciente" id="nombre_paciente" class="form-control glass-input" required maxlength="200" placeholder="Nombre completo del paciente">
+                                </div>
 
-                    <div class="form-group row">
-                        <label for="salida" class="col-lg-3 control-label requerido">Cantidad de Salida</label>
-                        <div class="col-lg-8">
-                            <input type="number" name="salida" id="salida" class="form-control" value="{{old('salida')}}" required min="1" placeholder="Cantidad a retirar">
-                            <small class="form-text text-muted">La cantidad no puede ser mayor al saldo actual</small>
-                        </div>
-                    </div>
+                                <div class="form-group-glass">
+                                    <label for="cedula_paciente">
+                                        <i class="fas fa-id-card mr-2"></i>Cédula del Paciente *
+                                    </label>
+                                    <input type="text" name="cedula_paciente" id="cedula_paciente" class="form-control glass-input" required maxlength="50" placeholder="Número de cédula">
+                                </div>
 
-                    <div class="form-group row">
-                        <label class="col-lg-3 control-label">Nuevo Saldo</label>
-                        <div class="col-lg-8">
-                            <h3><span class="badge badge-warning" id="nuevo-saldo">0</span></h3>
-                        </div>
-                    </div>
-
-                    <div class="form-group row">
-                        <label for="foto_formula" class="col-lg-3 control-label">Foto del Formulario</label>
-                        <div class="col-lg-8">
-                            <div class="custom-file">
-                                <input type="file" name="foto_formula" id="foto_formula" class="custom-file-input" accept="image/*" capture="camera">
-                                <label class="custom-file-label" for="foto_formula">Seleccionar foto o tomar foto...</label>
+                                <div class="form-group-glass">
+                                    <label for="numero_formula_control">
+                                        <i class="fas fa-file-prescription mr-2"></i>No. Fórmula de Control
+                                    </label>
+                                    <input type="text" name="numero_formula_control" id="numero_formula_control" class="form-control glass-input" maxlength="100" placeholder="Número del formulario (opcional)">
+                                </div>
                             </div>
-                            <small class="form-text text-muted">Formatos: JPG, JPEG, PNG. Tamaño máximo: 5MB</small>
 
-                            <!-- Preview de la imagen -->
-                            <div id="preview-container" class="mt-3" style="display: none;">
-                                <img id="preview-imagen" src="" alt="Preview" class="img-fluid img-thumbnail" style="max-height: 300px;">
-                                <button type="button" id="btn-eliminar-foto" class="btn btn-danger btn-sm mt-2">
-                                    <i class="fas fa-trash"></i> Eliminar foto
+                            <!-- Columna derecha: Cantidad y foto -->
+                            <div class="col-lg-6">
+                                <div class="form-group-glass">
+                                    <label for="salida">
+                                        <i class="fas fa-minus mr-2"></i>Cantidad a Retirar *
+                                    </label>
+                                    <input type="number" name="salida" id="salida" class="form-control glass-input" required min="1" placeholder="Cantidad a retirar" style="font-size: 1.2rem; font-weight: bold;">
+                                    <small style="color: rgba(255, 255, 255, 0.8);">La cantidad no puede ser mayor al saldo disponible</small>
+                                </div>
+
+                                <div class="form-group-glass">
+                                    <label><i class="fas fa-calculator mr-2"></i>Nuevo Saldo</label>
+                                    <div class="text-center">
+                                        <span class="glass-badge glass-badge-warning" style="font-size: 2rem; padding: 20px 40px;" id="nuevo-saldo">0</span>
+                                    </div>
+                                </div>
+
+                                <div class="form-group-glass">
+                                    <label for="foto_formula">
+                                        <i class="fas fa-camera mr-2"></i>Foto del Formulario
+                                    </label>
+                                    <div class="custom-file">
+                                        <input type="file" name="foto_formula" id="foto_formula" class="custom-file-input" accept="image/*" capture="environment">
+                                        <label class="custom-file-label glass-input" for="foto_formula">
+                                            <i class="fas fa-camera mr-2"></i>Tomar foto o seleccionar...
+                                        </label>
+                                    </div>
+                                    <small style="color: rgba(255, 255, 255, 0.8);">JPG, PNG. Máx: 5MB</small>
+
+                                    <!-- Preview con glassmorphism -->
+                                    <div id="preview-container" class="image-preview-glass" style="display: none;">
+                                        <img id="preview-imagen" src="" alt="Preview" style="max-height: 250px; border-radius: 10px;">
+                                        <button type="button" id="btn-eliminar-foto" class="glass-btn glass-btn-danger mt-3">
+                                            <i class="fas fa-trash"></i> Eliminar foto
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row mt-4">
+                            <div class="col-12 text-center">
+                                <button type="reset" class="glass-btn glass-btn-secondary mr-2" id="btn-limpiar">
+                                    <i class="fas fa-eraser mr-2"></i>Limpiar
+                                </button>
+                                <button type="submit" class="glass-btn glass-btn-danger" id="btn-guardar">
+                                    <i class="fas fa-save mr-2"></i>Registrar Salida
                                 </button>
                             </div>
                         </div>
-                    </div>
+                    </form>
                 </div>
-
-                <div class="card-footer">
-                    <div class="col-lg-6">
-                        <button type="reset" class="btn btn-default" id="btn-limpiar">
-                            <i class="fas fa-eraser"></i> Limpiar
-                        </button>
-                        <button type="submit" class="btn btn-danger">
-                            <i class="fas fa-save"></i> Registrar Salida
-                        </button>
-                    </div>
-                </div>
-            </form>
+            </div>
         </div>
     </div>
 </div>

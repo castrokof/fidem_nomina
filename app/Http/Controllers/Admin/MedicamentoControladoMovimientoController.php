@@ -104,6 +104,15 @@ class MedicamentoControladoMovimientoController extends Controller
 
             // Validar que no quede negativo
             if ($nuevoSaldo < 0) {
+                if ($request->ajax()) {
+                    return response()->json([
+                        'success' => false,
+                        'message' => 'No hay suficiente stock. Saldo actual: ' . $saldoAnterior,
+                        'errors' => [
+                            'salida' => ['No hay suficiente stock. Saldo actual: ' . $saldoAnterior]
+                        ]
+                    ], 422);
+                }
                 return back()->withInput()->withErrors(['salida' => 'No hay suficiente stock. Saldo actual: ' . $saldoAnterior]);
             }
 
@@ -120,6 +129,18 @@ class MedicamentoControladoMovimientoController extends Controller
         $medicamento = MedicamentoControlado::findOrFail($request->medicamento_controlado_id);
         $medicamento->saldo_actual = $data['saldo'];
         $medicamento->save();
+
+        // Responder con JSON si es AJAX
+        if ($request->ajax()) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Movimiento registrado con éxito',
+                'saldo' => $data['saldo'],
+                'medicamento_id' => $medicamento->id,
+                'medicamento_nombre' => $medicamento->nombre,
+                'movimiento_id' => $movimiento->id
+            ]);
+        }
 
         $redireccion = $request->tipo_movimiento == 'entrada'
             ? 'admin/medicamento-controlado-movimiento/crear-entrada'
