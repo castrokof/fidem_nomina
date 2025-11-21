@@ -38,7 +38,18 @@ class MedicamentoControladoController extends Controller
      */
     public function guardar(ValidacionMedicamentoControlado $request)
     {
-        MedicamentoControlado::create($request->all());
+        $medicamento = MedicamentoControlado::create($request->all());
+
+        // Responder con JSON si es AJAX
+        if ($request->ajax()) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Medicamento controlado creado con éxito',
+                'id' => $medicamento->id,
+                'nombre' => $medicamento->nombre
+            ]);
+        }
+
         return redirect('admin/medicamento-controlado/crear')
             ->with('mensaje', 'Medicamento controlado creado con éxito');
     }
@@ -66,6 +77,16 @@ class MedicamentoControladoController extends Controller
     {
         $medicamento = MedicamentoControlado::findOrFail($id);
         $medicamento->update($request->all());
+
+        // Responder con JSON si es AJAX
+        if ($request->ajax()) {
+            return response()->json([
+                'success' => true,
+                'message' => 'Medicamento controlado actualizado con éxito',
+                'redirect' => route('medicamento_controlado')
+            ]);
+        }
+
         return redirect('admin/medicamento-controlado')
             ->with('mensaje', 'Medicamento controlado actualizado con éxito');
     }
