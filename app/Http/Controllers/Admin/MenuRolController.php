@@ -23,7 +23,7 @@ class MenuRolController extends Controller
         return view('admin.menu-rol.index', compact('rols','menus','menusRols'));
     }
 
-    
+
 
     /**
      * Store a newly created resource in storage.

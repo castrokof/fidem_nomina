@@ -5,7 +5,7 @@
   <meta http-equiv="X-UA-Compatible" content="IE=edge">
   <!-- CSRF Token -->
     <meta name="csrf-token" content="{{ csrf_token() }}">
-  <title>Registro de Turnos</title>
+  <title>Coll nomina</title>
 
     <!-- Favicons -->
     <link href="{{asset("assets/img/fidem_icon.jpeg")}}" rel="icon">
@@ -73,11 +73,12 @@
     <a href="{{route('inicio')}}"></a>
   </div>
   <!-- /.login-logo -->
-  <div class="card">
+  <div class="card col-lg-12">
+      <div class="card-header  text-black text-center"><b>Coll nomina</b></div>
 
     <div class="card-body login-card-body">
         <img src="{{asset("assets/img/coll_nomina_logo.svg")}}") alt="User Avatar" class="col-xs-12 col-sm-12 col-md-12 m-t-10 text-center img-size-500 mr-12 " >
-       <p class="login-box-msg"> <b>Registro de turnos</b></p>
+       
        <div class="card"></div><hr />
       <p class="login-box-msg">Inicie sesión</p>
       @if ($errors->any())
@@ -114,7 +115,7 @@
           <div class="col-lg-6 col-mb-6 col-xs-12">
           </div>
           <!-- /.col -->
-          <div class="col-lg-6 col-mb-6 col-xs-12">
+          <div class="col-lg-12 col-mb-12 col-xs-12">
             <p>
             <button type="submit" class="btn  btn-info has-spinner" style="width:100%">
               Acceder

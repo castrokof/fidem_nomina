@@ -52,6 +52,47 @@ class HoursxuserController extends Controller
 
     }
 
+
+// Index de Nomina Fija
+    public function index_nominaf1(Request $request )
+    {
+
+        $fechaAi=now()->toDateString()." 00:00:01";
+        $fechaAf=now()->toDateString()." 23:59:59";
+
+        if($request->ajax()){
+
+
+            $datas = DB::table('usuario')
+            ->Join('usuario_rol', 'usuario.id', '=', 'usuario_rol.usuario_id')
+            ->Join('position', 'usuario.cargo_id', '=', 'position.id')
+            ->Join('rol', 'usuario_rol.rol_id', '=', 'rol.id')
+            ->select('usuario.id as id', 'usuario.pnombre as pnombre', 'usuario.snombre as snombre', 'usuario.papellido as papellido','usuario.sapellido as sapellido', 'rol.nombre as nombre',
+            'usuario.tipo_documento as tipo_documento', 'usuario.documento as documento', 'usuario.usuario as usuario', 'position.position as cargo', 'position.salary as salario', 'usuario.celular as celular',
+            'usuario.email as email', 'usuario.ips as ips', 'usuario.activo as activo', 'usuario.type_salary as type_salary', 'usuario.created_at as created_at')
+            ->orderBy('usuario.id')
+            ->where('usuario.ips', $request->ips)
+            ->where('usuario.type_salary', 1)
+            ->get();
+
+
+            return  DataTables()->of($datas)
+           ->addColumn('action', function($datas){
+                $button ='<input type="checkbox" name="case[]"  value="'.$datas->id.'" class="case btn btn-primary btn-sm tooltipsC" title="Selecciona Orden"/>';
+                return $button;
+
+            })
+            ->rawColumns(['action'])
+            ->make(true);
+
+
+
+
+
+    }
+    return view('nomina.nomina_fijos.index');
+}
+
 //Function para traer tabla de empleados a informes
     /**
      * Show the form for creating a new resource.
@@ -280,6 +321,97 @@ if($request->supervisor != null){
 
 
 }
+//Guardar nomina pagos fijos
+    /**
+     * Store a newly created resource in storage.
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @return \Illuminate\Http\Response
+     */
+    public function store_nominaf(Request $request)
+    {
+        $rules = array(
+            'date_hour_initial_turn'  => 'required',
+            'date_hour_end_turn'  => 'required',
+            'working_type'  => 'required',
+            'observation'  => 'max:100'
+        );
+
+        $error = Validator::make($request->all(), $rules);
+
+        if($error->fails()) {
+            return response()->json(['errors' => $error->errors()->all()]);
+        }
+
+        //Validar que no pueda ingresar un misma turno con una misma fecha del mismo empleado
+
+        //Variables donde se extrae solo la fecha
+
+        $usuariosn = null;
+        $usuarios = null;
+
+        $datei = new Carbon($request->date_hour_initial_turn);
+        $datei = $datei->toDateString();
+
+        $datef = new Carbon($request->date_hour_end_turn);
+        $datef = $datef->toDateString();
+        $ids = $request->input('id');
+
+        foreach ($ids as $id ) {
+
+
+
+        $existe = Hoursxuser::where([
+            ['working_type', $request->working_type],
+            ['quincena', $request->quincena],
+            ['user_id', $id]
+            ])->count();
+
+
+      if($existe == 0){
+
+
+            Hoursxuser::create([
+               'date_hour_initial_turn'  => $request->date_hour_initial_turn,
+               'date_hour_end_turn'  => $request->date_hour_end_turn,
+               'working_type'  => $request->working_type,
+               'quincena'  => $request->quincena,
+               'observation'  => $request->observation,
+               'hours' => 120,
+               'user_id'  => $id,
+               'supervisor'  => $request->supervisor
+
+
+               ]);
+
+
+            $usuariosn[] = $id ;
+
+
+       }else if($datei > $datef){
+
+            return response()->json(['errors' => ['La fecha y hora inicial debe ser menor que la fecha y hora final']]);
+
+       }else if ($existe>0) {
+
+            $usuarios[] = $id ;
+
+
+       }
+
+
+
+     }
+        if ($usuarios == 0) {
+            $usuarios = [];# code...
+        }
+        if ($usuariosn == 0) {
+            $usuariosn = [];
+        }
+            return response()->json(['success' => 'ok', 'usuarios' => $usuarios, 'usuarios1' => $usuariosn]);
+
+        }
+
 
 
 

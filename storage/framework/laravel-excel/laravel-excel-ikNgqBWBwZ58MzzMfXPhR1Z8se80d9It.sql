@@ -1,0 +1,56 @@
+select   t.APELLIDO1, t.APELLIDO2, t.NOMBRE1, t.NOMBRE2,CASE t.TIPDOCUM WHEN 1 THEN 'CC'  WHEN 2 THEN 'TI'  WHEN 3 THEN 'CE'  WHEN 4 THEN 'RC'  WHEN 5 THEN 'PA'  WHEN 6 THEN 'AS'  WHEN 7 THEN 'MS'  WHEN 10 THEN 'SC'  WHEN 13 THEN 'PA'  WHEN 15 THEN 'PT' ELSE '' END 
+AS Tipodocum, t.NUMDOCUM, t.FECHANAC, Max(CASE WHEN dx1.diagnostico IN ('C_PPAL','P_PPAL','') THEN dx1.causa ELSE NULL END) AS dx_principal,
+CASE t.DPTO_RES+t.MPIO_RES WHEN 76001 THEN 'Cali'  WHEN 76364 THEN 'Jamundi'  WHEN 76520 THEN 'Palmira'  WHEN 76109 THEN 'Buenaventura'  WHEN 76892 THEN 'Yumbo'  WHEN 76130 THEN 'Candelaria'  WHEN 76248 THEN 'Cerrito' ELSE '' END 
+AS CIUDAD, t.DIRECRES, t.TELEFRES, t.TELEFTRA, pert.CORREO_ELECTRONICO,
+
+'NUEVO' AS Nuevo,
+
+MIN( h.FECHAHORA_EVOLUCION) AS PRIMERA_CONSULTA,
+
+
+'' as dead,
+'' as date_dead,
+'ATENDIDO' as estado,
+'AMBULATORIO' as type,
+'' as profesional,
+'' as diagnos,
+CASE t.SEXO WHEN 1 THEN 'M'  WHEN 2 THEN 'F' ELSE '' END 
+AS SEXO,
+
+'' as nn,
+'' as nn1,
+4 as estado,
+1 as usuario
+
+from 
+
+his_m_evolucion  h 
+
+INNER JOIN fac_m_factura f on f.FACTURA = h.NUMERO_FACTURA and f.DOCUMENTO = h.DOCUMENTO_FACTURA
+INNER JOIN fac_m_procedimientos dx on  dx.FACTURA = h.NUMERO_FACTURA and dx.DOCUMENTO = h.DOCUMENTO_FACTURA
+LEFT JOIN fac_m_procedimientos_dx dx1 on  dx1.FACTURA = h.NUMERO_FACTURA and dx1.DOCUMENTO = h.DOCUMENTO_FACTURA
+INNER JOIN fac_m_tarjetero t on t.NUMDOCUM = f.NUMDOCUM
+INNER JOIN gen_m_persona pert on t.NUMDOCUM = pert.NUMERO_DOCUMENTO
+INNER JOIN his_m_apertura ha on ha.ID_APERTURA = h.ID_APERTURA
+LEFT JOIN his_m_ordenes omd on omd.DOCUMENTO_FACTURA = h.DOCUMENTO_FACTURA and omd.NUMERO_FACTURA = h.NUMERO_FACTURA
+INNER JOIN fac_p_cups cups on cups.CODIGO = dx.CODIGO 
+INNER JOIN fac_p_profesional pro on pro.CODIGO_USUARIO = h.CODIGO_USUARIO
+INNER JOIN gen_p_usuario usu on usu.CODIGO_USUARIO = h.CODIGO_USUARIO
+INNER JOIN gen_m_persona per on per.ID_PERSONA = usu.ID_PERSONA
+INNER JOIN fac_p_especialidad esp on esp.CODIGO = pro.ESPECIALIDAD
+
+
+WHERE 
+
+h.FECHAHORA_EVOLUCION > '2022-01-31' and h.FECHAHORA_EVOLUCION < '2024-07-22'  AND dx.PROFESIONAL_COD IN('M012','M017', 'M009', 'M018', 'M020', 'CP01', 'M027', 'M028', 'M031', 'M032') AND t.REGIMEN in('3', '2') AND f.CENTROPRODUCCION IN('P001') AND f.EMPRESA IN('EPS012')
+
+
+group by 
+
+t.NUMDOCUM, t.TIPDOCUM,  t.APELLIDO1, t.APELLIDO2, t.NOMBRE1, t.NOMBRE2,
+ t.FECHANAC, t.SEXO,  t.TELEFRES, t.DPTO_RES, t.MPIO_RES
+, t.DIRECRES, t.TELEFRES, t.TELEFTRA, pert.CORREO_ELECTRONICO
+
+
+order by PRIMERA_CONSULTA
+

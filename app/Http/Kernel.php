@@ -61,6 +61,9 @@ class Kernel extends HttpKernel
         'superadmin' => \App\Http\Middleware\PermisoAdministrador::class,
         'superConsultor' => \App\Http\Middleware\PermisoConsultor::class,
         'superEditor' => \App\Http\Middleware\PermisoEditor::class,
+        'superAnalista' => \App\Http\Middleware\PermisoAnalista::class,
+        'superPsicologica' => \App\Http\Middleware\PermisoPsicologia::class,
+        'pruebaava' => \App\Http\Middleware\PermisoPruebaAva::class,
         'signed' => \Illuminate\Routing\Middleware\ValidateSignature::class,
         'throttle' => \Illuminate\Routing\Middleware\ThrottleRequests::class,
         

@@ -5,9 +5,18 @@ namespace App\Models\Seguridad;
 use App\Models\Admin\Cita;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use App\Models\Admin\Rol;
+use App\Models\Listas\Listas;
+use App\Models\Listas\ListasDetalle;
 use App\Models\Nomina\Hoursxuser;
 use App\Models\Nomina\Liquidationxuser;
+use App\Models\Nomina\nominaliquid;
+use App\Models\Nomina\Novedades;
 use App\Models\Nomina\Position;
+use App\Models\Paliativos\BasePaliativos;
+use App\Models\Paliativos\ObsPaliativos;
+use App\Models\Psicologica\LineaPsicologica;
+use App\Models\Psicologica\ObservacionesPsicologia;
+use DateTimeInterface;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Session;
 
@@ -30,8 +39,8 @@ class Usuario extends Authenticatable
         'celular',
         'observacion',
         'ips',
-        'activo',
-        'cargo_id'
+        'activo'
+
     ];
 
 
@@ -40,14 +49,43 @@ class Usuario extends Authenticatable
     protected $hidden = ['password', 'remenber_token'];
 
 
+    public function ListasGeneral(){
+        return $this->hasMany(Listas::class, 'user_id');
 
-    public function cargos(){
-         return $this->belongsTo(Position::class, 'id');
+    }
+
+    public function ListasDetalle(){
+        return $this->hasMany(ListasDetalle::class, 'user_id');
+
+    }
+
+    public function novedades(){
+        return $this->hasMany(Novedades::class, 'user_id');
+
     }
 
 
+    public function obs_palia(){
+        return $this->hasMany(ObsPaliativos::class, 'user_id');
+
+    }
+
+
+    public function base_palia(){
+        return $this->hasMany(BasePaliativos::class, 'user_id');
+
+    }
+    
+
+    
+     public function segui_fidemcontigo(){
+        return $this->hasMany(Seguimiento::class, 'user_id');
+
+    } 
+
+
     public function hours(){
-        return $this->hasMany(Hoursxuser::class, 'user_id');
+        return $this->hasMany(nominaliquid::class, 'user_id');
     }
 
     public function hoursliquidation(){
@@ -55,7 +93,13 @@ class Usuario extends Authenticatable
     }
 
 
+    public function psicologica(){
+        return $this->hasMany(LineaPsicologica::class, 'user_id');
+    }
 
+    public function obspsicologica(){
+        return $this->hasMany(ObservacionesPsicologia::class, 'user_id');
+    }
 
 
 
@@ -63,7 +107,7 @@ class Usuario extends Authenticatable
         return $this->belongsToMany(Rol::class,'usuario_rol');
     }
 
-       public function setSession(){
+public function setSession(){
 
     $roles1 = $this->roles1()->get()->toArray();
 
@@ -77,7 +121,8 @@ class Usuario extends Authenticatable
                     'profesion' => $this->profesion,
                     'especialidad' => $this->especialidad,
                     'email' => $this->email,
-                    'activo'=>$this->activo
+                    'activo'=>$this->activo,
+                    'ips'=>$this->ips
                 ]
                 );
         }
@@ -92,13 +137,10 @@ class Usuario extends Authenticatable
         }
     }
 
-    // public function historias(){
-    //     return $this->belongsTo(Historia::class, 'usuario_id');
-    // }
-
-    // public function citas(){
-    //     return $this->belongsTo(Cita::class, 'usuario_id');
-    // }
+    protected function serializeDate(DateTimeInterface $date)
+{
+    return $date->format('Y-m-d H:i:s');
+}
 
 
 }

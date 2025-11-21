@@ -115,7 +115,7 @@ $id= Session()->get('usuario_id');
 <script type="text/javascript">
 
   $(window).on("load",function() {
-      $(".loader1").fadeOut("slow");
+      $(".loader1").fadeOut("fast");
   });
   </script>
 

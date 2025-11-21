@@ -12,7 +12,11 @@ class LoginController extends Controller
     //use Notifiable;
     use AuthenticatesUsers;
 
-    protected $redirectTo = 'hoursxuser';
+
+
+   // protected $redirectTo = 'hoursxuser';
+
+
 
     public function __construct()
     {
@@ -20,11 +24,13 @@ class LoginController extends Controller
     }
 
 
-    public function index()
+    public function index(Request $request)
     {
 
            return view('seguridad.index');
     }
+    
+  
 
 
 
@@ -38,15 +44,34 @@ class LoginController extends Controller
         ])->count();
 
 
-        $roles1 = $user->roles1()->get();
+        $roles1 = $user->roles1()->first();
 
-        if ($roles1->isNotEmpty() && $useractivo >= 1) {
+
+
+
+
+        if ($roles1->id == 1 || $roles1->id == 2 || $roles1->id == 3 && $useractivo >= 1) {
             $user->setSession();
-        }else{
+            return redirect('paliativos-index');
+
+        }else if ($roles1->id == 4 && $useractivo >= 1) {
+           $user->setSession();
+            return redirect('empleado');
+
+        }else if ($roles1->id == 5 && $useractivo >= 1) {
+           $user->setSession();
+            return redirect('reporte_psicologia');
+
+        }else if ($roles1->id == 6 && $useractivo >= 1) {
+           $user->setSession();
+            return redirect('consultar_evolucion');
+
+        }{
             $this->guard()->logout();
             $request->session()->invalidate();
             return redirect('seguridad/login')->withErrors(['error'=>'Este usuario no esta activo y no tiene rol ']);
         }
+
     }
 
     public function username()

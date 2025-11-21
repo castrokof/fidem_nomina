@@ -42,9 +42,8 @@
             <th>Cargo</th>
             <th>Salario</th>
             <th>Valor Hora</th>
-            <th>Valor Hora Adicional</th>
             <th>Valor Paciente Atendido</th>
-            <th>Valor Turno Nocturno</th>
+            <th>Rodamiento</th>
             <th>Fecha Creacion</th>
 
 
@@ -107,9 +106,8 @@ $(document).ready(function(){
           {data:'position'},
           {data:'salary'},
           {data:'value_hour'},
-          {data:'value_hour_add'},
           {data:'value_patient_attended'},
-          {data:'value_hour_night'},
+          {data:'value_salary_add'},
           {data:'created_at',
            name:'created_at'}
         ],

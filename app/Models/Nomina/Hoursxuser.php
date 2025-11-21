@@ -5,6 +5,7 @@ namespace App\Models\Nomina;
 use App\Models\Seguridad\Usuario;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
+use DateTimeInterface;
 
 class Hoursxuser extends Model
 {
@@ -27,4 +28,10 @@ class Hoursxuser extends Model
         {
             return $this->belongsTo(Usuario::class, 'id');
         }
+
+        protected function serializeDate(DateTimeInterface $date)
+        {
+            return $date->format('Y-m-d H:i:s');
+        }
+
 }

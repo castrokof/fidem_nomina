@@ -30,32 +30,160 @@ class LiquidationxuserController extends Controller
 
         $fechafin = new Carbon($request->fechafin);
         $fechafin = $fechafin->toDateString();
-
-            $usuario = $request->usuario;
-            $quincena = $request->quincena;
-
-
-            $datas = DB::table('hoursxuser')
-            ->join('usuario', 'hoursxuser.user_id', '=', 'usuario.id')
-            ->join('position', 'usuario.cargo_id', '=', 'position.id')
-
+        
+        
+            // Obtén las variables del request
+        $quincena = $request->quincena;
+        $tipocontrato = $request->contrato;
+    
+       /* // Paso 1: Realiza la consulta básica y almacénala en una colección
+        $datas = DB::table('nominaliquids')
+            ->join('empleados', 'nominaliquids.empleado_id', '=', 'empleados.id')
             ->select(
-            DB::raw("SUM(CASE WHEN hoursxuser.working_type = 'nocturno' THEN 1 ELSE 0 END) AS turnos"),
-            DB::raw("position.value_hour_night * SUM(CASE WHEN hoursxuser.working_type = 'nocturno' THEN 1 ELSE 0 END) AS total_noches"),
-            DB::raw("sum(position.value_hour * hoursxuser.hours + position.value_hour_night * CASE WHEN hoursxuser.working_type = 'nocturno' THEN 1 ELSE 0 END ) as total_pagar"),
-            DB::raw('sum(hoursxuser.hours) as horas'),
-            'usuario.id as id', 'position.value_hour_night as noches', 'usuario.pnombre as pnombre', 'position.value_hour as valor_hora', DB::raw('position.value_hour * sum(hoursxuser.hours) as total'),
-            'usuario.snombre as snombre', 'usuario.papellido as papellido', 'usuario.sapellido as sapellido','hoursxuser.quincena as quincena')
-            ->where([
-            ['hoursxuser.quincena', $quincena],
-            ['hoursxuser.supervisor', '!=', null]])
-            ->groupBy('pnombre', 'id', 'snombre', 'papellido', 'sapellido', 'quincena', 'value_hour', 'value_hour_night')
-            ->get();
+                'nominaliquids.salary',
+                'nominaliquids.value_salary_add',
+                'nominaliquids.value_transporte',
+                'nominaliquids.salary_ps',
+                'nominaliquids.hours as horas',
+                'nominaliquids.value_hour as valor_hora',
+                'nominaliquids.type_salary',
+                'nominaliquids.type_contrat',
+                'nominaliquids.id',
+                'empleados.id as empleado_id',
+                'empleados.pnombre',
+                'empleados.snombre',
+                'empleados.papellido',
+                'empleados.sapellido',
+                'nominaliquids.quincena',
+                'empleados.ips',
+                'nominaliquids.value_salary_add as rodamiento',
+                'nominaliquids.value_transporte as value_transporte',
+                'nominaliquids.value_add_security_social as retencion',
+            );
+    
+        // Agrega filtros condicionalmente
+        if (!empty($quincena)) {
+            $datas->where('nominaliquids.quincena', $quincena);
+        }
+    
+        if (!empty($tipocontrato)) {
+            $datas->where('nominaliquids.type_contrat', $tipocontrato);
+        }
+    
+        // Obtén los datos sin cálculos complejos y agrupa por campos requeridos
+        $datas = $datas->groupBy('nominaliquids.salary',
+            'nominaliquids.value_salary_add',
+            'nominaliquids.value_transporte',
+            'nominaliquids.salary_ps',
+            'nominaliquids.hours',
+            'nominaliquids.value_hour',
+            'nominaliquids.type_salary',
+            'nominaliquids.type_contrat',
+            'nominaliquids.id',
+            'nominaliquids.quincena',
+            'empleados.id',
+            'empleados.pnombre',
+            'empleados.snombre',
+            'empleados.papellido',
+            'empleados.sapellido',
+            'nominaliquids.value_add_security_social',
+            'empleados.ips')->get();
+    
+ 
+    
+    
+      // Paso 2: Realiza los cálculos en cada registro
+        $datas->transform(function ($record) {
+            
+            // Calcula `total_pagar` basado en el tipo de salario y contrato
+            if ($record->type_salary === 'FIJO-QUINCENAL-MENSUAL' && $record->type_contrat === 'CT') {
+                
+                $record->total_pagar = $record->salary + $record->value_salary_add + $record->value_transporte - ($record->salary * 0.08 + $record->value_add_security_social);
+            
+                
+            } elseif ($record->type_salary === 'FIJO-MENSUAL') {
+                
+                $record->total_pagar = $record->salary + $record->value_salary_add - ($record->salary * 0.08 + $record->value_add_security_social);
+            
+                
+            } elseif ($record->type_salary === 'FIJO-QUINCENAL-MENSUAL' && $record->type_contrat === 'PS') {
+            
+                $record->total_pagar = $record->salary_ps;
+            
+            } else {
+               
+                $record->total_pagar = 0;
+            
+                
+            }
+    
+            // Calcula otros campos como `parafiscales` y `total_hours_value`
+            $record->parafiscales = in_array($record->type_salary, ['FIJO-QUINCENAL-MENSUAL', 'FIJO-MENSUAL']) ? $record->salary * 0.08 : 0;
+            $record->total = $record->value_hour * $record->hours;
+    
+            // Devuelve el registro con los cálculos
+            return $record;
+        });*/
 
+           //$usuario = $request->usuario; no se define en el front
+            $quincena = $request->quincena;
+            $tipocontrato = $request->contrato;
+
+
+            $datas = DB::table('nominaliquids')
+            ->join('empleados', 'nominaliquids.empleado_id', '=', 'empleados.id')
+            ->select(
+            DB::raw("CASE WHEN nominaliquids.type_salary = 'FIJO-QUINCENAL-MENSUAL' AND nominaliquids.type_contrat = 'CT' THEN SUM(nominaliquids.salary + nominaliquids.value_salary_add + nominaliquids.value_transporte - (nominaliquids.salary * 0.08 + (nominaliquids.value_add_security_social))) WHEN
+            nominaliquids.type_salary = 'FIJO-MENSUAL' THEN SUM(nominaliquids.salary + nominaliquids.value_salary_add - (nominaliquids.salary * 0.08  + (nominaliquids.value_add_security_social)) ) WHEN nominaliquids.type_salary = 'FIJO-QUINCENAL-MENSUAL' AND nominaliquids.type_contrat = 'PS' THEN SUM(nominaliquids.salary_ps)  ELSE 0 END as total_pagar"),
+            DB::raw("CASE WHEN nominaliquids.type_salary = 'FIJO-QUINCENAL-MENSUAL' THEN nominaliquids.hours WHEN nominaliquids.type_salary = 'FIJO-MENSUAL' THEN nominaliquids.hours ELSE 0 END as horas"),
+            DB::raw('(nominaliquids.value_salary_add) as rodamiento'),
+            DB::raw('(nominaliquids.value_transporte) as value_transporte '),
+            DB::raw('nominaliquids.value_hour * sum(nominaliquids.hours) as total'),
+            DB::raw("CASE WHEN nominaliquids.type_salary = 'FIJO-QUINCENAL-MENSUAL' AND nominaliquids.type_contrat = 'CT' THEN nominaliquids.salary WHEN nominaliquids.type_salary = 'FIJO-QUINCENAL-MENSUAL' AND nominaliquids.type_contrat = 'PS' THEN nominaliquids.salary_ps
+            WHEN nominaliquids.type_salary = 'FIJO-MENSUAL' AND nominaliquids.type_contrat = 'CT' THEN nominaliquids.salary  ELSE 0 END as salary"),
+            DB::raw("CASE WHEN nominaliquids.type_salary = 'FIJO-QUINCENAL-MENSUAL' THEN nominaliquids.salary * 0.08 WHEN nominaliquids.type_salary = 'FIJO-MENSUAL' THEN nominaliquids.salary * 0.08 ELSE 0 END as parafiscales"),
+            'nominaliquids.id as id','empleados.id as idu', 'nominaliquids.type_salary as type_salary', 'empleados.pnombre as pnombre', 'nominaliquids.value_hour as valor_hora',
+            'empleados.snombre as snombre', 'empleados.papellido as papellido', 'empleados.sapellido as sapellido','nominaliquids.quincena as quincena',
+             'empleados.ips as ips', 'nominaliquids.type_contrat as type_contrat', 'nominaliquids.value_add_security_social as retencion');
+             
+             
+             
+            
+            // Condicionalmente agrega filtros
+            if (!empty($quincena)) {
+                $datas->where('nominaliquids.quincena', $quincena);
+            }
+            
+            if (!empty($tipocontrato)) {
+                $datas->where('nominaliquids.type_contrat', $tipocontrato);
+            }
+            
+            
+           
+           
+            
+            
+            if ($request->session()->get('rol_id') == 1) {
+                $datas->whereIn('empleados.ips', ['ATENCION FIDEM SAS','SALUD VITALIA SAS', 'SALUD MEDCOL SAS']);
+            }else if ($request->session()->get('ips') == 'ATENCION FIDEM SAS' && $request->session()->get('rol_id') == 4) {
+                $datas->whereIn('empleados.ips', ['ATENCION FIDEM SAS']);
+            }else if ($request->session()->get('ips') == 'SALUD VITALIA SAS' || $request->session()->get('ips') == 'SALUD MEDCOL SAS' && $request->session()->get('rol_id') == 4) {
+                $datas->whereIn('empleados.ips', ['SALUD VITALIA SAS', 'SALUD MEDCOL SAS']);
+            }
+            
+
+
+            
+            // Continúa con el groupBy y obtiene los resultados
+            $datas = $datas->groupBy('pnombre', 'id', 'snombre', 'papellido', 'idu', 'sapellido', 'quincena', 'valor_hora', 'salary', 'type_salary', 'ips', 'parafiscales', 'rodamiento', 'horas', 'type_contrat', 'value_transporte', 'retencion')
+                ->get(); 
+            
+            
             return  DataTables()->of($datas)
                 ->addColumn('action', function($datas){
-                $button ='<input type="checkbox" name="case[]"  value="'.$datas->id.'" class="case btn btn-primary btn-sm tooltipsC" title="Selecciona Orden"/>';
-                return $button;
+                    $button ='<button type="button" name="novedad" id="'.$datas->id.'" value="'.$datas->idu.'" class="listasDetalleNove btn btn-sm bg-success tooltipsC" title="Adicionar Novedad"  ><span class="badge bg-teal"><i class="fa fa-fw fa-plus-circle"></i>Add</span></button>';
+
+                    return $button;
 
             })
             ->rawColumns(['action'])
@@ -218,14 +346,7 @@ public function informes1(Request $request )
      * @param  \Illuminate\Http\Request  $request
      * @return \Illuminate\Http\Response
      */
-    public function select()
-    {
-        if(request()->ajax())
-        {
-          $quincenas=Hoursxuser::select('quincena')->groupby('quincena')->get();
-            return response()->json($quincenas);
-        }
-    }
+
     /**
      * Display the specified resource.
      *

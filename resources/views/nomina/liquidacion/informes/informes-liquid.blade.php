@@ -122,6 +122,12 @@
       </div>
 
 
+
+<!-- Modal que carga los form, tablas de las novedades -->
+@include('nomina.novedades.modal.modalProcDetalleIndex')
+
+
+
 </section>
     <!-- /.content -->
 
@@ -140,6 +146,161 @@
 <script>
 
 $(document).ready(function() {
+
+    $(document).on('click', '.listasDetalleNove', function() {
+        $('#modal-novedades-detalle').modal('show');
+
+ var idn = $(this).attr('id');
+ var idu = $(this).attr('value');
+
+if (idn != '') {
+    $('#tnovedades').DataTable().destroy();
+    fill_tnovedades(idn,idu);
+}
+// if (idn != '' && idu != '') {
+//     $('#tcuentasdecobro').DataTable().destroy();
+//     fill_tcuentasdecobro(idn,idu);
+// }
+
+
+$.ajax({
+    url: "editar_novedades/" + idu + "",
+    dataType: "json",
+    success: function(result) {
+        $.each(result, function(i, items) {
+            $('#title-novedades-detalle').text(items.nombre);
+            $('#modal-novedades-detalle').modal({
+
+                backdrop: 'static',
+                keyboard: false
+            });
+            $('#modal-novedaes-detalle').modal('show');
+
+        });
+    }
+
+}).fail(function(jqXHR, textStatus, errorThrown) {
+
+    if (jqXHR.status === 403) {
+
+        Manteliviano.notificaciones('No tienes permisos para realizar esta accion',
+            'Sistema Historias Clínicas', 'warning');
+    }
+});
+
+});
+
+fill_tnovedades();
+
+// Función para filtrar cargar los datos en la tabla de novedades
+
+function fill_tnovedades(idn = '' )
+         {
+          var tnovedades = $('#tnovedades').DataTable
+          ({
+              language: idioma_espanol,
+              lengthMenu: [ -1],
+              processing: true,
+              serverSide: true,
+              aaSorting: [[ 2, "asc" ]],
+
+
+          ajax:{
+               url:"{{route('novedades')}}",
+                data:{nove_id:idn}
+              },
+              columns: [
+          {data:'action',
+           orderable: false},
+          {data:'id'},
+          {data:'type_nove'},
+          {data:'road', render: $.fn.dataTable.render.number( ',', '.' )},
+          {data:'hours'},
+          {data:'total_pac'},
+          {data:'nove_observacion'},
+          {data:'created_at'}
+
+        ],
+        "columnDefs": [
+
+
+                      ],
+
+              //Botones----------------------------------------------------------------------
+        "dom":'Brtip',
+               buttons: [
+
+                   {
+
+               extend:'copyHtml5',
+               titleAttr: 'Copy',
+               className: "btn btn-info"
+
+
+                  },
+                  {
+
+               extend:'excelHtml5',
+               titleAttr: 'Excel',
+               className: "btn btn-success"
+
+
+                  },
+                   {
+
+               extend:'csvHtml5',
+               titleAttr: 'csv',
+               className: "btn btn-warning"
+
+
+                  },
+                  {
+
+               extend:'pdfHtml5',
+               titleAttr: 'pdf',
+               className: "btn btn-primary"
+
+
+                  }
+               ],
+            //    "columnDefs": [
+
+            //                         {
+            //                         "render": function ( data, type, row ) {
+            //                                 return data +' '+row["papellido"]+' '+row["sapellido"];
+            //                             },
+            //                             "targets":[3]
+            //                         },
+            //                         { "visible": false,  "targets": [4] },
+            //                         { "visible": false,  "targets": [5] },
+            //                         { "visible": false,  "targets": [6] },
+
+
+
+
+
+
+
+            //                         ],
+
+            //      "createdRow": function(row, data, dataIndex) {
+            //         if (data["type_salary"] == 'FIJO-QUINCENAL') {
+            //             $($(row).find("td")[5]).addClass("btn btn-sm bg-info rounded-lg");
+            //         }else{
+            //             $($(row).find("td")[5]).addClass("btn btn-sm bg-dark rounded-lg");
+            //             }
+            //         if (data["total_pagar"] > 1) {
+            //         $($(row).find("td")[12]).addClass("btn btn-sm bg-success rounded-lg");
+            //       }
+            //       if (data["parafiscales"] > 1) {
+            //             $($(row).find("td")[8]).addClass("btn btn-sm bg-danger rounded-lg ");
+            //         }
+
+            //      }
+
+             });
+ }
+
 
 // variables globales
   var quincena = '';
@@ -250,30 +411,23 @@ $.get('select_quincena',
           {data:'action',
            orderable: false},
           {data:'id'},
+          {data:'ips'},
           {data:'pnombre'},
           {data:'snombre'},
           {data:'papellido'},
           {data:'sapellido'},
           {data:'quincena'},
+          {data:'type_salary'},
+          {data:'salary', render: $.fn.dataTable.render.number( ',', '.' )},
+          {data:'rodamiento', render: $.fn.dataTable.render.number( ',', '.' )},
+          {data:'parafiscales', render: $.fn.dataTable.render.number( ',', '.' )},
           {data:'horas'},
-          {data:'valor_hora'},
-          {data:'turnos'},
-          {data:'noches'},
-          {data:'total_noches'},
-          {data:'total'},
-          {data:'total_pagar'}
+          {data:'valor_hora', render: $.fn.dataTable.render.number( ',', '.' )},
+          {data:'total', render: $.fn.dataTable.render.number( ',', '.' )},
+          {data:'total_pagar', render: $.fn.dataTable.render.number( ',', '.' )}
 
         ],
         "columnDefs": [
-                                    {
-                                    "render": function ( data, type, row ) {
-                                            return data +' '+row["papellido"]+' '+row["sapellido"];
-                                        },
-                                        "targets":[2]
-                                    },
-                                    { "visible": false,  "targets": [3] },
-                                    { "visible": false,  "targets": [4] },
-                                    { "visible": false,  "targets": [5] }
 
 
                       ],
@@ -314,7 +468,42 @@ $.get('select_quincena',
 
 
                   }
-               ]
+               ],
+               "columnDefs": [
+
+                                    {
+                                    "render": function ( data, type, row ) {
+                                            return data +' '+row["papellido"]+' '+row["sapellido"];
+                                        },
+                                        "targets":[3]
+                                    },
+                                    { "visible": false,  "targets": [4] },
+                                    { "visible": false,  "targets": [5] },
+                                    { "visible": false,  "targets": [6] },
+
+
+
+
+
+
+
+                                    ],
+
+                 "createdRow": function(row, data, dataIndex) {
+                    if (data["type_salary"] == 'FIJO-QUINCENAL') {
+                        $($(row).find("td")[5]).addClass("btn btn-sm bg-info rounded-lg");
+                    }else{
+                        $($(row).find("td")[5]).addClass("btn btn-sm bg-dark rounded-lg");
+                        }
+                    if (data["total_pagar"] > 1) {
+                    $($(row).find("td")[12]).addClass("btn btn-sm bg-success rounded-lg");
+                  }
+                  if (data["parafiscales"] > 1) {
+                        $($(row).find("td")[8]).addClass("btn btn-sm bg-danger rounded-lg ");
+                    }
+
+                 }
+
              });
  }
 

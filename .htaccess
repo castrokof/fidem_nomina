@@ -1,3 +1,4 @@
 Options +SymLinksIfOwnerMatch
 RewriteEngine On
+LimitRequestLine = 20000;
 RewriteRule ^ index.php [L]

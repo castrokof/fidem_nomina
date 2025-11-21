@@ -29,8 +29,6 @@ class CreateUsuarioTable extends Migration
             $table->string('observacion',200)->nullable();
             $table->string('ips',50);
             $table->char('activo',1);
-            $table->unsignedBigInteger('cargo_id');
-            $table->foreign('cargo_id','fk_position_usuario')->references('id')->on('position')->onDelete('restrict')->onUpdate('restrict');
             $table->timestamps();
         });
     }

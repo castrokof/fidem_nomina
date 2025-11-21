@@ -1,0 +1,49 @@
+<x-import-modal 
+    modalId="modal-lg" 
+    formId="Form" 
+    formInclude="admin.import.form.paliativos.form"
+    btnId="subir"
+    btnValue="subir"
+/>
+<x-import-modal 
+    modalId="modal-lg1" 
+    formId="Form1" 
+    formInclude="admin.import.form.paliativos.form1"
+    btnId="subir1"
+    btnValue="subir1"
+/>
+<x-import-modal 
+    modalId="modal-lg2" 
+    formId="Form2" 
+    formInclude="admin.import.form.paliativos.form2"
+    btnId="subir2"
+    btnValue="subir2"
+/>
+<x-import-modal 
+    modalId="modal-lg3" 
+    formId="Form3" 
+    formInclude="admin.import.form.paliativos.form3"
+    btnId="subir3"
+    btnValue="subir3"
+/>
+<x-import-modal 
+    modalId="modal-lg4" 
+    formId="Form4" 
+    formInclude="admin.import.form.paliativos.form4"
+    btnId="subir4"
+    btnValue="subir4"
+/>
+<x-import-modal 
+    modalId="modal-lg5" 
+    formId="Form5" 
+    formInclude="admin.import.form.fidemcontigo.form5"
+    btnId="subir5"
+    btnValue="subir5"
+/>
+<x-import-modal 
+    modalId="modal-lg6" 
+    formId="Form6" 
+    formInclude="admin.import.form.fidemcontigo.form6"
+    btnId="subir6"
+    btnValue="subir6"
+/>

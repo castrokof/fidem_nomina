@@ -24,15 +24,21 @@ class ValidacionEmpleado extends FormRequest
     public function rules()
     {
         return [
-            'nombres'  => 'required|max:100',
-            'apellidos'  => 'required|max:100',
+            'papellido'  => 'required|max:100',
+            'pnombre'  => 'required|max:100',
             'documento' => 'numeric|required|min:10000|max:9999999999',
             'tipo_documento' => 'required',
-            'empresa_id' => 'required',
-            'ciudad' => 'required',
-            'pais' => 'required',
-            'barrio' => 'required',
-            'direccion' => 'required',
+            'email' => 'required',
+            'celular' => 'required',
+            'ips' => 'required',
+            'position' => 'required',
+            'eps' => 'required',
+            'arl' => 'required',
+            'afp' => 'required',
+            'fc' => 'required',
+            'user_id' => 'required',
+            'type_contrat' => 'required',
+            'type_salary' => 'required',
             'activo' => 'required'
             ];
     }

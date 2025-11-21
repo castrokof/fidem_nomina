@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use App\Http\Requests\ValidacionUsuario;
 use App\Models\Admin\Rol;
+use App\Models\Nomina\Position;
 use App\Models\Seguridad\Usuario;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -23,21 +24,14 @@ class UsuarioController extends Controller
         $usuario_id = $request->session()->get('usuario_id');
         $Rols1 = Rol::orderBy('id')->pluck('nombre', 'id')->toArray();
 
+
     if($request->ajax()){
 
         if($request->session()->get('rol_id') == 1){
 
-            $datas = DB::table('usuario')
-            ->Join('usuario_rol', 'usuario.id', '=', 'usuario_rol.usuario_id')
-            ->Join('position', 'usuario.cargo_id', '=', 'position.id')
-            ->Join('rol', 'usuario_rol.rol_id', '=', 'rol.id')
-            ->select('usuario.id as id', 'usuario.pnombre as pnombre', 'usuario.snombre as snombre', 'usuario.papellido as papellido','usuario.sapellido as sapellido', 'rol.nombre as nombre',
-            'usuario.tipo_documento as tipo_documento', 'usuario.documento as documento', 'usuario.usuario as usuario', 'position.position as cargo', 'usuario.celular as celular',
-            'usuario.email as email', 'usuario.ips as ips', 'usuario.activo as activo', 'usuario.created_at as created_at')
-            ->orderBy('usuario.id')
-            ->get();
+            $datas = Usuario::with('roles1')->get();
 
-            return  DataTables()->of($datas)
+           return  DataTables()->of($datas)
             ->addColumn('action', function($datas){
             $button = '<button type="button" name="edit" id="'.$datas->id.'"
             class = "edit btn-float  bg-gradient-primary btn-sm tooltipsC"  title="Editar usuario"><i class="fas fa-user-edit"></i></button>';
@@ -50,17 +44,10 @@ class UsuarioController extends Controller
             ->rawColumns(['action'])
             ->make(true);
 
-        }else  if($request->session()->get('rol_id') == 2){
+         }else  if($request->session()->get('rol_id') == 2){
 
-            $datas = DB::table('usuario')
-            ->Join('usuario_rol', 'usuario.id', '=', 'usuario_rol.usuario_id')
-            ->Join('position', 'usuario.cargo_id', '=', 'position.id')
-            ->Join('rol', 'usuario_rol.rol_id', '=', 'rol.id')
-            ->where('usuario.id',  $usuario_id )
-            ->select('usuario.id as id', 'usuario.pnombre as pnombre', 'usuario.snombre as snombre', 'usuario.papellido as papellido','usuario.sapellido as sapellido', 'rol.nombre as nombre',
-            'usuario.tipo_documento as tipo_documento', 'usuario.documento as documento', 'usuario.usuario as usuario','position.position as cargo', 'usuario.celular as celular',
-            'usuario.email as email', 'usuario.ips as ips','usuario.activo as activo', 'usuario.created_at as created_at')
-            ->orderBy('usuario.id')
+            $datas = Usuario::with('roles1')
+            ->where('id',  $usuario_id )
             ->get();
 
         return  DataTables()->of($datas)
@@ -79,7 +66,8 @@ class UsuarioController extends Controller
 
 
     }
-    return view('admin.usuario.index', compact('Rols1'));
+
+   return view('admin.usuario.index', compact('Rols1'));
  }
     /**
      * Show the form for creating a new resource.
@@ -150,11 +138,10 @@ class UsuarioController extends Controller
 
             $data = DB::table('usuario')
             ->Join('usuario_rol', 'usuario.id', '=', 'usuario_rol.usuario_id')
-            ->Join('position', 'usuario.cargo_id', '=', 'position.id')
             ->Join('rol', 'usuario_rol.rol_id', '=', 'rol.id')
             ->select('usuario.id as id', 'usuario.pnombre as pnombre', 'usuario.snombre as snombre', 'usuario.papellido as papellido','usuario.sapellido as sapellido', 'rol.nombre as nombre',
             'usuario.tipo_documento as tipo_documento', 'usuario.documento as documento', 'usuario.usuario as usuario', 'usuario.celular as celular',
-            'usuario.email as email', 'usuario.ips as ips', 'usuario.cargo_id as cargo_id', 'usuario.activo as activo','usuario.password as password','usuario.remenber_token as remenber_token', 'rol.id as rol_id', 'usuario.created_at as created_at')
+            'usuario.email as email', 'usuario.ips as ips', 'usuario.activo as activo', 'usuario.password as password','usuario.remenber_token as remenber_token', 'rol.id as rol_id', 'usuario.created_at as created_at')
             ->orderBy('usuario.id')
             ->where('usuario.id', $id)
             ->first();
@@ -227,6 +214,16 @@ class UsuarioController extends Controller
     public function eliminar($id)
     {
         //
+    }
+
+
+    public function consultarusuario($id)
+    {
+        if(request()->ajax())
+        {
+          $result= Usuario::findOrFail($id);
+            return response()->json($result);
+        }
     }
 
 
