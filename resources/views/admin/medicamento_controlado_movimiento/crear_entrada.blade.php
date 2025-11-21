@@ -3,99 +3,124 @@
 Registrar Entrada de Medicamento
 @endsection
 
+@section('styles')
+<link href="{{asset('assets/css/custom/medicamentos-glassmorphism.css')}}" rel="stylesheet" type="text/css"/>
+<style>
+    .content-wrapper {
+        background: linear-gradient(-45deg, #0fd850, #0bad52, #00f2fe, #4facfe);
+        background-size: 400% 400%;
+        animation: gradientBG 15s ease infinite;
+    }
+</style>
+@endsection
+
 @section('scripts')
+<script>
+    var guardarMovimientoUrl = "{{route('guardar_medicamento_controlado_movimiento')}}";
+</script>
 <script src="{{asset("assets/pages/scripts/admin/medicamento_controlado_movimiento/crear_entrada.js")}}" type="text/javascript"></script>
 @endsection
 
 @section('contenido')
-<div class="row">
-    <div class="col-lg-12">
-        @include('includes.form-error')
-        @include('includes.form-mensaje')
+<div class="medicamentos-wrapper">
+    <div class="row">
+        <div class="col-lg-12">
+            @include('includes.form-error')
 
-        <div class="card card-success">
-            <div class="card-header">
-                <h3 class="card-title">Registrar Entrada de Medicamento Controlado</h3>
-                <div class="card-tools">
-                    <a href="{{route('medicamento_controlado_movimiento')}}" class="btn btn-info btn-sm">
-                        <i class="fas fa-list"></i> Ver Movimientos
-                    </a>
+            <div class="glass-card animate-in">
+                <div class="glass-card-header" style="background: var(--success-gradient);">
+                    <div class="d-flex justify-content-between align-items-center flex-wrap">
+                        <h3><i class="fas fa-plus-circle mr-2"></i> Registrar Entrada de Medicamento</h3>
+                        <a href="{{route('medicamento_controlado_movimiento')}}" class="glass-btn glass-btn-info mt-2 mt-md-0">
+                            <i class="fas fa-list"></i> Ver Movimientos
+                        </a>
+                    </div>
+                </div>
+
+                <div class="glass-card-body">
+                    <form id="form-entrada">
+                        @csrf
+                        <input type="hidden" name="tipo_movimiento" value="entrada">
+
+                        <div class="row">
+                            <!-- Columna izquierda -->
+                            <div class="col-lg-6">
+                                <div class="form-group-glass">
+                                    <label for="fecha">
+                                        <i class="fas fa-calendar-alt mr-2"></i>Fecha *
+                                    </label>
+                                    <input type="date" name="fecha" id="fecha" class="form-control glass-input" value="{{date('Y-m-d')}}" required>
+                                </div>
+
+                                <div class="form-group-glass">
+                                    <label for="medicamento_controlado_id">
+                                        <i class="fas fa-pills mr-2"></i>Medicamento *
+                                    </label>
+                                    <select name="medicamento_controlado_id" id="medicamento_controlado_id" class="form-control glass-select" required>
+                                        <option value="">Seleccione un medicamento</option>
+                                        @foreach($medicamentos as $med)
+                                            <option value="{{$med->id}}" data-saldo="{{$med->saldo_actual}}">
+                                                {{$med->nombre}} (Stock: {{$med->saldo_actual}})
+                                            </option>
+                                        @endforeach
+                                    </select>
+                                </div>
+
+                                <div class="form-group-glass">
+                                    <label><i class="fas fa-warehouse mr-2"></i>Saldo Actual</label>
+                                    <div class="text-center">
+                                        <span class="glass-badge glass-badge-info" style="font-size: 1.5rem; padding: 15px 30px;">
+                                            <i class="fas fa-box-open"></i> <span id="saldo-actual">0</span>
+                                        </span>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <!-- Columna derecha -->
+                            <div class="col-lg-6">
+                                <div class="form-group-glass">
+                                    <label for="proveedor">
+                                        <i class="fas fa-truck mr-2"></i>Proveedor *
+                                    </label>
+                                    <input type="text" name="proveedor" id="proveedor" class="form-control glass-input" required maxlength="200" placeholder="Nombre del proveedor">
+                                </div>
+
+                                <div class="form-group-glass">
+                                    <label for="numero_factura">
+                                        <i class="fas fa-file-invoice mr-2"></i>No. Factura
+                                    </label>
+                                    <input type="text" name="numero_factura" id="numero_factura" class="form-control glass-input" maxlength="100" placeholder="Número de factura (opcional)">
+                                </div>
+
+                                <div class="form-group-glass">
+                                    <label for="entrada">
+                                        <i class="fas fa-plus mr-2"></i>Cantidad a Ingresar *
+                                    </label>
+                                    <input type="number" name="entrada" id="entrada" class="form-control glass-input" required min="1" placeholder="Cantidad a ingresar" style="font-size: 1.2rem; font-weight: bold;">
+                                </div>
+
+                                <div class="form-group-glass">
+                                    <label><i class="fas fa-calculator mr-2"></i>Nuevo Saldo</label>
+                                    <div class="text-center">
+                                        <span class="glass-badge glass-badge-success" style="font-size: 2rem; padding: 20px 40px;" id="nuevo-saldo">0</span>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row mt-4">
+                            <div class="col-12 text-center">
+                                <button type="reset" class="glass-btn glass-btn-secondary mr-2" id="btn-limpiar">
+                                    <i class="fas fa-eraser mr-2"></i>Limpiar
+                                </button>
+                                <button type="submit" class="glass-btn glass-btn-success" id="btn-guardar">
+                                    <i class="fas fa-save mr-2"></i>Registrar Entrada
+                                </button>
+                            </div>
+                        </div>
+                    </form>
                 </div>
             </div>
-
-            <form action="{{route('guardar_medicamento_controlado_movimiento')}}" id="form-entrada" class="form-horizontal" method="POST">
-                @csrf
-                <input type="hidden" name="tipo_movimiento" value="entrada">
-
-                <div class="card-body">
-                    <div class="form-group row">
-                        <label for="fecha" class="col-lg-3 control-label requerido">Fecha</label>
-                        <div class="col-lg-8">
-                            <input type="date" name="fecha" id="fecha" class="form-control" value="{{old('fecha', date('Y-m-d'))}}" required>
-                        </div>
-                    </div>
-
-                    <div class="form-group row">
-                        <label for="medicamento_controlado_id" class="col-lg-3 control-label requerido">Medicamento</label>
-                        <div class="col-lg-8">
-                            <select name="medicamento_controlado_id" id="medicamento_controlado_id" class="form-control" required>
-                                <option value="">Seleccione un medicamento</option>
-                                @foreach($medicamentos as $med)
-                                    <option value="{{$med->id}}" data-saldo="{{$med->saldo_actual}}" {{old('medicamento_controlado_id') == $med->id ? 'selected' : ''}}>
-                                        {{$med->nombre}} (Saldo actual: {{$med->saldo_actual}})
-                                    </option>
-                                @endforeach
-                            </select>
-                        </div>
-                    </div>
-
-                    <div class="form-group row">
-                        <label class="col-lg-3 control-label">Saldo Actual</label>
-                        <div class="col-lg-8">
-                            <h4><span class="badge badge-info" id="saldo-actual">0</span></h4>
-                        </div>
-                    </div>
-
-                    <div class="form-group row">
-                        <label for="proveedor" class="col-lg-3 control-label requerido">Proveedor</label>
-                        <div class="col-lg-8">
-                            <input type="text" name="proveedor" id="proveedor" class="form-control" value="{{old('proveedor')}}" required maxlength="200" placeholder="Nombre del proveedor">
-                        </div>
-                    </div>
-
-                    <div class="form-group row">
-                        <label for="numero_factura" class="col-lg-3 control-label">No. Factura</label>
-                        <div class="col-lg-8">
-                            <input type="text" name="numero_factura" id="numero_factura" class="form-control" value="{{old('numero_factura')}}" maxlength="100" placeholder="Número de factura (opcional)">
-                        </div>
-                    </div>
-
-                    <div class="form-group row">
-                        <label for="entrada" class="col-lg-3 control-label requerido">Cantidad de Entrada</label>
-                        <div class="col-lg-8">
-                            <input type="number" name="entrada" id="entrada" class="form-control" value="{{old('entrada')}}" required min="1" placeholder="Cantidad a ingresar">
-                        </div>
-                    </div>
-
-                    <div class="form-group row">
-                        <label class="col-lg-3 control-label">Nuevo Saldo</label>
-                        <div class="col-lg-8">
-                            <h3><span class="badge badge-success" id="nuevo-saldo">0</span></h3>
-                        </div>
-                    </div>
-                </div>
-
-                <div class="card-footer">
-                    <div class="col-lg-6">
-                        <button type="reset" class="btn btn-default">
-                            <i class="fas fa-eraser"></i> Limpiar
-                        </button>
-                        <button type="submit" class="btn btn-success">
-                            <i class="fas fa-save"></i> Registrar Entrada
-                        </button>
-                    </div>
-                </div>
-            </form>
         </div>
     </div>
 </div>
