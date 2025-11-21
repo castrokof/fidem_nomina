@@ -31,8 +31,9 @@ Registrar Entrada de Medicamento
                 <div class="glass-card-header" style="background: var(--success-gradient);">
                     <div class="d-flex justify-content-between align-items-center flex-wrap">
                         <h3><i class="fas fa-plus-circle mr-2"></i> Registrar Entrada de Medicamento</h3>
-                        <a href="{{route('medicamento_controlado_movimiento')}}" class="glass-btn glass-btn-info mt-2 mt-md-0">
-                            <i class="fas fa-list"></i> Ver Movimientos
+                        <a href="{{route('medicamento_controlado_movimiento')}}" class="btn-ios btn-ios-info mt-2 mt-md-0">
+                            <i class="fas fa-list"></i>
+                            <span>Ver Movimientos</span>
                         </a>
                     </div>
                 </div>
@@ -110,12 +111,16 @@ Registrar Entrada de Medicamento
 
                         <div class="row mt-4">
                             <div class="col-12 text-center">
-                                <button type="reset" class="glass-btn glass-btn-secondary mr-2" id="btn-limpiar">
-                                    <i class="fas fa-eraser mr-2"></i>Limpiar
-                                </button>
-                                <button type="submit" class="glass-btn glass-btn-success" id="btn-guardar">
-                                    <i class="fas fa-save mr-2"></i>Registrar Entrada
-                                </button>
+                                <div class="btn-group-ios">
+                                    <button type="reset" class="btn-ios btn-ios-warning" id="btn-limpiar">
+                                        <i class="fas fa-eraser"></i>
+                                        <span>Limpiar</span>
+                                    </button>
+                                    <button type="submit" class="btn-ios btn-ios-success" id="btn-guardar">
+                                        <i class="fas fa-save"></i>
+                                        <span>Registrar Entrada</span>
+                                    </button>
+                                </div>
                             </div>
                         </div>
                     </form>

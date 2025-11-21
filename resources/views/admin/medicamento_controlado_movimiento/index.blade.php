@@ -69,8 +69,9 @@ Movimientos de Medicamentos Controlados
                                 <div class="col-md-2">
                                     <div class="form-group-glass">
                                         <label>&nbsp;</label>
-                                        <button type="submit" class="btn glass-btn glass-btn-primary btn-block">
-                                            <i class="fas fa-search mr-2"></i>Filtrar
+                                        <button type="submit" class="btn-ios btn-ios-info btn-block" style="width: 100%; justify-content: center;">
+                                            <i class="fas fa-search"></i>
+                                            <span>Filtrar</span>
                                         </button>
                                     </div>
                                 </div>
@@ -86,15 +87,20 @@ Movimientos de Medicamentos Controlados
                     <div class="d-flex justify-content-between align-items-center flex-wrap">
                         <h3><i class="fas fa-exchange-alt mr-2"></i> Historial de Movimientos</h3>
                         <div class="mt-2 mt-md-0">
-                            <a href="{{route('crear_entrada_medicamento_controlado')}}" class="glass-btn glass-btn-success">
-                                <i class="fas fa-plus-circle"></i> Nueva Entrada
-                            </a>
-                            <a href="{{route('crear_salida_medicamento_controlado')}}" class="glass-btn glass-btn-danger ml-2">
-                                <i class="fas fa-minus-circle"></i> Nueva Salida
-                            </a>
-                            <a href="{{route('medicamento_controlado')}}" class="glass-btn glass-btn-info ml-2">
-                                <i class="fas fa-pills"></i> Medicamentos
-                            </a>
+                            <div class="btn-group-ios">
+                                <a href="{{route('crear_entrada_medicamento_controlado')}}" class="btn-ios btn-ios-success">
+                                    <i class="fas fa-plus-circle"></i>
+                                    <span>Entrada</span>
+                                </a>
+                                <a href="{{route('crear_salida_medicamento_controlado')}}" class="btn-ios btn-ios-danger">
+                                    <i class="fas fa-minus-circle"></i>
+                                    <span>Salida</span>
+                                </a>
+                                <a href="{{route('medicamento_controlado')}}" class="btn-ios btn-ios-info">
+                                    <i class="fas fa-pills"></i>
+                                    <span>Medicamentos</span>
+                                </a>
+                            </div>
                         </div>
                     </div>
                 </div>
