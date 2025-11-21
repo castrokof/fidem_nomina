@@ -95,6 +95,22 @@ Route::group(['prefix' => 'admin', 'namespace' => 'Admin', 'middleware' => ['aut
     /* RUTAS DEL PERMISOROL */
     Route::get('permiso-rol', 'PermisoRolController@index')->name('permiso_rol');
     Route::post('permiso-rol', 'PermisoRolController@guardar')->name('guardar_permiso_rol');
+
+    /* RUTAS DE MEDICAMENTOS CONTROLADOS */
+    Route::get('medicamento-controlado', 'MedicamentoControladoController@index')->name('medicamento_controlado');
+    Route::get('medicamento-controlado/crear', 'MedicamentoControladoController@crear')->name('crear_medicamento_controlado');
+    Route::post('medicamento-controlado', 'MedicamentoControladoController@guardar')->name('guardar_medicamento_controlado');
+    Route::get('medicamento-controlado/{id}/editar', 'MedicamentoControladoController@editar')->name('editar_medicamento_controlado');
+    Route::put('medicamento-controlado/{id}', 'MedicamentoControladoController@actualizar')->name('actualizar_medicamento_controlado');
+    Route::get('medicamento-controlado/{id}/eliminar', 'MedicamentoControladoController@eliminar')->name('eliminar_medicamento_controlado');
+
+    /* RUTAS DE MOVIMIENTOS DE MEDICAMENTOS CONTROLADOS */
+    Route::get('medicamento-controlado-movimiento', 'MedicamentoControladoMovimientoController@index')->name('medicamento_controlado_movimiento');
+    Route::get('medicamento-controlado-movimiento/crear-entrada', 'MedicamentoControladoMovimientoController@crearEntrada')->name('crear_entrada_medicamento_controlado');
+    Route::get('medicamento-controlado-movimiento/crear-salida', 'MedicamentoControladoMovimientoController@crearSalida')->name('crear_salida_medicamento_controlado');
+    Route::post('medicamento-controlado-movimiento', 'MedicamentoControladoMovimientoController@guardar')->name('guardar_medicamento_controlado_movimiento');
+    Route::get('medicamento-controlado-movimiento/{id}', 'MedicamentoControladoMovimientoController@mostrar')->name('mostrar_medicamento_controlado_movimiento');
+    Route::get('medicamento-controlado-movimiento/saldo/{medicamento_id}', 'MedicamentoControladoMovimientoController@obtenerSaldo')->name('obtener_saldo_medicamento');
 });
 
 
