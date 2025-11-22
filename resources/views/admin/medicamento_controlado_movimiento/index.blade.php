@@ -5,6 +5,7 @@ Movimientos de Medicamentos Controlados
 
 @section('styles')
 <link href="{{asset('assets/css/custom/medicamentos-glassmorphism.css')}}" rel="stylesheet" type="text/css"/>
+<link href="{{asset("assets/$theme/plugins/datatables-bs4/css/dataTables.bootstrap4.css")}}" rel="stylesheet" type="text/css"/>
 <style>
     .content-wrapper {
         background: linear-gradient(-45deg, #7F7FD5, #86A8E7, #91EAE4, #11998e, #38ef7d);
@@ -15,6 +16,9 @@ Movimientos de Medicamentos Controlados
 @endsection
 
 @section('scripts')
+<script src="{{asset("assets/$theme/plugins/datatables/jquery.dataTables.js")}}" type="text/javascript"></script>
+<script src="{{asset("assets/$theme/plugins/datatables-bs4/js/dataTables.bootstrap4.js")}}" type="text/javascript"></script>
+<script src="{{asset("assets/$theme/plugins/datatables-responsive/js/dataTables.responsive.min.js")}}" type="text/javascript"></script>
 <script src="{{asset("assets/pages/scripts/admin/medicamento_controlado_movimiento/index.js")}}" type="text/javascript"></script>
 @endsection
 
