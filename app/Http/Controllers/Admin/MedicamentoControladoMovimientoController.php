@@ -253,4 +253,56 @@ class MedicamentoControladoMovimientoController extends Controller
             'nombre' => $medicamento->nombre
         ]);
     }
+
+    /**
+     * Obtener estadísticas de movimientos con filtros
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @return \Illuminate\Http\Response
+     */
+    public function obtenerEstadisticas(Request $request)
+    {
+        $medicamento_id = $request->get('medicamento_id');
+        $fecha_desde = $request->get('fecha_desde');
+        $fecha_hasta = $request->get('fecha_hasta');
+
+        $query = MedicamentoControladoMovimiento::query();
+
+        // Aplicar filtros
+        if ($medicamento_id) {
+            $query->where('medicamento_controlado_id', $medicamento_id);
+        }
+
+        if ($fecha_desde) {
+            $query->whereDate('fecha', '>=', $fecha_desde);
+        }
+
+        if ($fecha_hasta) {
+            $query->whereDate('fecha', '<=', $fecha_hasta);
+        }
+
+        // Obtener estadísticas
+        $totalEntradas = (clone $query)->sum('entrada');
+        $totalSalidas = (clone $query)->sum('salida');
+        $totalMovimientos = (clone $query)->count();
+
+        // Obtener stock actual
+        if ($medicamento_id) {
+            $medicamento = MedicamentoControlado::find($medicamento_id);
+            $stockActual = $medicamento ? $medicamento->saldo_actual : 0;
+            $nombreMedicamento = $medicamento ? $medicamento->nombre : '';
+        } else {
+            // Si no hay filtro de medicamento, sumar todos los saldos actuales
+            $stockActual = MedicamentoControlado::where('activo', 1)->sum('saldo_actual');
+            $nombreMedicamento = 'Todos los medicamentos';
+        }
+
+        return response()->json([
+            'total_entradas' => $totalEntradas,
+            'total_salidas' => $totalSalidas,
+            'total_movimientos' => $totalMovimientos,
+            'stock_actual' => $stockActual,
+            'nombre_medicamento' => $nombreMedicamento
+        ]);
+    }
 }

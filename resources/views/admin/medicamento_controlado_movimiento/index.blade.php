@@ -22,6 +22,74 @@ Movimientos de Medicamentos Controlados
             @include('includes.form-error')
             @include('includes.form-mensaje')
 
+            <!-- Tarjetas de Estadísticas -->
+            <div class="row mb-3" id="tarjetas-estadisticas">
+                <div class="col-lg-3 col-md-6 mb-3">
+                    <div class="glass-card animate-in">
+                        <div class="glass-card-body text-center">
+                            <div class="d-flex align-items-center justify-content-center mb-2">
+                                <div class="rounded-circle p-3" style="background: rgba(40, 167, 69, 0.2);">
+                                    <i class="fas fa-arrow-down fa-2x text-success"></i>
+                                </div>
+                            </div>
+                            <h6 class="text-white mb-1">Total Entradas</h6>
+                            <h3 class="mb-0 font-weight-bold" style="color: #28a745;">
+                                <span id="total-entradas">-</span>
+                            </h3>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-lg-3 col-md-6 mb-3">
+                    <div class="glass-card animate-in">
+                        <div class="glass-card-body text-center">
+                            <div class="d-flex align-items-center justify-content-center mb-2">
+                                <div class="rounded-circle p-3" style="background: rgba(220, 53, 69, 0.2);">
+                                    <i class="fas fa-arrow-up fa-2x text-danger"></i>
+                                </div>
+                            </div>
+                            <h6 class="text-white mb-1">Total Salidas</h6>
+                            <h3 class="mb-0 font-weight-bold" style="color: #dc3545;">
+                                <span id="total-salidas">-</span>
+                            </h3>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-lg-3 col-md-6 mb-3">
+                    <div class="glass-card animate-in">
+                        <div class="glass-card-body text-center">
+                            <div class="d-flex align-items-center justify-content-center mb-2">
+                                <div class="rounded-circle p-3" style="background: rgba(23, 162, 184, 0.2);">
+                                    <i class="fas fa-warehouse fa-2x text-info"></i>
+                                </div>
+                            </div>
+                            <h6 class="text-white mb-1">Stock Actual</h6>
+                            <h3 class="mb-0 font-weight-bold" style="color: #17a2b8;">
+                                <span id="stock-actual">-</span>
+                            </h3>
+                            <small class="text-white-50" id="nombre-medicamento">Cargando...</small>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-lg-3 col-md-6 mb-3">
+                    <div class="glass-card animate-in">
+                        <div class="glass-card-body text-center">
+                            <div class="d-flex align-items-center justify-content-center mb-2">
+                                <div class="rounded-circle p-3" style="background: rgba(255, 193, 7, 0.2);">
+                                    <i class="fas fa-exchange-alt fa-2x text-warning"></i>
+                                </div>
+                            </div>
+                            <h6 class="text-white mb-1">Total Movimientos</h6>
+                            <h3 class="mb-0 font-weight-bold" style="color: #ffc107;">
+                                <span id="total-movimientos">-</span>
+                            </h3>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
             <!-- Filtros -->
             <div class="filter-glass animate-in mb-3">
                 <div class="card-header" style="background: rgba(255, 255, 255, 0.1); border-radius: 15px 15px 0 0; padding: 15px 20px; border: none;">
@@ -139,6 +207,40 @@ $(document).ready(function() {
     var filtroFechaDesde = "{{ $fecha_desde ?? '' }}";
     var filtroFechaHasta = "{{ $fecha_hasta ?? '' }}";
 
+    // Función para cargar estadísticas
+    function cargarEstadisticas() {
+        $.ajax({
+            url: "{{ route('medicamento_controlado_movimiento') }}/estadisticas",
+            method: 'GET',
+            data: {
+                medicamento_id: filtroMedicamento,
+                fecha_desde: filtroFechaDesde,
+                fecha_hasta: filtroFechaHasta
+            },
+            success: function(data) {
+                // Actualizar tarjetas con animación
+                $('#total-entradas').fadeOut(200, function() {
+                    $(this).text(data.total_entradas).fadeIn(200);
+                });
+                $('#total-salidas').fadeOut(200, function() {
+                    $(this).text(data.total_salidas).fadeIn(200);
+                });
+                $('#stock-actual').fadeOut(200, function() {
+                    $(this).text(data.stock_actual).fadeIn(200);
+                });
+                $('#total-movimientos').fadeOut(200, function() {
+                    $(this).text(data.total_movimientos).fadeIn(200);
+                });
+                $('#nombre-medicamento').fadeOut(200, function() {
+                    $(this).text(data.nombre_medicamento).fadeIn(200);
+                });
+            },
+            error: function(xhr) {
+                console.error('Error al cargar estadísticas:', xhr);
+            }
+        });
+    }
+
     // Configuración de idioma español
     var idioma_espanol = {
         "sProcessing": "Procesando...",
@@ -250,6 +352,38 @@ $(document).ready(function() {
             // Reactivar tooltips después de cada redibujado
             $('[data-toggle="tooltip"]').tooltip();
         }
+    });
+
+    // Cargar estadísticas al inicio
+    cargarEstadisticas();
+
+    // Manejar el formulario de filtros con AJAX
+    $('form[action*="medicamento_controlado_movimiento"]').on('submit', function(e) {
+        e.preventDefault(); // Prevenir el submit normal
+
+        // Actualizar variables de filtro
+        filtroMedicamento = $('select[name="medicamento_id"]').val();
+        filtroFechaDesde = $('input[name="fecha_desde"]').val();
+        filtroFechaHasta = $('input[name="fecha_hasta"]').val();
+
+        // Actualizar URL sin recargar la página
+        var nuevaUrl = "{{ route('medicamento_controlado_movimiento') }}";
+        var params = [];
+        if (filtroMedicamento) params.push('medicamento_id=' + filtroMedicamento);
+        if (filtroFechaDesde) params.push('fecha_desde=' + filtroFechaDesde);
+        if (filtroFechaHasta) params.push('fecha_hasta=' + filtroFechaHasta);
+
+        if (params.length > 0) {
+            nuevaUrl += '?' + params.join('&');
+        }
+
+        window.history.pushState({}, '', nuevaUrl);
+
+        // Recargar estadísticas
+        cargarEstadisticas();
+
+        // Recargar tabla DataTables
+        tabla.ajax.reload();
     });
 
 });

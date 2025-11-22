@@ -444,9 +444,13 @@ $(document).ready(function() {
         e.preventDefault();
 
         var formData = new FormData(this);
+        var id = $('#editar_id').val();
+
+        // Agregar _method para simular PUT
+        formData.append('_method', 'PUT');
 
         $.ajax({
-            url: 'medicamento-controlado/actualizar',
+            url: 'medicamento-controlado/' + id,
             type: 'POST',
             data: formData,
             processData: false,
