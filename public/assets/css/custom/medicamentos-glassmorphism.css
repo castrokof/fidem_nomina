@@ -435,3 +435,361 @@
     -webkit-text-fill-color: transparent;
     background-clip: text;
 }
+
+/* ========================================
+   BOTONES ESTILO iOS - GLASSMORPHISM
+   ======================================== */
+
+/* Contenedor de botones horizontales */
+.btn-group-ios {
+    display: inline-flex;
+    gap: 6px;
+    padding: 4px;
+    background: rgba(255, 255, 255, 0.6);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border-radius: 12px;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.08);
+}
+
+/* Contenedor de botones con texto */
+.btn-stack-ios {
+    display: inline-flex;
+    flex-direction: column;
+    gap: 4px;
+    padding: 4px;
+    background: rgba(255, 255, 255, 0.5);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border-radius: 10px;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
+}
+
+/* Contenedor vertical compacto */
+.btn-vertical-ios {
+    display: inline-flex;
+    flex-direction: column;
+    gap: 4px;
+    padding: 4px;
+    background: rgba(255, 255, 255, 0.5);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    border-radius: 10px;
+    border: 1px solid rgba(255, 255, 255, 0.3);
+    box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
+}
+
+/* Base de botón iOS */
+.btn-ios {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+    padding: 8px 12px;
+    border: none;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 500;
+    color: #ffffff;
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+    box-shadow:
+        0 2px 8px rgba(0, 0, 0, 0.1),
+        inset 0 1px 0 rgba(255, 255, 255, 0.2);
+    overflow: hidden;
+    outline: none;
+    -webkit-tap-highlight-color: transparent;
+}
+
+/* Efecto de brillo iOS */
+.btn-ios::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: -100%;
+    width: 100%;
+    height: 100%;
+    background: linear-gradient(
+        90deg,
+        transparent,
+        rgba(255, 255, 255, 0.3),
+        transparent
+    );
+    transition: left 0.5s ease;
+}
+
+.btn-ios:hover::before {
+    left: 100%;
+}
+
+/* Iconos en botones iOS */
+.btn-ios i {
+    font-size: 14px;
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Texto en botones iOS */
+.btn-ios span {
+    font-size: 12px;
+    font-weight: 500;
+    letter-spacing: 0.3px;
+}
+
+/* Hover effect iOS */
+.btn-ios:hover {
+    transform: translateY(-2px) scale(1.02);
+    box-shadow:
+        0 6px 16px rgba(0, 0, 0, 0.15),
+        inset 0 1px 0 rgba(255, 255, 255, 0.3);
+    color: #ffffff;
+}
+
+.btn-ios:hover i {
+    transform: scale(1.1);
+}
+
+/* Active/Click effect iOS */
+.btn-ios:active {
+    transform: translateY(0) scale(0.98);
+    box-shadow:
+        0 2px 6px rgba(0, 0, 0, 0.1),
+        inset 0 1px 3px rgba(0, 0, 0, 0.2);
+    transition: all 0.1s ease;
+}
+
+/* === VARIANTES DE COLOR iOS === */
+
+/* Success (Verde) */
+.btn-ios-success {
+    background: linear-gradient(135deg, #34c759 0%, #30d158 100%);
+    background-size: 200% 200%;
+}
+
+.btn-ios-success:hover {
+    background-position: 100% 0;
+    background: linear-gradient(135deg, #30d158 0%, #32d74b 100%);
+    color: #ffffff;
+}
+
+.btn-ios-success:active {
+    background: linear-gradient(135deg, #28a745 0%, #30d158 100%);
+}
+
+/* Warning (Naranja/Amarillo) */
+.btn-ios-warning {
+    background: linear-gradient(135deg, #ff9500 0%, #ffcc00 100%);
+    color: #1d1d1f;
+    background-size: 200% 200%;
+}
+
+.btn-ios-warning:hover {
+    background-position: 100% 0;
+    background: linear-gradient(135deg, #ffcc00 0%, #ffd60a 100%);
+    color: #1d1d1f;
+}
+
+.btn-ios-warning:active {
+    background: linear-gradient(135deg, #f90 0%, #fc0 100%);
+}
+
+/* Info (Azul) */
+.btn-ios-info {
+    background: linear-gradient(135deg, #007aff 0%, #5ac8fa 100%);
+    background-size: 200% 200%;
+}
+
+.btn-ios-info:hover {
+    background-position: 100% 0;
+    background: linear-gradient(135deg, #0a84ff 0%, #64d2ff 100%);
+    color: #ffffff;
+}
+
+.btn-ios-info:active {
+    background: linear-gradient(135deg, #0051d5 0%, #007aff 100%);
+}
+
+/* Danger (Rojo) */
+.btn-ios-danger {
+    background: linear-gradient(135deg, #ff3b30 0%, #ff453a 100%);
+    background-size: 200% 200%;
+}
+
+.btn-ios-danger:hover {
+    background-position: 100% 0;
+    background: linear-gradient(135deg, #ff453a 0%, #ff6259 100%);
+    color: #ffffff;
+}
+
+.btn-ios-danger:active {
+    background: linear-gradient(135deg, #d70015 0%, #ff3b30 100%);
+}
+
+/* === EFECTOS ESPECIALES === */
+
+/* Ripple effect al hacer click */
+.btn-ios::after {
+    content: '';
+    position: absolute;
+    top: 50%;
+    left: 50%;
+    width: 0;
+    height: 0;
+    border-radius: 50%;
+    background: rgba(255, 255, 255, 0.5);
+    transform: translate(-50%, -50%);
+    transition: width 0.6s ease, height 0.6s ease;
+}
+
+.btn-ios:active::after {
+    width: 300px;
+    height: 300px;
+    opacity: 0;
+    transition: all 0.4s ease;
+}
+
+/* === ESTADO DISABLED === */
+.btn-ios:disabled {
+    opacity: 0.4;
+    cursor: not-allowed;
+    transform: none;
+    pointer-events: none;
+}
+
+/* === LOADING STATE === */
+.btn-ios.loading {
+    pointer-events: none;
+    opacity: 0.7;
+}
+
+.btn-ios.loading i {
+    animation: spinIOS 1s linear infinite;
+}
+
+@keyframes spinIOS {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+
+/* === TOOLTIPS ESTILO iOS === */
+.tooltip {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+}
+
+.tooltip-inner {
+    background-color: rgba(0, 0, 0, 0.85);
+    backdrop-filter: blur(10px);
+    -webkit-backdrop-filter: blur(10px);
+    padding: 6px 12px;
+    border-radius: 8px;
+    font-size: 12px;
+    font-weight: 500;
+    box-shadow: 0 4px 16px rgba(0, 0, 0, 0.2);
+    letter-spacing: 0.3px;
+}
+
+.tooltip.bs-tooltip-top .arrow::before {
+    border-top-color: rgba(0, 0, 0, 0.85);
+}
+
+.tooltip.bs-tooltip-bottom .arrow::before {
+    border-bottom-color: rgba(0, 0, 0, 0.85);
+}
+
+/* === EFECTOS EN LA TABLA === */
+.glass-table tbody tr:hover .btn-group-ios,
+.glass-table tbody tr:hover .btn-stack-ios,
+.glass-table tbody tr:hover .btn-vertical-ios {
+    background: rgba(255, 255, 255, 0.8);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.12);
+    transform: scale(1.02);
+}
+
+/* === ANIMACIONES DE ENTRADA === */
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.btn-group-ios,
+.btn-stack-ios,
+.btn-vertical-ios {
+    animation: fadeInUp 0.4s ease;
+}
+
+/* === FOCUS VISIBLE (Accesibilidad) === */
+.btn-ios:focus-visible {
+    outline: 2px solid rgba(0, 122, 255, 0.5);
+    outline-offset: 2px;
+}
+
+/* === VARIANTE: Solo iconos sin padding extra === */
+.btn-group-ios .btn-ios:not(:has(span)) {
+    padding: 8px;
+    width: 32px;
+    height: 32px;
+}
+
+/* === SPRING ANIMATION === */
+@keyframes springIOS {
+    0% { transform: scale(1); }
+    50% { transform: scale(1.1); }
+    100% { transform: scale(1); }
+}
+
+/* === RESPONSIVE iOS === */
+@media (max-width: 768px) {
+    /* Botones más pequeños en móvil */
+    .btn-ios {
+        padding: 6px 10px;
+        font-size: 12px;
+        border-radius: 6px;
+    }
+
+    .btn-ios i {
+        font-size: 12px;
+    }
+
+    .btn-ios span {
+        font-size: 11px;
+    }
+
+    /* Contenedores más compactos */
+    .btn-group-ios,
+    .btn-stack-ios,
+    .btn-vertical-ios {
+        gap: 3px;
+        padding: 3px;
+    }
+
+    /* Cambiar a vertical en móvil */
+    .btn-group-ios {
+        flex-direction: column;
+    }
+}
+
+/* === DARK MODE (Opcional) === */
+@media (prefers-color-scheme: dark) {
+    .btn-group-ios,
+    .btn-stack-ios,
+    .btn-vertical-ios {
+        background: rgba(28, 28, 30, 0.7);
+        border-color: rgba(255, 255, 255, 0.1);
+    }
+
+    .glass-table tbody tr:hover .btn-group-ios,
+    .glass-table tbody tr:hover .btn-stack-ios,
+    .glass-table tbody tr:hover .btn-vertical-ios {
+        background: rgba(28, 28, 30, 0.85);
+    }
+}

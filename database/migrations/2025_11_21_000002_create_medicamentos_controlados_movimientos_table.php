@@ -44,7 +44,7 @@ class CreateMedicamentosControladosMovimientosTable extends Migration
                 ->onDelete('restrict')->onUpdate('restrict');
 
             $table->foreign('user_id', 'fk_movmedicamento_user')
-                ->references('id')->on('users')
+                ->references('id')->on('usuario')
                 ->onDelete('set null')->onUpdate('restrict');
         });
     }

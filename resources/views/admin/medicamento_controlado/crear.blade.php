@@ -31,8 +31,9 @@ Crear Medicamento Controlado
                 <div class="glass-card-header" style="background: var(--success-gradient);">
                     <div class="d-flex justify-content-between align-items-center flex-wrap">
                         <h3><i class="fas fa-plus-circle mr-2"></i> Crear Medicamento Controlado</h3>
-                        <a href="{{route('medicamento_controlado')}}" class="glass-btn glass-btn-info mt-2 mt-md-0">
-                            <i class="fas fa-list"></i> Listar Medicamentos
+                        <a href="{{route('medicamento_controlado')}}" class="btn-ios btn-ios-info mt-2 mt-md-0">
+                            <i class="fas fa-list"></i>
+                            <span>Listar Medicamentos</span>
                         </a>
                     </div>
                 </div>
@@ -44,12 +45,16 @@ Crear Medicamento Controlado
 
                         <div class="row mt-4">
                             <div class="col-12 text-center">
-                                <button type="reset" class="glass-btn glass-btn-secondary mr-2">
-                                    <i class="fas fa-eraser mr-2"></i>Limpiar
-                                </button>
-                                <button type="submit" class="glass-btn glass-btn-success" id="btn-guardar">
-                                    <i class="fas fa-save mr-2"></i>Guardar Medicamento
-                                </button>
+                                <div class="btn-group-ios">
+                                    <button type="reset" class="btn-ios btn-ios-warning">
+                                        <i class="fas fa-eraser"></i>
+                                        <span>Limpiar</span>
+                                    </button>
+                                    <button type="submit" class="btn-ios btn-ios-success" id="btn-guardar">
+                                        <i class="fas fa-save"></i>
+                                        <span>Guardar Medicamento</span>
+                                    </button>
+                                </div>
                             </div>
                         </div>
                     </form>

@@ -63,12 +63,16 @@ Medicamentos Controlados
                     <div class="d-flex justify-content-between align-items-center flex-wrap">
                         <h3><i class="fas fa-pills mr-2"></i> Medicamentos Controlados</h3>
                         <div class="mt-2 mt-md-0">
-                            <a href="{{route('crear_medicamento_controlado')}}" class="glass-btn glass-btn-success">
-                                <i class="fas fa-plus-circle"></i> Nuevo Medicamento
-                            </a>
-                            <a href="{{route('medicamento_controlado_movimiento')}}" class="glass-btn glass-btn-info ml-2">
-                                <i class="fas fa-list"></i> Ver Movimientos
-                            </a>
+                            <div class="btn-group-ios">
+                                <a href="{{route('crear_medicamento_controlado')}}" class="btn-ios btn-ios-success">
+                                    <i class="fas fa-plus-circle"></i>
+                                    <span>Nuevo</span>
+                                </a>
+                                <a href="{{route('medicamento_controlado_movimiento')}}" class="btn-ios btn-ios-info">
+                                    <i class="fas fa-list"></i>
+                                    <span>Movimientos</span>
+                                </a>
+                            </div>
                         </div>
                     </div>
                 </div>
@@ -135,19 +139,21 @@ Medicamentos Controlados
                                         @endif
                                     </td>
                                     <td class="text-center">
-                                        <a href="{{route('editar_medicamento_controlado', ['id' => $medicamento->id])}}"
-                                           class="btn btn-warning btn-sm"
-                                           title="Editar"
-                                           data-toggle="tooltip">
-                                            <i class="fas fa-edit"></i>
-                                        </a>
-                                        <button type="button"
-                                                class="btn btn-danger btn-sm btn-eliminar"
-                                                data-id="{{$medicamento->id}}"
-                                                title="Eliminar"
-                                                data-toggle="tooltip">
-                                            <i class="fas fa-trash-alt"></i>
-                                        </button>
+                                        <div class="btn-group-ios">
+                                            <a href="{{route('editar_medicamento_controlado', ['id' => $medicamento->id])}}"
+                                               class="btn-ios btn-ios-warning"
+                                               title="Editar"
+                                               data-toggle="tooltip">
+                                                <i class="fas fa-edit"></i>
+                                            </a>
+                                            <button type="button"
+                                                    class="btn-ios btn-ios-danger btn-eliminar"
+                                                    data-id="{{$medicamento->id}}"
+                                                    title="Eliminar"
+                                                    data-toggle="tooltip">
+                                                <i class="fas fa-trash-alt"></i>
+                                            </button>
+                                        </div>
                                     </td>
                                 </tr>
                                 @endforeach

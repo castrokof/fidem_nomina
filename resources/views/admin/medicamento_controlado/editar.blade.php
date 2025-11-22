@@ -31,8 +31,9 @@ Editar Medicamento Controlado
                 <div class="glass-card-header" style="background: var(--warning-gradient);">
                     <div class="d-flex justify-content-between align-items-center flex-wrap">
                         <h3><i class="fas fa-edit mr-2"></i> Editar Medicamento: {{$data->nombre}}</h3>
-                        <a href="{{route('medicamento_controlado')}}" class="glass-btn glass-btn-info mt-2 mt-md-0">
-                            <i class="fas fa-list"></i> Listar Medicamentos
+                        <a href="{{route('medicamento_controlado')}}" class="btn-ios btn-ios-info mt-2 mt-md-0">
+                            <i class="fas fa-list"></i>
+                            <span>Listar Medicamentos</span>
                         </a>
                     </div>
                 </div>
@@ -45,12 +46,16 @@ Editar Medicamento Controlado
 
                         <div class="row mt-4">
                             <div class="col-12 text-center">
-                                <a href="{{route('medicamento_controlado')}}" class="glass-btn glass-btn-secondary mr-2">
-                                    <i class="fas fa-times mr-2"></i>Cancelar
-                                </a>
-                                <button type="submit" class="glass-btn glass-btn-warning" id="btn-actualizar">
-                                    <i class="fas fa-sync mr-2"></i>Actualizar Medicamento
-                                </button>
+                                <div class="btn-group-ios">
+                                    <a href="{{route('medicamento_controlado')}}" class="btn-ios btn-ios-danger">
+                                        <i class="fas fa-times"></i>
+                                        <span>Cancelar</span>
+                                    </a>
+                                    <button type="submit" class="btn-ios btn-ios-warning" id="btn-actualizar">
+                                        <i class="fas fa-sync"></i>
+                                        <span>Actualizar Medicamento</span>
+                                    </button>
+                                </div>
                             </div>
                         </div>
                     </form>
