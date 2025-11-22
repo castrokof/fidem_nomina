@@ -44,7 +44,7 @@ class MedicamentoControladoController extends Controller
         if ($request->ajax()) {
             return response()->json([
                 'success' => true,
-                'message' => 'Medicamento controlado creado con éxito',
+                'mensaje' => 'Medicamento controlado creado con éxito',
                 'id' => $medicamento->id,
                 'nombre' => $medicamento->nombre
             ]);
@@ -82,7 +82,7 @@ class MedicamentoControladoController extends Controller
         if ($request->ajax()) {
             return response()->json([
                 'success' => true,
-                'message' => 'Medicamento controlado actualizado con éxito',
+                'mensaje' => 'Medicamento controlado actualizado con éxito',
                 'redirect' => route('medicamento_controlado')
             ]);
         }
