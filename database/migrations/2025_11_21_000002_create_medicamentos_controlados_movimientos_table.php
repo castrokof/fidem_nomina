@@ -15,6 +15,7 @@ class CreateMedicamentosControladosMovimientosTable extends Migration
     {
         Schema::create('medicamentos_controlados_movimientos', function (Blueprint $table) {
             $table->increments('id');
+            $table->unsignedInteger('medicamento_controlado_id');
             $table->date('fecha');
             $table->enum('tipo_movimiento', ['entrada', 'salida']);
 
@@ -36,12 +37,14 @@ class CreateMedicamentosControladosMovimientosTable extends Migration
             // Auditoría
             $table->unsignedInteger('user_id')->nullable();
             $table->timestamps();
+
+            // Índices para foreign keys
+            $table->index('medicamento_controlado_id');
+            $table->index('user_id');
         });
 
         // Agregar foreign keys después de crear la tabla
         Schema::table('medicamentos_controlados_movimientos', function (Blueprint $table) {
-            $table->unsignedInteger('medicamento_controlado_id')->after('id');
-
             $table->foreign('medicamento_controlado_id', 'fk_movmedicamento_medicamento')
                 ->references('id')->on('medicamentos_controlados')
                 ->onDelete('restrict')->onUpdate('restrict');

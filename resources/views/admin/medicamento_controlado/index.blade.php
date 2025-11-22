@@ -7,7 +7,7 @@ Medicamentos Controlados
 <link href="{{asset('assets/css/custom/medicamentos-glassmorphism.css')}}" rel="stylesheet" type="text/css"/>
 <style>
     .content-wrapper {
-        background: linear-gradient(-45deg, #ee7752, #e73c7e, #23a6d5, #23d5ab);
+        background: linear-gradient(-45deg, #7F7FD5, #86A8E7, #91EAE4, #11998e, #38ef7d);
         background-size: 400% 400%;
         animation: gradientBG 15s ease infinite;
     }
