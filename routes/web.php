@@ -108,9 +108,9 @@ Route::group(['prefix' => 'admin', 'namespace' => 'Admin', 'middleware' => ['aut
     Route::get('medicamento-controlado-movimiento', 'MedicamentoControladoMovimientoController@index')->name('medicamento_controlado_movimiento');
     Route::get('medicamento-controlado-movimiento/crear-entrada', 'MedicamentoControladoMovimientoController@crearEntrada')->name('crear_entrada_medicamento_controlado');
     Route::get('medicamento-controlado-movimiento/crear-salida', 'MedicamentoControladoMovimientoController@crearSalida')->name('crear_salida_medicamento_controlado');
-    Route::post('medicamento-controlado-movimiento', 'MedicamentoControladoMovimientoController@guardar')->name('guardar_medicamento_controlado_movimiento');
-    Route::get('medicamento-controlado-movimiento/{id}', 'MedicamentoControladoMovimientoController@mostrar')->name('mostrar_medicamento_controlado_movimiento');
+    Route::post('medicamento-controlado-movimiento/guardar', 'MedicamentoControladoMovimientoController@guardar')->name('guardar_medicamento_controlado_movimiento');
     Route::get('medicamento-controlado-movimiento/saldo/{medicamento_id}', 'MedicamentoControladoMovimientoController@obtenerSaldo')->name('obtener_saldo_medicamento');
+    Route::get('medicamento-controlado-movimiento/{id}', 'MedicamentoControladoMovimientoController@mostrar')->name('mostrar_medicamento_controlado_movimiento');
 });
 
 
