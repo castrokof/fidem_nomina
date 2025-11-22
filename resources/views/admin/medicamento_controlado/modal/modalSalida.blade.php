@@ -54,12 +54,7 @@
                                                 <i class="fas fa-pills mr-2" style="color: #43e97b;"></i>Medicamento *
                                             </label>
                                             <select name="medicamento_controlado_id" id="salida_medicamento_id" class="form-control" required style="border: 2px solid #e0e0e0; border-radius: 8px; padding: 10px;">
-                                                <option value="">Seleccione un medicamento</option>
-                                                @foreach($medicamentos as $med)
-                                                    <option value="{{$med->id}}" data-saldo="{{$med->saldo_actual}}">
-                                                        {{$med->nombre}} (Stock: {{$med->saldo_actual}})
-                                                    </option>
-                                                @endforeach
+                                                <option value="">Cargando medicamentos...</option>
                                             </select>
                                         </div>
 

@@ -103,6 +103,7 @@ Route::group(['prefix' => 'admin', 'namespace' => 'Admin', 'middleware' => ['aut
     Route::get('medicamento-controlado/{id}/editar', 'MedicamentoControladoController@editar')->name('editar_medicamento_controlado');
     Route::put('medicamento-controlado/{id}', 'MedicamentoControladoController@actualizar')->name('actualizar_medicamento_controlado');
     Route::get('medicamento-controlado/{id}/eliminar', 'MedicamentoControladoController@eliminar')->name('eliminar_medicamento_controlado');
+    Route::get('medicamento-controlado/api/activos', 'MedicamentoControladoController@obtenerMedicamentosActivos')->name('api_medicamentos_activos');
 
     /* RUTAS DE MOVIMIENTOS DE MEDICAMENTOS CONTROLADOS */
     Route::get('medicamento-controlado-movimiento', 'MedicamentoControladoMovimientoController@index')->name('medicamento_controlado_movimiento');

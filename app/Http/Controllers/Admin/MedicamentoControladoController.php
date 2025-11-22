@@ -94,7 +94,30 @@ class MedicamentoControladoController extends Controller
             'stock_total' => MedicamentoControlado::sum('saldo_actual')
         ];
 
+        // Los medicamentos se cargan dinámicamente vía AJAX en los modales
         return view('admin.medicamento_controlado.index', compact('stats'));
+    }
+
+    /**
+     * Obtener medicamentos activos para los selects (AJAX)
+     *
+     * @return \Illuminate\Http\Response
+     */
+    public function obtenerMedicamentosActivos(Request $request)
+    {
+        if ($request->ajax()) {
+            $medicamentos = MedicamentoControlado::where('activo', 1)
+                ->orderBy('nombre')
+                ->select('id', 'nombre', 'saldo_actual')
+                ->get();
+
+            return response()->json([
+                'success' => true,
+                'medicamentos' => $medicamentos
+            ]);
+        }
+
+        return response()->json(['success' => false], 403);
     }
 
     /**
