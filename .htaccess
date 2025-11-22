@@ -1,4 +1,8 @@
 Options +SymLinksIfOwnerMatch
 RewriteEngine On
-LimitRequestLine = 20000;
-RewriteRule ^ index.php [L]
+RewriteBase /nominaips/
+LimitRequestLine 20000
+
+# Redirect to public folder
+RewriteCond %{REQUEST_URI} !^/public/
+RewriteRule ^(.*)$ public/$1 [L]
