@@ -130,7 +130,7 @@ $(document).ready(function() {
     $(document).on('click', '.btn-eliminar', function(e) {
         e.preventDefault();
         var id = $(this).data('id');
-        var url = '/medicamento-controlado/' + id + '/eliminar';
+        var url = 'medicamento-controlado/' + id + '/eliminar';
 
         Swal.fire({
             title: '¿Está seguro?',
@@ -185,7 +185,7 @@ $(document).ready(function() {
         var formData = new FormData(this);
 
         $.ajax({
-            url: '/medicamento-controlado/guardar',
+            url: 'medicamento-controlado/guardar',
             type: 'POST',
             data: formData,
             processData: false,
@@ -256,7 +256,7 @@ $(document).ready(function() {
         var formData = new FormData(this);
 
         $.ajax({
-            url: '/medicamento-controlado-movimiento/guardar',
+            url: 'medicamento-controlado-movimiento/guardar',
             type: 'POST',
             data: formData,
             processData: false,
@@ -378,7 +378,7 @@ $(document).ready(function() {
         var formData = new FormData(this);
 
         $.ajax({
-            url: '/medicamento-controlado-movimiento/guardar',
+            url: 'medicamento-controlado-movimiento/guardar',
             type: 'POST',
             data: formData,
             processData: false,
@@ -446,7 +446,7 @@ $(document).ready(function() {
         var formData = new FormData(this);
 
         $.ajax({
-            url: '/medicamento-controlado/actualizar',
+            url: 'medicamento-controlado/actualizar',
             type: 'POST',
             data: formData,
             processData: false,
