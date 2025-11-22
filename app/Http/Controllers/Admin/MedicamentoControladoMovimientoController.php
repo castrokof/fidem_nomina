@@ -23,24 +23,101 @@ class MedicamentoControladoMovimientoController extends Controller
         $fecha_desde = $request->get('fecha_desde');
         $fecha_hasta = $request->get('fecha_hasta');
 
-        $query = MedicamentoControladoMovimiento::with(['medicamentoControlado', 'usuario']);
+        // Si es una petición AJAX, retornar datos para DataTables
+        if ($request->ajax()) {
+            $query = MedicamentoControladoMovimiento::with(['medicamentoControlado', 'usuario'])
+                ->select('medicamento_controlado_movimiento.*');
 
-        if ($medicamento_id) {
-            $query->where('medicamento_controlado_id', $medicamento_id);
+            // Aplicar filtros
+            if ($medicamento_id) {
+                $query->where('medicamento_controlado_id', $medicamento_id);
+            }
+
+            if ($fecha_desde) {
+                $query->whereDate('fecha', '>=', $fecha_desde);
+            }
+
+            if ($fecha_hasta) {
+                $query->whereDate('fecha', '<=', $fecha_hasta);
+            }
+
+            return datatables()->of($query)
+                ->editColumn('fecha', function($mov) {
+                    return '<strong>'.date('d/m/Y', strtotime($mov->fecha)).'</strong>';
+                })
+                ->editColumn('medicamento', function($mov) {
+                    return '<div class="d-flex align-items-center">
+                                <i class="fas fa-prescription-bottle text-primary mr-2"></i>
+                                '.$mov->medicamentoControlado->nombre.'
+                            </div>';
+                })
+                ->editColumn('tipo_movimiento', function($mov) {
+                    if ($mov->tipo_movimiento == 'entrada') {
+                        return '<span class="glass-badge glass-badge-success">
+                                    <i class="fas fa-arrow-down"></i> ENTRADA
+                                </span>';
+                    } else {
+                        return '<span class="glass-badge glass-badge-danger">
+                                    <i class="fas fa-arrow-up"></i> SALIDA
+                                </span>';
+                    }
+                })
+                ->editColumn('proveedor', function($mov) {
+                    return $mov->proveedor ?? '-';
+                })
+                ->editColumn('paciente', function($mov) {
+                    if ($mov->nombre_paciente) {
+                        return '<strong>'.$mov->nombre_paciente.'</strong><br>
+                                <small class="text-muted"><i class="fas fa-id-card mr-1"></i>'.$mov->cedula_paciente.'</small>';
+                    }
+                    return '-';
+                })
+                ->editColumn('entrada', function($mov) {
+                    if ($mov->entrada > 0) {
+                        return '<span class="glass-badge glass-badge-success">+'.$mov->entrada.'</span>';
+                    }
+                    return '-';
+                })
+                ->editColumn('salida', function($mov) {
+                    if ($mov->salida > 0) {
+                        return '<span class="glass-badge glass-badge-danger">-'.$mov->salida.'</span>';
+                    }
+                    return '-';
+                })
+                ->editColumn('saldo', function($mov) {
+                    return '<strong style="font-size: 1.1rem;">'.$mov->saldo.'</strong>';
+                })
+                ->addColumn('detalles', function($mov) {
+                    $html = '';
+                    if ($mov->foto_formula) {
+                        $html .= '<a href="'.asset('storage/' . $mov->foto_formula).'" target="_blank"
+                                     class="btn btn-info btn-sm" title="Ver foto fórmula" data-toggle="tooltip">
+                                    <i class="fas fa-image"></i>
+                                  </a> ';
+                    }
+                    if ($mov->numero_factura) {
+                        $html .= '<span class="badge badge-info" title="Factura: '.$mov->numero_factura.'" data-toggle="tooltip">
+                                    <i class="fas fa-file-invoice"></i> '.$mov->numero_factura.'
+                                  </span> ';
+                    }
+                    if ($mov->numero_formula_control) {
+                        $html .= '<span class="badge badge-warning" title="Fórmula Control: '.$mov->numero_formula_control.'" data-toggle="tooltip">
+                                    <i class="fas fa-file-prescription"></i> '.$mov->numero_formula_control.'
+                                  </span>';
+                    }
+                    return $html ?: '-';
+                })
+                ->orderColumn('fecha', function($query, $order) {
+                    $query->orderBy('fecha', $order)->orderBy('id', $order);
+                })
+                ->rawColumns(['fecha', 'medicamento', 'tipo_movimiento', 'paciente', 'entrada', 'salida', 'saldo', 'detalles'])
+                ->make(true);
         }
 
-        if ($fecha_desde) {
-            $query->whereDate('fecha', '>=', $fecha_desde);
-        }
-
-        if ($fecha_hasta) {
-            $query->whereDate('fecha', '<=', $fecha_hasta);
-        }
-
-        $movimientos = $query->orderBy('fecha', 'desc')->orderBy('id', 'desc')->get();
+        // Para la vista normal, solo cargar medicamentos para los filtros
         $medicamentos = MedicamentoControlado::where('activo', 1)->orderBy('nombre')->get();
 
-        return view('admin.medicamento_controlado_movimiento.index', compact('movimientos', 'medicamentos', 'medicamento_id', 'fecha_desde', 'fecha_hasta'));
+        return view('admin.medicamento_controlado_movimiento.index', compact('medicamentos', 'medicamento_id', 'fecha_desde', 'fecha_hasta'));
     }
 
     /**

@@ -19,6 +19,18 @@ Movimientos de Medicamentos Controlados
 <script src="{{asset("assets/$theme/plugins/datatables/jquery.dataTables.js")}}" type="text/javascript"></script>
 <script src="{{asset("assets/$theme/plugins/datatables-bs4/js/dataTables.bootstrap4.js")}}" type="text/javascript"></script>
 <script src="{{asset("assets/$theme/plugins/datatables-responsive/js/dataTables.responsive.min.js")}}" type="text/javascript"></script>
+<!-- DataTables Buttons -->
+<script src="https://cdn.datatables.net/buttons/1.6.1/js/dataTables.buttons.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.1.3/jszip.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.53/pdfmake.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.53/vfs_fonts.js"></script>
+<script src="https://cdn.datatables.net/buttons/1.6.1/js/buttons.html5.min.js"></script>
+<script>
+    // Pasar filtros desde PHP a JavaScript
+    var filtroMedicamento = "{{ $medicamento_id ?? '' }}";
+    var filtroFechaDesde = "{{ $fecha_desde ?? '' }}";
+    var filtroFechaHasta = "{{ $fecha_hasta ?? '' }}";
+</script>
 <script src="{{asset("assets/pages/scripts/admin/medicamento_controlado_movimiento/index.js")}}" type="text/javascript"></script>
 @endsection
 
@@ -115,78 +127,7 @@ Movimientos de Medicamentos Controlados
                                 </tr>
                             </thead>
                             <tbody>
-                                @forelse($movimientos as $mov)
-                                <tr>
-                                    <td><strong>{{date('d/m/Y', strtotime($mov->fecha))}}</strong></td>
-                                    <td>
-                                        <div class="d-flex align-items-center">
-                                            <i class="fas fa-prescription-bottle text-primary mr-2"></i>
-                                            {{$mov->medicamentoControlado->nombre}}
-                                        </div>
-                                    </td>
-                                    <td class="text-center">
-                                        @if($mov->tipo_movimiento == 'entrada')
-                                            <span class="glass-badge glass-badge-success">
-                                                <i class="fas fa-arrow-down"></i> ENTRADA
-                                            </span>
-                                        @else
-                                            <span class="glass-badge glass-badge-danger">
-                                                <i class="fas fa-arrow-up"></i> SALIDA
-                                            </span>
-                                        @endif
-                                    </td>
-                                    <td>{{$mov->proveedor ?? '-'}}</td>
-                                    <td>
-                                        @if($mov->nombre_paciente)
-                                            <strong>{{$mov->nombre_paciente}}</strong><br>
-                                            <small class="text-muted"><i class="fas fa-id-card mr-1"></i>{{$mov->cedula_paciente}}</small>
-                                        @else
-                                            -
-                                        @endif
-                                    </td>
-                                    <td class="text-center">
-                                        @if($mov->entrada > 0)
-                                            <span class="glass-badge glass-badge-success">+{{$mov->entrada}}</span>
-                                        @else
-                                            -
-                                        @endif
-                                    </td>
-                                    <td class="text-center">
-                                        @if($mov->salida > 0)
-                                            <span class="glass-badge glass-badge-danger">-{{$mov->salida}}</span>
-                                        @else
-                                            -
-                                        @endif
-                                    </td>
-                                    <td class="text-center">
-                                        <strong style="font-size: 1.1rem;">{{$mov->saldo}}</strong>
-                                    </td>
-                                    <td class="text-center">
-                                        @if($mov->foto_formula)
-                                            <a href="{{asset('storage/' . $mov->foto_formula)}}" target="_blank" class="btn btn-info btn-sm" title="Ver foto fórmula" data-toggle="tooltip">
-                                                <i class="fas fa-image"></i>
-                                            </a>
-                                        @endif
-                                        @if($mov->numero_factura)
-                                            <span class="badge badge-info" title="Factura: {{$mov->numero_factura}}" data-toggle="tooltip">
-                                                <i class="fas fa-file-invoice"></i> {{$mov->numero_factura}}
-                                            </span>
-                                        @endif
-                                        @if($mov->numero_formula_control)
-                                            <span class="badge badge-warning" title="Fórmula Control: {{$mov->numero_formula_control}}" data-toggle="tooltip">
-                                                <i class="fas fa-file-prescription"></i> {{$mov->numero_formula_control}}
-                                            </span>
-                                        @endif
-                                    </td>
-                                </tr>
-                                @empty
-                                <tr>
-                                    <td colspan="9" class="text-center" style="padding: 40px;">
-                                        <i class="fas fa-inbox" style="font-size: 3rem; color: rgba(0, 0, 0, 0.2);"></i>
-                                        <p class="mt-3" style="color: rgba(0, 0, 0, 0.5);">No hay movimientos registrados</p>
-                                    </td>
-                                </tr>
-                                @endforelse
+                                <!-- DataTables cargará los datos dinámicamente via AJAX -->
                             </tbody>
                         </table>
                     </div>

@@ -1,16 +1,104 @@
 $(document).ready(function() {
 
-    // Inicializar DataTable
-    $('#tabla-medicamentos').DataTable({
-        responsive: true,
-        language: {
-            url: '//cdn.datatables.net/plug-ins/1.10.24/i18n/Spanish.json'
+    // Configuración de idioma español
+    var idioma_espanol = {
+        "sProcessing": "Procesando...",
+        "sLengthMenu": "Mostrar _MENU_ registros",
+        "sZeroRecords": "No se encontraron resultados",
+        "sEmptyTable": "Ningún dato disponible en esta tabla",
+        "sInfo": "Mostrando registros del _START_ al _END_ de un total de _TOTAL_ registros",
+        "sInfoEmpty": "Mostrando registros del 0 al 0 de un total de 0 registros",
+        "sInfoFiltered": "(filtrado de un total de _MAX_ registros)",
+        "sInfoPostFix": "",
+        "sSearch": "Buscar:",
+        "sUrl": "",
+        "sInfoThousands": ",",
+        "sLoadingRecords": "Cargando...",
+        "oPaginate": {
+            "sFirst": "Primero",
+            "sLast": "Último",
+            "sNext": "Siguiente",
+            "sPrevious": "Anterior"
         },
-        order: [[1, 'asc']]
+        "oAria": {
+            "sSortAscending": ": Activar para ordenar la columna de manera ascendente",
+            "sSortDescending": ": Activar para ordenar la columna de manera descendente"
+        }
+    };
+
+    // Inicializar DataTable con server-side processing
+    var tabla = $('#tabla-medicamentos').DataTable({
+        language: idioma_espanol,
+        processing: true,
+        serverSide: true,
+        responsive: true,
+        lengthMenu: [[10, 25, 50, 100, -1], [10, 25, 50, 100, "Todos"]],
+        pageLength: 25,
+        order: [[1, 'asc']],
+        ajax: {
+            url: "/admin/medicamento-controlado",
+            type: 'GET'
+        },
+        columns: [
+            { data: 'id', name: 'id', width: '8%' },
+            { data: 'nombre', name: 'nombre', width: '32%' },
+            { data: 'descripcion', name: 'descripcion', width: '25%' },
+            { data: 'saldo_actual', name: 'saldo_actual', width: '12%', className: 'text-center', orderable: true },
+            { data: 'activo', name: 'activo', width: '10%', className: 'text-center', orderable: true },
+            { data: 'action', name: 'action', width: '13%', className: 'text-center', orderable: false, searchable: false }
+        ],
+        dom: '<"row"<"col-sm-12 col-md-6"l><"col-sm-12 col-md-6"f>>' +
+             '<"row"<"col-sm-12 col-md-6"B>>' +
+             '<"row"<"col-sm-12"tr>>' +
+             '<"row"<"col-sm-12 col-md-5"i><"col-sm-12 col-md-7"p>>',
+        buttons: [
+            {
+                extend: 'copyHtml5',
+                text: '<i class="fas fa-copy"></i> Copiar',
+                titleAttr: 'Copiar',
+                className: 'btn btn-secondary btn-sm',
+                exportOptions: {
+                    columns: [0, 1, 2, 3, 4]
+                }
+            },
+            {
+                extend: 'excelHtml5',
+                text: '<i class="fas fa-file-excel"></i> Excel',
+                titleAttr: 'Excel',
+                className: 'btn btn-success btn-sm',
+                exportOptions: {
+                    columns: [0, 1, 2, 3, 4]
+                }
+            },
+            {
+                extend: 'csvHtml5',
+                text: '<i class="fas fa-file-csv"></i> CSV',
+                titleAttr: 'CSV',
+                className: 'btn btn-info btn-sm',
+                exportOptions: {
+                    columns: [0, 1, 2, 3, 4]
+                }
+            },
+            {
+                extend: 'pdfHtml5',
+                text: '<i class="fas fa-file-pdf"></i> PDF',
+                titleAttr: 'PDF',
+                className: 'btn btn-danger btn-sm',
+                orientation: 'landscape',
+                pageSize: 'LEGAL',
+                exportOptions: {
+                    columns: [0, 1, 2, 3, 4]
+                },
+                customize: function(doc) {
+                    doc.defaultStyle.fontSize = 8;
+                    doc.styles.tableHeader.fontSize = 9;
+                }
+            }
+        ]
     });
 
-    // Eliminar medicamento
-    $('.btn-eliminar').on('click', function(e) {
+    // Eliminar medicamento (usando delegación de eventos para elementos dinámicos)
+    $(document).on('click', '.btn-eliminar', function(e) {
         e.preventDefault();
         var id = $(this).data('id');
         var url = '/admin/medicamento-controlado/' + id + '/eliminar';
@@ -37,7 +125,7 @@ $(document).ready(function() {
                                 response.mensaje,
                                 'success'
                             ).then(() => {
-                                location.reload();
+                                tabla.ajax.reload(null, false); // Recargar tabla sin resetear paginación
                             });
                         } else {
                             Swal.fire(
@@ -77,6 +165,7 @@ $(document).ready(function() {
             success: function(response) {
                 if (response.success) {
                     $('#modal-crear-medicamento').modal('hide');
+                    limpiarFormCrear();
                     Swal.fire({
                         icon: 'success',
                         title: 'Éxito',
@@ -84,7 +173,7 @@ $(document).ready(function() {
                         timer: 2000,
                         showConfirmButton: false
                     }).then(() => {
-                        location.reload();
+                        tabla.ajax.reload(null, false); // Recargar tabla sin resetear paginación
                     });
                 } else {
                     Swal.fire({
@@ -155,7 +244,7 @@ $(document).ready(function() {
                         timer: 2000,
                         showConfirmButton: false
                     }).then(() => {
-                        location.reload();
+                        tabla.ajax.reload(null, false); // Recargar tabla sin resetear paginación
                     });
                 } else {
                     Swal.fire({
@@ -277,7 +366,7 @@ $(document).ready(function() {
                         timer: 2000,
                         showConfirmButton: false
                     }).then(() => {
-                        location.reload();
+                        tabla.ajax.reload(null, false); // Recargar tabla sin resetear paginación
                     });
                 } else {
                     Swal.fire({
@@ -344,7 +433,7 @@ $(document).ready(function() {
                         timer: 2000,
                         showConfirmButton: false
                     }).then(() => {
-                        location.reload();
+                        tabla.ajax.reload(null, false); // Recargar tabla sin resetear paginación
                     });
                 } else {
                     Swal.fire({

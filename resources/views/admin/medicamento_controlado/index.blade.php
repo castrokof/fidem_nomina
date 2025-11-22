@@ -19,6 +19,12 @@ Medicamentos Controlados
 <script src="{{asset("assets/$theme/plugins/datatables/jquery.dataTables.js")}}" type="text/javascript"></script>
 <script src="{{asset("assets/$theme/plugins/datatables-bs4/js/dataTables.bootstrap4.js")}}" type="text/javascript"></script>
 <script src="{{asset("assets/$theme/plugins/datatables-responsive/js/dataTables.responsive.min.js")}}" type="text/javascript"></script>
+<!-- DataTables Buttons -->
+<script src="https://cdn.datatables.net/buttons/1.6.1/js/dataTables.buttons.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.1.3/jszip.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.53/pdfmake.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.53/vfs_fonts.js"></script>
+<script src="https://cdn.datatables.net/buttons/1.6.1/js/buttons.html5.min.js"></script>
 <script src="{{asset("assets/pages/scripts/admin/medicamento_controlado/index.js")}}" type="text/javascript"></script>
 @endsection
 
@@ -31,7 +37,7 @@ Medicamentos Controlados
                 <div class="icon">
                     <i class="fas fa-pills"></i>
                 </div>
-                <div class="value" id="total-medicamentos">{{ count($medicamentos) }}</div>
+                <div class="value" id="total-medicamentos">{{ $stats['total'] }}</div>
                 <div class="label">Total Medicamentos</div>
             </div>
         </div>
@@ -41,7 +47,7 @@ Medicamentos Controlados
                 <div class="icon">
                     <i class="fas fa-check-circle"></i>
                 </div>
-                <div class="value" id="medicamentos-activos">{{ $medicamentos->where('activo', 1)->count() }}</div>
+                <div class="value" id="medicamentos-activos">{{ $stats['activos'] }}</div>
                 <div class="label">Medicamentos Activos</div>
             </div>
         </div>
@@ -51,7 +57,7 @@ Medicamentos Controlados
                 <div class="icon">
                     <i class="fas fa-boxes"></i>
                 </div>
-                <div class="value" id="total-stock">{{ $medicamentos->sum('saldo_actual') }}</div>
+                <div class="value" id="total-stock">{{ $stats['stock_total'] }}</div>
                 <div class="label">Stock Total</div>
             </div>
         </div>
@@ -114,65 +120,7 @@ Medicamentos Controlados
                                 </tr>
                             </thead>
                             <tbody>
-                                @foreach($medicamentos as $medicamento)
-                                <tr data-id="{{$medicamento->id}}">
-                                    <td><strong>{{$medicamento->id}}</strong></td>
-                                    <td>
-                                        <div class="d-flex align-items-center">
-                                            <i class="fas fa-prescription-bottle text-primary mr-2"></i>
-                                            <strong>{{$medicamento->nombre}}</strong>
-                                        </div>
-                                    </td>
-                                    <td>{{$medicamento->descripcion ?? 'N/A'}}</td>
-                                    <td class="text-center">
-                                        @if($medicamento->saldo_actual > 50)
-                                            <span class="glass-badge glass-badge-success">
-                                                <i class="fas fa-box-open"></i> {{$medicamento->saldo_actual}}
-                                            </span>
-                                        @elseif($medicamento->saldo_actual > 20)
-                                            <span class="glass-badge glass-badge-warning">
-                                                <i class="fas fa-box-open"></i> {{$medicamento->saldo_actual}}
-                                            </span>
-                                        @else
-                                            <span class="glass-badge glass-badge-danger">
-                                                <i class="fas fa-exclamation-triangle"></i> {{$medicamento->saldo_actual}}
-                                            </span>
-                                        @endif
-                                    </td>
-                                    <td class="text-center">
-                                        @if($medicamento->activo)
-                                            <span class="glass-badge glass-badge-success">
-                                                <i class="fas fa-check-circle"></i> Activo
-                                            </span>
-                                        @else
-                                            <span class="glass-badge glass-badge-secondary">
-                                                <i class="fas fa-times-circle"></i> Inactivo
-                                            </span>
-                                        @endif
-                                    </td>
-                                    <td class="text-center">
-                                        <div class="btn-group-ios">
-                                            <button type="button"
-                                                    class="btn-ios btn-ios-warning btn-editar"
-                                                    data-id="{{$medicamento->id}}"
-                                                    data-nombre="{{$medicamento->nombre}}"
-                                                    data-descripcion="{{$medicamento->descripcion}}"
-                                                    data-activo="{{$medicamento->activo}}"
-                                                    title="Editar"
-                                                    data-toggle="tooltip">
-                                                <i class="fas fa-edit"></i>
-                                            </button>
-                                            <button type="button"
-                                                    class="btn-ios btn-ios-danger btn-eliminar"
-                                                    data-id="{{$medicamento->id}}"
-                                                    title="Eliminar"
-                                                    data-toggle="tooltip">
-                                                <i class="fas fa-trash-alt"></i>
-                                            </button>
-                                        </div>
-                                    </td>
-                                </tr>
-                                @endforeach
+                                <!-- DataTables cargará los datos dinámicamente via AJAX -->
                             </tbody>
                         </table>
                     </div>
