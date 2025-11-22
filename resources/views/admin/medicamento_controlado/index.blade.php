@@ -185,6 +185,58 @@ $(document).ready(function() {
     });
 
     // =====================================================
+    // CARGAR MEDICAMENTOS VÍA AJAX
+    // =====================================================
+
+    function cargarMedicamentosEnSelect(selectId) {
+        var $select = $('#' + selectId);
+
+        $.ajax({
+            url: 'medicamento-controlado/api/activos',
+            type: 'GET',
+            dataType: 'json',
+            success: function(response) {
+                if (response.success) {
+                    $select.empty();
+                    $select.append('<option value="">Seleccione un medicamento</option>');
+
+                    if (response.medicamentos.length > 0) {
+                        $.each(response.medicamentos, function(index, medicamento) {
+                            $select.append(
+                                $('<option></option>')
+                                    .val(medicamento.id)
+                                    .attr('data-saldo', medicamento.saldo_actual)
+                                    .text(medicamento.nombre + ' (Stock: ' + medicamento.saldo_actual + ')')
+                            );
+                        });
+                    } else {
+                        $select.append('<option value="" disabled>No hay medicamentos activos disponibles</option>');
+                    }
+                } else {
+                    console.error('Error al cargar medicamentos');
+                    $select.empty();
+                    $select.append('<option value="" disabled>Error al cargar medicamentos</option>');
+                }
+            },
+            error: function(xhr, status, error) {
+                console.error('Error AJAX al cargar medicamentos:', error);
+                $select.empty();
+                $select.append('<option value="" disabled>Error al cargar medicamentos</option>');
+            }
+        });
+    }
+
+    // Cargar medicamentos cuando se abre el modal de entrada
+    $('#modal-entrada').on('show.bs.modal', function() {
+        cargarMedicamentosEnSelect('entrada_medicamento_id');
+    });
+
+    // Cargar medicamentos cuando se abre el modal de salida
+    $('#modal-salida').on('show.bs.modal', function() {
+        cargarMedicamentosEnSelect('salida_medicamento_id');
+    });
+
+    // =====================================================
     // MODAL CREAR MEDICAMENTO
     // =====================================================
     $('#form-crear-medicamento').on('submit', function(e) {
