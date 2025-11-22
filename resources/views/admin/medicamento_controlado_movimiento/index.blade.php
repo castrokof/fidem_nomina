@@ -7,7 +7,7 @@ Movimientos de Medicamentos Controlados
 <link href="{{asset('assets/css/custom/medicamentos-glassmorphism.css')}}" rel="stylesheet" type="text/css"/>
 <style>
     .content-wrapper {
-        background: linear-gradient(-45deg, #667eea, #764ba2, #f093fb, #f5576c);
+        background: linear-gradient(-45deg, #7F7FD5, #86A8E7, #91EAE4, #11998e, #38ef7d);
         background-size: 400% 400%;
         animation: gradientBG 15s ease infinite;
     }
@@ -87,20 +87,10 @@ Movimientos de Medicamentos Controlados
                     <div class="d-flex justify-content-between align-items-center flex-wrap">
                         <h3><i class="fas fa-exchange-alt mr-2"></i> Historial de Movimientos</h3>
                         <div class="mt-2 mt-md-0">
-                            <div class="btn-group-ios">
-                                <a href="{{route('crear_entrada_medicamento_controlado')}}" class="btn-ios btn-ios-success">
-                                    <i class="fas fa-plus-circle"></i>
-                                    <span>Entrada</span>
-                                </a>
-                                <a href="{{route('crear_salida_medicamento_controlado')}}" class="btn-ios btn-ios-danger">
-                                    <i class="fas fa-minus-circle"></i>
-                                    <span>Salida</span>
-                                </a>
-                                <a href="{{route('medicamento_controlado')}}" class="btn-ios btn-ios-info">
-                                    <i class="fas fa-pills"></i>
-                                    <span>Medicamentos</span>
-                                </a>
-                            </div>
+                            <a href="{{route('medicamento_controlado')}}" class="btn-ios btn-ios-info">
+                                <i class="fas fa-arrow-left mr-1"></i>
+                                <span>Volver a Medicamentos</span>
+                            </a>
                         </div>
                     </div>
                 </div>
