@@ -64,10 +64,18 @@ Medicamentos Controlados
                         <h3><i class="fas fa-pills mr-2"></i> Medicamentos Controlados</h3>
                         <div class="mt-2 mt-md-0">
                             <div class="btn-group-ios">
-                                <a href="{{route('crear_medicamento_controlado')}}" class="btn-ios btn-ios-success">
+                                <button type="button" class="btn-ios btn-ios-success" data-toggle="modal" data-target="#modal-crear-medicamento">
                                     <i class="fas fa-plus-circle"></i>
                                     <span>Nuevo</span>
-                                </a>
+                                </button>
+                                <button type="button" class="btn-ios" style="background: linear-gradient(135deg, #0fd850 0%, #0bad52 100%);" data-toggle="modal" data-target="#modal-entrada">
+                                    <i class="fas fa-arrow-down"></i>
+                                    <span>Entrada</span>
+                                </button>
+                                <button type="button" class="btn-ios" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);" data-toggle="modal" data-target="#modal-salida">
+                                    <i class="fas fa-arrow-up"></i>
+                                    <span>Salida</span>
+                                </button>
                                 <a href="{{route('medicamento_controlado_movimiento')}}" class="btn-ios btn-ios-info">
                                     <i class="fas fa-list"></i>
                                     <span>Movimientos</span>
@@ -140,12 +148,16 @@ Medicamentos Controlados
                                     </td>
                                     <td class="text-center">
                                         <div class="btn-group-ios">
-                                            <a href="{{route('editar_medicamento_controlado', ['id' => $medicamento->id])}}"
-                                               class="btn-ios btn-ios-warning"
-                                               title="Editar"
-                                               data-toggle="tooltip">
+                                            <button type="button"
+                                                    class="btn-ios btn-ios-warning btn-editar"
+                                                    data-id="{{$medicamento->id}}"
+                                                    data-nombre="{{$medicamento->nombre}}"
+                                                    data-descripcion="{{$medicamento->descripcion}}"
+                                                    data-activo="{{$medicamento->activo}}"
+                                                    title="Editar"
+                                                    data-toggle="tooltip">
                                                 <i class="fas fa-edit"></i>
-                                            </a>
+                                            </button>
                                             <button type="button"
                                                     class="btn-ios btn-ios-danger btn-eliminar"
                                                     data-id="{{$medicamento->id}}"
@@ -165,4 +177,10 @@ Medicamentos Controlados
         </div>
     </div>
 </div>
+
+@include('admin.medicamento_controlado.modal.modalCrear')
+@include('admin.medicamento_controlado.modal.modalEditar')
+@include('admin.medicamento_controlado.modal.modalEntrada')
+@include('admin.medicamento_controlado.modal.modalSalida')
+
 @endsection
