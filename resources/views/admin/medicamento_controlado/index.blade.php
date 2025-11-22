@@ -66,7 +66,10 @@ $(document).ready(function() {
         order: [[1, 'asc']],
         ajax: {
             url: "{{ route('medicamento_controlado') }}",
-            type: 'GET'
+            type: 'GET',
+            error: function(xhr, error, code) {
+                console.error('Error cargando datos:', xhr, error, code);
+            }
         },
         columns: [
             { data: 'id', name: 'id', width: '8%' },
@@ -76,6 +79,11 @@ $(document).ready(function() {
             { data: 'activo', name: 'activo', width: '10%', className: 'text-center', orderable: true },
             { data: 'action', name: 'action', width: '13%', className: 'text-center', orderable: false, searchable: false }
         ],
+        drawCallback: function(settings) {
+            // Inicializar tooltips después de dibujar la tabla
+            $('[data-toggle="tooltip"]').tooltip();
+            console.log('Tabla dibujada, tooltips inicializados');
+        },
         dom: '<"row"<"col-sm-12 col-md-6"l><"col-sm-12 col-md-6"f>>' +
              '<"row"<"col-sm-12 col-md-6"B>>' +
              '<"row"<"col-sm-12"tr>>' +
