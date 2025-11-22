@@ -94,7 +94,12 @@ class MedicamentoControladoController extends Controller
             'stock_total' => MedicamentoControlado::sum('saldo_actual')
         ];
 
-        return view('admin.medicamento_controlado.index', compact('stats'));
+        // Cargar medicamentos activos para los modales de entrada/salida
+        $medicamentos = MedicamentoControlado::where('activo', 1)
+            ->orderBy('nombre')
+            ->get();
+
+        return view('admin.medicamento_controlado.index', compact('stats', 'medicamentos'));
     }
 
     /**
