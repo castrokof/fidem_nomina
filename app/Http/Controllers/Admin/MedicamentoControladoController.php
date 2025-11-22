@@ -14,10 +14,87 @@ class MedicamentoControladoController extends Controller
      *
      * @return \Illuminate\Http\Response
      */
-    public function index()
+    public function index(Request $request)
     {
-        $medicamentos = MedicamentoControlado::orderBy('nombre')->get();
-        return view('admin.medicamento_controlado.index', compact('medicamentos'));
+        // Si es una petición AJAX, retornar datos para DataTables
+        if ($request->ajax()) {
+            $medicamentos = MedicamentoControlado::select([
+                'id',
+                'nombre',
+                'descripcion',
+                'saldo_actual',
+                'activo'
+            ]);
+
+            return datatables()->of($medicamentos)
+                ->addColumn('action', function($medicamento) {
+                    return '<div class="btn-group-ios">
+                                <button type="button"
+                                        class="btn-ios btn-ios-warning btn-editar"
+                                        data-id="'.$medicamento->id.'"
+                                        data-nombre="'.$medicamento->nombre.'"
+                                        data-descripcion="'.$medicamento->descripcion.'"
+                                        data-activo="'.$medicamento->activo.'"
+                                        title="Editar"
+                                        data-toggle="tooltip">
+                                    <i class="fas fa-edit"></i>
+                                </button>
+                                <button type="button"
+                                        class="btn-ios btn-ios-danger btn-eliminar"
+                                        data-id="'.$medicamento->id.'"
+                                        title="Eliminar"
+                                        data-toggle="tooltip">
+                                    <i class="fas fa-trash-alt"></i>
+                                </button>
+                            </div>';
+                })
+                ->editColumn('nombre', function($medicamento) {
+                    return '<div class="d-flex align-items-center">
+                                <i class="fas fa-prescription-bottle text-primary mr-2"></i>
+                                <strong>'.$medicamento->nombre.'</strong>
+                            </div>';
+                })
+                ->editColumn('descripcion', function($medicamento) {
+                    return $medicamento->descripcion ?? 'N/A';
+                })
+                ->editColumn('saldo_actual', function($medicamento) {
+                    if ($medicamento->saldo_actual > 50) {
+                        return '<span class="glass-badge glass-badge-success">
+                                    <i class="fas fa-box-open"></i> '.$medicamento->saldo_actual.'
+                                </span>';
+                    } elseif ($medicamento->saldo_actual > 20) {
+                        return '<span class="glass-badge glass-badge-warning">
+                                    <i class="fas fa-box-open"></i> '.$medicamento->saldo_actual.'
+                                </span>';
+                    } else {
+                        return '<span class="glass-badge glass-badge-danger">
+                                    <i class="fas fa-exclamation-triangle"></i> '.$medicamento->saldo_actual.'
+                                </span>';
+                    }
+                })
+                ->editColumn('activo', function($medicamento) {
+                    if ($medicamento->activo) {
+                        return '<span class="glass-badge glass-badge-success">
+                                    <i class="fas fa-check-circle"></i> Activo
+                                </span>';
+                    } else {
+                        return '<span class="glass-badge glass-badge-secondary">
+                                    <i class="fas fa-times-circle"></i> Inactivo
+                                </span>';
+                    }
+                })
+                ->rawColumns(['action', 'nombre', 'saldo_actual', 'activo'])
+                ->make(true);
+        }
+
+        // Para las estadísticas, cargar datos mínimos
+        $stats = [
+            'total' => MedicamentoControlado::count(),
+            'activos' => MedicamentoControlado::where('activo', 1)->count(),
+            'stock_total' => MedicamentoControlado::sum('saldo_actual')
+        ];
+
+        return view('admin.medicamento_controlado.index', compact('stats'));
     }
 
     /**

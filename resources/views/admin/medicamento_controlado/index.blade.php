@@ -16,197 +16,118 @@ Medicamentos Controlados
 @endsection
 
 @section('scripts')
-
 <script src="{{asset("assets/$theme/plugins/datatables/jquery.dataTables.js")}}" type="text/javascript"></script>
 <script src="{{asset("assets/$theme/plugins/datatables-bs4/js/dataTables.bootstrap4.js")}}" type="text/javascript"></script>
 <script src="{{asset("assets/$theme/plugins/datatables-responsive/js/dataTables.responsive.min.js")}}" type="text/javascript"></script>
+<!-- DataTables Buttons -->
+<script src="https://cdn.datatables.net/buttons/1.6.1/js/dataTables.buttons.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.1.3/jszip.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.53/pdfmake.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.1.53/vfs_fonts.js"></script>
+<script src="https://cdn.datatables.net/buttons/1.6.1/js/buttons.html5.min.js"></script>
 
-@endsection
+<script type="text/javascript">
+$(document).ready(function() {
 
-@section('contenido')
-<div class="medicamentos-wrapper">
-    <div class="row animate-in">
-        <!-- Estadísticas -->
-        <div class="col-lg-4 col-md-6 mb-4">
-            <div class="stats-card">
-                <div class="icon">
-                    <i class="fas fa-pills"></i>
-                </div>
-                <div class="value" id="total-medicamentos">{{ count($medicamentos) }}</div>
-                <div class="label">Total Medicamentos</div>
-            </div>
-        </div>
+    // Configuración de idioma español
+    var idioma_espanol = {
+        "sProcessing": "Procesando...",
+        "sLengthMenu": "Mostrar _MENU_ registros",
+        "sZeroRecords": "No se encontraron resultados",
+        "sEmptyTable": "Ningún dato disponible en esta tabla",
+        "sInfo": "Mostrando registros del _START_ al _END_ de un total de _TOTAL_ registros",
+        "sInfoEmpty": "Mostrando registros del 0 al 0 de un total de 0 registros",
+        "sInfoFiltered": "(filtrado de un total de _MAX_ registros)",
+        "sInfoPostFix": "",
+        "sSearch": "Buscar:",
+        "sUrl": "",
+        "sInfoThousands": ",",
+        "sLoadingRecords": "Cargando...",
+        "oPaginate": {
+            "sFirst": "Primero",
+            "sLast": "Último",
+            "sNext": "Siguiente",
+            "sPrevious": "Anterior"
+        },
+        "oAria": {
+            "sSortAscending": ": Activar para ordenar la columna de manera ascendente",
+            "sSortDescending": ": Activar para ordenar la columna de manera descendente"
+        }
+    };
 
-        <div class="col-lg-4 col-md-6 mb-4">
-            <div class="stats-card">
-                <div class="icon">
-                    <i class="fas fa-check-circle"></i>
-                </div>
-                <div class="value" id="medicamentos-activos">{{ $medicamentos->where('activo', 1)->count() }}</div>
-                <div class="label">Medicamentos Activos</div>
-            </div>
-        </div>
-
-        <div class="col-lg-4 col-md-6 mb-4">
-            <div class="stats-card">
-                <div class="icon">
-                    <i class="fas fa-boxes"></i>
-                </div>
-                <div class="value" id="total-stock">{{ $medicamentos->sum('saldo_actual') }}</div>
-                <div class="label">Stock Total</div>
-            </div>
-        </div>
-    </div>
-
-    <div class="row">
-        <div class="col-lg-12">
-            @include('includes.form-error')
-            @include('includes.form-mensaje')
-
-            <div class="glass-card animate-in">
-                <div class="glass-card-header">
-                    <div class="d-flex justify-content-between align-items-center flex-wrap">
-                        <h3><i class="fas fa-pills mr-2"></i> Medicamentos Controlados</h3>
-                        <div class="mt-2 mt-md-0">
-                            <div class="btn-group-ios">
-                                <button type="button" class="btn-ios" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);" data-toggle="modal" data-target="#modal-crear-medicamento">
-                                    <i class="fas fa-plus-circle"></i>
-                                    <span>Nuevo</span>
-                                </button>
-                                <button type="button" class="btn-ios" style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);" data-toggle="modal" data-target="#modal-entrada">
-                                    <i class="fas fa-arrow-down"></i>
-                                    <span>Entrada</span>
-                                </button>
-                                <button type="button" class="btn-ios" style="background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);" data-toggle="modal" data-target="#modal-salida">
-                                    <i class="fas fa-arrow-up"></i>
-                                    <span>Salida</span>
-                                </button>
-                                <a href="{{route('medicamento_controlado_movimiento')}}" class="btn-ios" style="background: linear-gradient(135deg, #5ba3d0 0%, #2193b0 100%);">
-                                    <i class="fas fa-list"></i>
-                                    <span>Movimientos</span>
-                                </a>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-                <div class="glass-card-body">
-                    <div class="table-responsive">
-                        <table class="table glass-table table-hover" id="tabla-medicamentos">
-                            <thead>
-                                <tr>
-                                    <th width="8%">
-                                        <i class="fas fa-hashtag"></i> ID
-                                    </th>
-                                    <th width="32%">
-                                        <i class="fas fa-capsules"></i> Nombre
-                                    </th>
-                                    <th width="25%">
-                                        <i class="fas fa-info-circle"></i> Descripción
-                                    </th>
-                                    <th width="12%" class="text-center">
-                                        <i class="fas fa-warehouse"></i> Saldo Actual
-                                    </th>
-                                    <th width="10%" class="text-center">
-                                        <i class="fas fa-toggle-on"></i> Estado
-                                    </th>
-                                    <th width="13%" class="text-center">
-                                        <i class="fas fa-cogs"></i> Acciones
-                                    </th>
-                                </tr>
-                            </thead>
-                            <tbody>
-                                @foreach($medicamentos as $medicamento)
-                                <tr data-id="{{$medicamento->id}}">
-                                    <td><strong>{{$medicamento->id}}</strong></td>
-                                    <td>
-                                        <div class="d-flex align-items-center">
-                                            <i class="fas fa-prescription-bottle text-primary mr-2"></i>
-                                            <strong>{{$medicamento->nombre}}</strong>
-                                        </div>
-                                    </td>
-                                    <td>{{$medicamento->descripcion ?? 'N/A'}}</td>
-                                    <td class="text-center">
-                                        @if($medicamento->saldo_actual > 50)
-                                            <span class="glass-badge glass-badge-success">
-                                                <i class="fas fa-box-open"></i> {{$medicamento->saldo_actual}}
-                                            </span>
-                                        @elseif($medicamento->saldo_actual > 20)
-                                            <span class="glass-badge glass-badge-warning">
-                                                <i class="fas fa-box-open"></i> {{$medicamento->saldo_actual}}
-                                            </span>
-                                        @else
-                                            <span class="glass-badge glass-badge-danger">
-                                                <i class="fas fa-exclamation-triangle"></i> {{$medicamento->saldo_actual}}
-                                            </span>
-                                        @endif
-                                    </td>
-                                    <td class="text-center">
-                                        @if($medicamento->activo)
-                                            <span class="glass-badge glass-badge-success">
-                                                <i class="fas fa-check-circle"></i> Activo
-                                            </span>
-                                        @else
-                                            <span class="glass-badge glass-badge-secondary">
-                                                <i class="fas fa-times-circle"></i> Inactivo
-                                            </span>
-                                        @endif
-                                    </td>
-                                    <td class="text-center">
-                                        <div class="btn-group-ios">
-                                            <button type="button"
-                                                    class="btn-ios btn-ios-warning btn-editar"
-                                                    data-id="{{$medicamento->id}}"
-                                                    data-nombre="{{$medicamento->nombre}}"
-                                                    data-descripcion="{{$medicamento->descripcion}}"
-                                                    data-activo="{{$medicamento->activo}}"
-                                                    title="Editar"
-                                                    data-toggle="tooltip">
-                                                <i class="fas fa-edit"></i>
-                                            </button>
-                                            <button type="button"
-                                                    class="btn-ios btn-ios-danger btn-eliminar"
-                                                    data-id="{{$medicamento->id}}"
-                                                    title="Eliminar"
-                                                    data-toggle="tooltip">
-                                                <i class="fas fa-trash-alt"></i>
-                                            </button>
-                                        </div>
-                                    </td>
-                                </tr>
-                                @endforeach
-                            </tbody>
-                        </table>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </div>
-</div>
-
-@include('admin.medicamento_controlado.modal.modalCrear')
-@include('admin.medicamento_controlado.modal.modalEditar')
-@include('admin.medicamento_controlado.modal.modalEntrada')
-@include('admin.medicamento_controlado.modal.modalSalida')
-
-@endsection
-@section('scriptsPlugins')
-    <script src="{{ asset("assets/$theme/plugins/datatables/jquery.dataTables.js") }}" type="text/javascript"></script>
-    <script src="{{ asset("assets/$theme/plugins/datatables-bs4/js/dataTables.bootstrap4.js") }}" type="text/javascript">
-    </script>
-    <script src="{{ asset('assets/js/jquery-select2/select2.min.js') }}" type="text/javascript"></script>
-
-    <script>
-        $(document).ready(function() {
-
-
- // Inicializar DataTable
-    $('#tabla-medicamentos').DataTable({
-        responsive: true,
+    // Inicializar DataTable con server-side processing
+    var tabla = $('#tabla-medicamentos').DataTable({
         language: idioma_espanol,
-        order: [[1, 'asc']]
+        processing: true,
+        serverSide: true,
+        responsive: true,
+        lengthMenu: [[10, 25, 50, 100, -1], [10, 25, 50, 100, "Todos"]],
+        pageLength: 25,
+        order: [[1, 'asc']],
+        ajax: {
+            url: "{{ route('medicamento_controlado') }}",
+            type: 'GET'
+        },
+        columns: [
+            { data: 'id', name: 'id', width: '8%' },
+            { data: 'nombre', name: 'nombre', width: '32%' },
+            { data: 'descripcion', name: 'descripcion', width: '25%' },
+            { data: 'saldo_actual', name: 'saldo_actual', width: '12%', className: 'text-center', orderable: true },
+            { data: 'activo', name: 'activo', width: '10%', className: 'text-center', orderable: true },
+            { data: 'action', name: 'action', width: '13%', className: 'text-center', orderable: false, searchable: false }
+        ],
+        dom: '<"row"<"col-sm-12 col-md-6"l><"col-sm-12 col-md-6"f>>' +
+             '<"row"<"col-sm-12 col-md-6"B>>' +
+             '<"row"<"col-sm-12"tr>>' +
+             '<"row"<"col-sm-12 col-md-5"i><"col-sm-12 col-md-7"p>>',
+        buttons: [
+            {
+                extend: 'copyHtml5',
+                text: '<i class="fas fa-copy"></i> Copiar',
+                titleAttr: 'Copiar',
+                className: 'btn btn-secondary btn-sm',
+                exportOptions: {
+                    columns: [0, 1, 2, 3, 4]
+                }
+            },
+            {
+                extend: 'excelHtml5',
+                text: '<i class="fas fa-file-excel"></i> Excel',
+                titleAttr: 'Excel',
+                className: 'btn btn-success btn-sm',
+                exportOptions: {
+                    columns: [0, 1, 2, 3, 4]
+                }
+            },
+            {
+                extend: 'csvHtml5',
+                text: '<i class="fas fa-file-csv"></i> CSV',
+                titleAttr: 'CSV',
+                className: 'btn btn-info btn-sm',
+                exportOptions: {
+                    columns: [0, 1, 2, 3, 4]
+                }
+            },
+            {
+                extend: 'pdfHtml5',
+                text: '<i class="fas fa-file-pdf"></i> PDF',
+                titleAttr: 'PDF',
+                className: 'btn btn-danger btn-sm',
+                orientation: 'landscape',
+                pageSize: 'LEGAL',
+                exportOptions: {
+                    columns: [0, 1, 2, 3, 4]
+                },
+                customize: function(doc) {
+                    doc.defaultStyle.fontSize = 8;
+                    doc.styles.tableHeader.fontSize = 9;
+                }
+            }
+        ]
     });
-    // Eliminar medicamento
-    $('.btn-eliminar').on('click', function(e) {
+
+    // Eliminar medicamento (usando delegación de eventos para elementos dinámicos)
+    $(document).on('click', '.btn-eliminar', function(e) {
         e.preventDefault();
         var id = $(this).data('id');
         var url = 'medicamento-controlado/' + id + '/eliminar';
@@ -233,7 +154,7 @@ Medicamentos Controlados
                                 response.mensaje,
                                 'success'
                             ).then(() => {
-                                location.reload();
+                                tabla.ajax.reload(null, false);
                             });
                         } else {
                             Swal.fire(
@@ -273,6 +194,7 @@ Medicamentos Controlados
             success: function(response) {
                 if (response.success) {
                     $('#modal-crear-medicamento').modal('hide');
+                    limpiarFormCrear();
                     Swal.fire({
                         icon: 'success',
                         title: 'Éxito',
@@ -280,7 +202,7 @@ Medicamentos Controlados
                         timer: 2000,
                         showConfirmButton: false
                     }).then(() => {
-                        location.reload();
+                        tabla.ajax.reload(null, false);
                     });
                 } else {
                     Swal.fire({
@@ -351,7 +273,7 @@ Medicamentos Controlados
                         timer: 2000,
                         showConfirmButton: false
                     }).then(() => {
-                        location.reload();
+                        tabla.ajax.reload(null, false);
                     });
                 } else {
                     Swal.fire({
@@ -473,7 +395,7 @@ Medicamentos Controlados
                         timer: 2000,
                         showConfirmButton: false
                     }).then(() => {
-                        location.reload();
+                        tabla.ajax.reload(null, false);
                     });
                 } else {
                     Swal.fire({
@@ -540,7 +462,7 @@ Medicamentos Controlados
                         timer: 2000,
                         showConfirmButton: false
                     }).then(() => {
-                        location.reload();
+                        tabla.ajax.reload(null, false);
                     });
                 } else {
                     Swal.fire({
@@ -597,37 +519,114 @@ function limpiarFormSalida() {
     $('#salida-preview-imagen').attr('src', '');
     $('#salida_fecha').val(new Date().toISOString().split('T')[0]);
 }
+</script>
+@endsection
 
-        // Variable con array de idioma de datatable
-        var idioma_espanol = {
-            "sProcessing": "Procesando...",
-            "sLengthMenu": "Mostrar _MENU_ registros",
-            "sZeroRecords": "No se encontraron resultados",
-            "sEmptyTable": "Ningún dato disponible en esta tabla =(",
-            "sInfo": "Mostrando registros del _START_ al _END_ de un total de _TOTAL_ registros",
-            "sInfoEmpty": "Mostrando registros del 0 al 0 de un total de 0 registros",
-            "sInfoFiltered": "(filtrado de un total de _MAX_ registros)",
-            "sInfoPostFix": "",
-            "sSearch": "Buscar:",
-            "sUrl": "",
-            "sInfoThousands": ",",
-            "sLoadingRecords": "Cargando...",
-            "oPaginate": {
-                "sFirst": "Primero",
-                "sLast": "Último",
-                "sNext": "Siguiente",
-                "sPrevious": "Anterior"
-            },
-            "oAria": {
-                "sSortAscending": ": Activar para ordenar la columna de manera ascendente",
-                "sSortDescending": ": Activar para ordenar la columna de manera descendente"
-            },
-            "buttons": {
-                "copy": "Copiar",
-                "colvis": "Visibilidad"
-            }
-        };
-    </script>
+@section('contenido')
+<div class="medicamentos-wrapper">
+    <div class="row animate-in">
+        <!-- Estadísticas -->
+        <div class="col-lg-4 col-md-6 mb-4">
+            <div class="stats-card">
+                <div class="icon">
+                    <i class="fas fa-pills"></i>
+                </div>
+                <div class="value" id="total-medicamentos">{{ $stats['total'] }}</div>
+                <div class="label">Total Medicamentos</div>
+            </div>
+        </div>
 
-    
+        <div class="col-lg-4 col-md-6 mb-4">
+            <div class="stats-card">
+                <div class="icon">
+                    <i class="fas fa-check-circle"></i>
+                </div>
+                <div class="value" id="medicamentos-activos">{{ $stats['activos'] }}</div>
+                <div class="label">Medicamentos Activos</div>
+            </div>
+        </div>
+
+        <div class="col-lg-4 col-md-6 mb-4">
+            <div class="stats-card">
+                <div class="icon">
+                    <i class="fas fa-boxes"></i>
+                </div>
+                <div class="value" id="total-stock">{{ $stats['stock_total'] }}</div>
+                <div class="label">Stock Total</div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-lg-12">
+            @include('includes.form-error')
+            @include('includes.form-mensaje')
+
+            <div class="glass-card animate-in">
+                <div class="glass-card-header">
+                    <div class="d-flex justify-content-between align-items-center flex-wrap">
+                        <h3><i class="fas fa-pills mr-2"></i> Medicamentos Controlados</h3>
+                        <div class="mt-2 mt-md-0">
+                            <div class="btn-group-ios">
+                                <button type="button" class="btn-ios" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);" data-toggle="modal" data-target="#modal-crear-medicamento">
+                                    <i class="fas fa-plus-circle"></i>
+                                    <span>Nuevo</span>
+                                </button>
+                                <button type="button" class="btn-ios" style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);" data-toggle="modal" data-target="#modal-entrada">
+                                    <i class="fas fa-arrow-down"></i>
+                                    <span>Entrada</span>
+                                </button>
+                                <button type="button" class="btn-ios" style="background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);" data-toggle="modal" data-target="#modal-salida">
+                                    <i class="fas fa-arrow-up"></i>
+                                    <span>Salida</span>
+                                </button>
+                                <a href="{{route('medicamento_controlado_movimiento')}}" class="btn-ios" style="background: linear-gradient(135deg, #5ba3d0 0%, #2193b0 100%);">
+                                    <i class="fas fa-list"></i>
+                                    <span>Movimientos</span>
+                                </a>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                <div class="glass-card-body">
+                    <div class="table-responsive">
+                        <table class="table glass-table table-hover" id="tabla-medicamentos">
+                            <thead>
+                                <tr>
+                                    <th width="8%">
+                                        <i class="fas fa-hashtag"></i> ID
+                                    </th>
+                                    <th width="32%">
+                                        <i class="fas fa-capsules"></i> Nombre
+                                    </th>
+                                    <th width="25%">
+                                        <i class="fas fa-info-circle"></i> Descripción
+                                    </th>
+                                    <th width="12%" class="text-center">
+                                        <i class="fas fa-warehouse"></i> Saldo Actual
+                                    </th>
+                                    <th width="10%" class="text-center">
+                                        <i class="fas fa-toggle-on"></i> Estado
+                                    </th>
+                                    <th width="13%" class="text-center">
+                                        <i class="fas fa-cogs"></i> Acciones
+                                    </th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <!-- DataTables cargará los datos dinámicamente via AJAX -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+@include('admin.medicamento_controlado.modal.modalCrear')
+@include('admin.medicamento_controlado.modal.modalEditar')
+@include('admin.medicamento_controlado.modal.modalEntrada')
+@include('admin.medicamento_controlado.modal.modalSalida')
+
 @endsection
