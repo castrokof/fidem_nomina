@@ -5,9 +5,10 @@ Medicamentos Controlados
 
 @section('styles')
 <link href="{{asset('assets/css/custom/medicamentos-glassmorphism.css')}}" rel="stylesheet" type="text/css"/>
+<link href="{{asset("assets/$theme/plugins/datatables-bs4/css/dataTables.bootstrap4.css")}}" rel="stylesheet" type="text/css"/>
 <style>
     .content-wrapper {
-        background: linear-gradient(-45deg, #7F7FD5, #86A8E7, #91EAE4, #11998e, #38ef7d);
+        background: linear-gradient(-45deg, #4facfe, #00f2fe, #5ba3d0, #2193b0, #6dd5ed);
         background-size: 400% 400%;
         animation: gradientBG 15s ease infinite;
     }
@@ -15,6 +16,9 @@ Medicamentos Controlados
 @endsection
 
 @section('scripts')
+<script src="{{asset("assets/$theme/plugins/datatables/jquery.dataTables.js")}}" type="text/javascript"></script>
+<script src="{{asset("assets/$theme/plugins/datatables-bs4/js/dataTables.bootstrap4.js")}}" type="text/javascript"></script>
+<script src="{{asset("assets/$theme/plugins/datatables-responsive/js/dataTables.responsive.min.js")}}" type="text/javascript"></script>
 <script src="{{asset("assets/pages/scripts/admin/medicamento_controlado/index.js")}}" type="text/javascript"></script>
 @endsection
 
@@ -64,19 +68,19 @@ Medicamentos Controlados
                         <h3><i class="fas fa-pills mr-2"></i> Medicamentos Controlados</h3>
                         <div class="mt-2 mt-md-0">
                             <div class="btn-group-ios">
-                                <button type="button" class="btn-ios btn-ios-success" data-toggle="modal" data-target="#modal-crear-medicamento">
+                                <button type="button" class="btn-ios" style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);" data-toggle="modal" data-target="#modal-crear-medicamento">
                                     <i class="fas fa-plus-circle"></i>
                                     <span>Nuevo</span>
                                 </button>
-                                <button type="button" class="btn-ios" style="background: linear-gradient(135deg, #0fd850 0%, #0bad52 100%);" data-toggle="modal" data-target="#modal-entrada">
+                                <button type="button" class="btn-ios" style="background: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);" data-toggle="modal" data-target="#modal-entrada">
                                     <i class="fas fa-arrow-down"></i>
                                     <span>Entrada</span>
                                 </button>
-                                <button type="button" class="btn-ios" style="background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);" data-toggle="modal" data-target="#modal-salida">
+                                <button type="button" class="btn-ios" style="background: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);" data-toggle="modal" data-target="#modal-salida">
                                     <i class="fas fa-arrow-up"></i>
                                     <span>Salida</span>
                                 </button>
-                                <a href="{{route('medicamento_controlado_movimiento')}}" class="btn-ios btn-ios-info">
+                                <a href="{{route('medicamento_controlado_movimiento')}}" class="btn-ios" style="background: linear-gradient(135deg, #5ba3d0 0%, #2193b0 100%);">
                                     <i class="fas fa-list"></i>
                                     <span>Movimientos</span>
                                 </a>

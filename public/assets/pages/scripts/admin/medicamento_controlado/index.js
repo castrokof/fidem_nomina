@@ -202,9 +202,21 @@ $(document).ready(function() {
 
         // Validar que no sea negativo
         if (nuevoSaldo < 0) {
-            $('#salida-nuevo-saldo').text('ERROR').css('background', 'rgba(220, 53, 69, 0.5)');
+            $('#salida-nuevo-saldo')
+                .text('ERROR')
+                .css({
+                    'background': 'linear-gradient(135deg, #ffcdd2 0%, #ef9a9a 100%)',
+                    'color': '#c62828',
+                    'border-color': '#ef5350'
+                });
         } else {
-            $('#salida-nuevo-saldo').text(nuevoSaldo).css('background', 'rgba(255, 193, 7, 0.3)');
+            $('#salida-nuevo-saldo')
+                .text(nuevoSaldo)
+                .css({
+                    'background': 'linear-gradient(135deg, #fff9c4 0%, #fff59d 100%)',
+                    'color': '#f57f17',
+                    'border-color': '#ffeb3b'
+                });
         }
     }
 
@@ -378,7 +390,13 @@ function limpiarFormEntrada() {
 function limpiarFormSalida() {
     $('#form-salida')[0].reset();
     $('#salida-saldo-actual').text('0');
-    $('#salida-nuevo-saldo').text('0').css('background', 'rgba(255, 193, 7, 0.3)');
+    $('#salida-nuevo-saldo')
+        .text('0')
+        .css({
+            'background': 'linear-gradient(135deg, #fff9c4 0%, #fff59d 100%)',
+            'color': '#f57f17',
+            'border-color': '#ffeb3b'
+        });
     $('#salida-preview-container').hide();
     $('#salida-preview-imagen').attr('src', '');
     $('#salida_fecha').val(new Date().toISOString().split('T')[0]);
