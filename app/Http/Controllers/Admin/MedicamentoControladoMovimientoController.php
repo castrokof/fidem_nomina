@@ -26,7 +26,7 @@ class MedicamentoControladoMovimientoController extends Controller
         // Si es una petición AJAX, retornar datos para DataTables
         if ($request->ajax()) {
             $query = MedicamentoControladoMovimiento::with(['medicamentoControlado', 'usuario'])
-                ->select('medicamento_controlado_movimiento.*');
+                ->select('medicamentos_controlados_movimientos.*');
 
             // Aplicar filtros
             if ($medicamento_id) {
