@@ -386,6 +386,89 @@ $(document).ready(function() {
         tabla.ajax.reload();
     });
 
+    // =====================================================
+    // ANULAR MOVIMIENTO
+    // =====================================================
+    $(document).on('click', '.btn-anular', function() {
+        var id = $(this).data('id');
+        var tipo = $(this).data('tipo');
+        var cantidad = $(this).data('cantidad');
+        var medicamento = $(this).data('medicamento');
+
+        Swal.fire({
+            title: '¿Anular movimiento?',
+            html: '<div class="text-left">' +
+                  '<p><strong>Medicamento:</strong> ' + medicamento + '</p>' +
+                  '<p><strong>Tipo:</strong> ' + tipo.toUpperCase() + '</p>' +
+                  '<p><strong>Cantidad:</strong> ' + cantidad + '</p>' +
+                  '<p class="text-warning"><i class="fas fa-exclamation-triangle"></i> Esta acción creará un movimiento inverso para revertir este registro.</p>' +
+                  '<hr>' +
+                  '<label for="motivo-anulacion"><strong>Motivo de anulación:</strong></label>' +
+                  '<textarea id="motivo-anulacion" class="form-control" rows="3" placeholder="Ingrese el motivo de la anulación..."></textarea>' +
+                  '</div>',
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#d33',
+            cancelButtonColor: '#6c757d',
+            confirmButtonText: 'Sí, anular',
+            cancelButtonText: 'Cancelar',
+            preConfirm: () => {
+                const motivo = document.getElementById('motivo-anulacion').value;
+                if (!motivo || motivo.trim() === '') {
+                    Swal.showValidationMessage('Debe ingresar un motivo de anulación');
+                    return false;
+                }
+                return { motivo: motivo };
+            }
+        }).then((result) => {
+            if (result.isConfirmed) {
+                $.ajax({
+                    url: "{{ route('medicamento_controlado_movimiento') }}/" + id + "/anular",
+                    type: 'POST',
+                    data: {
+                        _token: '{{ csrf_token() }}',
+                        motivo_anulacion: result.value.motivo
+                    },
+                    dataType: 'json',
+                    success: function(response) {
+                        if (response.success) {
+                            Swal.fire({
+                                icon: 'success',
+                                title: '¡Anulado!',
+                                html: response.mensaje,
+                                timer: 3000,
+                                showConfirmButton: false
+                            }).then(() => {
+                                // Recargar tabla y estadísticas
+                                tabla.ajax.reload(null, false);
+                                cargarEstadisticas();
+                            });
+                        } else {
+                            Swal.fire({
+                                icon: 'error',
+                                title: 'Error',
+                                text: response.mensaje
+                            });
+                        }
+                    },
+                    error: function(xhr) {
+                        var mensaje = 'Ha ocurrido un error al anular';
+                        if (xhr.responseJSON && xhr.responseJSON.mensaje) {
+                            mensaje = xhr.responseJSON.mensaje;
+                        } else if (xhr.responseJSON && xhr.responseJSON.message) {
+                            mensaje = xhr.responseJSON.message;
+                        }
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'Error',
+                            text: mensaje
+                        });
+                    }
+                });
+            }
+        });
+    });
+
 });
 </script>
 @endsection

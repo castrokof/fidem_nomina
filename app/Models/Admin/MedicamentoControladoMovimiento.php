@@ -22,7 +22,12 @@ class MedicamentoControladoMovimiento extends Model
         'entrada',
         'salida',
         'saldo',
-        'user_id'
+        'user_id',
+        'anulado',
+        'anulado_por_movimiento_id',
+        'anulado_por_user_id',
+        'anulado_at',
+        'motivo_anulacion'
     ];
 
     /**
@@ -60,6 +65,30 @@ class MedicamentoControladoMovimiento extends Model
         } else {
             return $saldoAnterior - $this->salida;
         }
+    }
+
+    /**
+     * Relación con el movimiento que anuló este movimiento
+     */
+    public function movimientoAnulador()
+    {
+        return $this->belongsTo('App\Models\Admin\MedicamentoControladoMovimiento', 'anulado_por_movimiento_id');
+    }
+
+    /**
+     * Relación con el usuario que anuló este movimiento
+     */
+    public function usuarioAnulador()
+    {
+        return $this->belongsTo('App\Models\Seguridad\Usuario', 'anulado_por_user_id');
+    }
+
+    /**
+     * Verificar si el movimiento está anulado
+     */
+    public function estaAnulado()
+    {
+        return $this->anulado == true;
     }
 
     /**

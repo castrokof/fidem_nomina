@@ -52,15 +52,25 @@ class MedicamentoControladoMovimientoController extends Controller
                             </div>';
                 })
                 ->editColumn('tipo_movimiento', function($mov) {
+                    $badge = '';
                     if ($mov->tipo_movimiento == 'entrada') {
-                        return '<span class="glass-badge glass-badge-success">
+                        $badge = '<span class="glass-badge glass-badge-success">
                                     <i class="fas fa-arrow-down"></i> ENTRADA
                                 </span>';
                     } else {
-                        return '<span class="glass-badge glass-badge-danger">
+                        $badge = '<span class="glass-badge glass-badge-danger">
                                     <i class="fas fa-arrow-up"></i> SALIDA
                                 </span>';
                     }
+
+                    // Marcar si está anulado
+                    if ($mov->anulado) {
+                        $badge .= '<br><span class="badge badge-dark" title="Anulado el: '.date('d/m/Y', strtotime($mov->anulado_at)).'" data-toggle="tooltip">
+                                    <i class="fas fa-ban"></i> ANULADO
+                                  </span>';
+                    }
+
+                    return $badge;
                 })
                 ->editColumn('proveedor', function($mov) {
                     return $mov->proveedor ?? '-';
@@ -88,7 +98,8 @@ class MedicamentoControladoMovimientoController extends Controller
                     return '<strong style="font-size: 1.1rem;">'.$mov->saldo.'</strong>';
                 })
                 ->addColumn('detalles', function($mov) {
-                    $html = '';
+                    $html = '<div class="btn-group-ios">';
+
                     if ($mov->foto_formula) {
                         $html .= '<a href="'.asset('storage/' . $mov->foto_formula).'" target="_blank"
                                      class="btn btn-info btn-sm" title="Ver foto fórmula" data-toggle="tooltip">
@@ -96,16 +107,32 @@ class MedicamentoControladoMovimientoController extends Controller
                                   </a> ';
                     }
                     if ($mov->numero_factura) {
-                        $html .= '<span class="badge badge-info" title="Factura: '.$mov->numero_factura.'" data-toggle="tooltip">
+                        $html .= '<span class="badge badge-info mr-1" title="Factura: '.$mov->numero_factura.'" data-toggle="tooltip">
                                     <i class="fas fa-file-invoice"></i> '.$mov->numero_factura.'
-                                  </span> ';
+                                  </span>';
                     }
                     if ($mov->numero_formula_control) {
-                        $html .= '<span class="badge badge-warning" title="Fórmula Control: '.$mov->numero_formula_control.'" data-toggle="tooltip">
+                        $html .= '<span class="badge badge-warning mr-1" title="Fórmula Control: '.$mov->numero_formula_control.'" data-toggle="tooltip">
                                     <i class="fas fa-file-prescription"></i> '.$mov->numero_formula_control.'
                                   </span>';
                     }
-                    return $html ?: '-';
+
+                    // Botón de anular solo si no está anulado y no es una anulación
+                    if (!$mov->anulado && !str_contains($mov->motivo_anulacion ?? '', 'ANULACIÓN:')) {
+                        $html .= '<button type="button"
+                                        class="btn-ios btn-ios-danger btn-anular"
+                                        data-id="'.$mov->id.'"
+                                        data-tipo="'.$mov->tipo_movimiento.'"
+                                        data-cantidad="'.($mov->tipo_movimiento == 'entrada' ? $mov->entrada : $mov->salida).'"
+                                        data-medicamento="'.$mov->medicamentoControlado->nombre.'"
+                                        title="Anular movimiento"
+                                        data-toggle="tooltip">
+                                    <i class="fas fa-ban"></i>
+                                  </button>';
+                    }
+
+                    $html .= '</div>';
+                    return $html;
                 })
                 ->orderColumn('fecha', function($query, $order) {
                     $query->orderBy('fecha', $order)->orderBy('id', $order);
@@ -304,5 +331,104 @@ class MedicamentoControladoMovimientoController extends Controller
             'stock_actual' => $stockActual,
             'nombre_medicamento' => $nombreMedicamento
         ]);
+    }
+
+    /**
+     * Anular un movimiento creando el movimiento inverso
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @param  int  $id
+     * @return \Illuminate\Http\Response
+     */
+    public function anular(Request $request, $id)
+    {
+        if (!$request->ajax()) {
+            return response()->json(['success' => false, 'mensaje' => 'Petición no válida'], 403);
+        }
+
+        try {
+            // Validar motivo
+            $request->validate([
+                'motivo_anulacion' => 'required|string|max:500'
+            ]);
+
+            // Obtener el movimiento original
+            $movimientoOriginal = MedicamentoControladoMovimiento::findOrFail($id);
+
+            // Verificar que no esté ya anulado
+            if ($movimientoOriginal->anulado) {
+                return response()->json([
+                    'success' => false,
+                    'mensaje' => 'Este movimiento ya ha sido anulado'
+                ]);
+            }
+
+            // Obtener el saldo actual del medicamento
+            $medicamento = MedicamentoControlado::findOrFail($movimientoOriginal->medicamento_controlado_id);
+
+            // Crear el movimiento inverso
+            $tipoInverso = $movimientoOriginal->tipo_movimiento == 'entrada' ? 'salida' : 'entrada';
+
+            // Preparar datos del movimiento inverso
+            $datosInverso = [
+                'medicamento_controlado_id' => $movimientoOriginal->medicamento_controlado_id,
+                'fecha' => now()->format('Y-m-d'),
+                'tipo_movimiento' => $tipoInverso,
+                'user_id' => Auth::id(),
+                'motivo_anulacion' => 'ANULACIÓN: ' . $request->motivo_anulacion,
+            ];
+
+            // Si el original era entrada, crear una salida por la misma cantidad
+            if ($movimientoOriginal->tipo_movimiento == 'entrada') {
+                // Verificar que hay suficiente stock para anular
+                if ($medicamento->saldo_actual < $movimientoOriginal->entrada) {
+                    return response()->json([
+                        'success' => false,
+                        'mensaje' => 'No se puede anular. Stock insuficiente. Stock actual: ' . $medicamento->saldo_actual . ', necesario: ' . $movimientoOriginal->entrada
+                    ]);
+                }
+
+                $datosInverso['entrada'] = 0;
+                $datosInverso['salida'] = $movimientoOriginal->entrada;
+                $datosInverso['saldo'] = $medicamento->saldo_actual - $movimientoOriginal->entrada;
+                $datosInverso['nombre_paciente'] = 'ANULACIÓN - MOV #' . $movimientoOriginal->id;
+                $datosInverso['cedula_paciente'] = 'ANULACIÓN';
+                $datosInverso['numero_formula_control'] = 'ANU-' . $movimientoOriginal->id;
+            } else {
+                // Si el original era salida, crear una entrada por la misma cantidad
+                $datosInverso['entrada'] = $movimientoOriginal->salida;
+                $datosInverso['salida'] = 0;
+                $datosInverso['saldo'] = $medicamento->saldo_actual + $movimientoOriginal->salida;
+                $datosInverso['proveedor'] = 'ANULACIÓN - MOV #' . $movimientoOriginal->id;
+                $datosInverso['numero_factura'] = 'ANU-' . $movimientoOriginal->id;
+            }
+
+            // Crear el movimiento inverso
+            $movimientoInverso = MedicamentoControladoMovimiento::create($datosInverso);
+
+            // Marcar el movimiento original como anulado
+            $movimientoOriginal->anulado = true;
+            $movimientoOriginal->anulado_por_movimiento_id = $movimientoInverso->id;
+            $movimientoOriginal->anulado_por_user_id = Auth::id();
+            $movimientoOriginal->anulado_at = now();
+            $movimientoOriginal->motivo_anulacion = $request->motivo_anulacion;
+            $movimientoOriginal->save();
+
+            // Actualizar el saldo del medicamento
+            $medicamento->saldo_actual = $datosInverso['saldo'];
+            $medicamento->save();
+
+            return response()->json([
+                'success' => true,
+                'mensaje' => 'Movimiento anulado exitosamente. Nuevo saldo: ' . $datosInverso['saldo'],
+                'nuevo_saldo' => $datosInverso['saldo']
+            ]);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'mensaje' => 'Error al anular el movimiento: ' . $e->getMessage()
+            ], 500);
+        }
     }
 }
