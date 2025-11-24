@@ -101,7 +101,7 @@ class MedicamentoControladoMovimientoController extends Controller
                     $html = '<div class="btn-group-ios">';
 
                     if ($mov->foto_formula) {
-                        $html .= '<a href="'.asset('storage/' . $mov->foto_formula).'" target="_blank"
+                        $html .= '<a href="'.route('foto.formula', $mov->id).'" target="_blank"
                                      class="btn btn-info btn-sm" title="Ver foto fórmula" data-toggle="tooltip">
                                     <i class="fas fa-image"></i>
                                   </a> ';
@@ -430,5 +430,28 @@ class MedicamentoControladoMovimientoController extends Controller
                 'mensaje' => 'Error al anular el movimiento: ' . $e->getMessage()
             ], 500);
         }
+    }
+
+    /**
+     * Ver la foto de una fórmula
+     *
+     * @param  int  $id
+     * @return \Illuminate\Http\Response
+     */
+    public function verFotoFormula($id)
+    {
+        $movimiento = MedicamentoControladoMovimiento::findOrFail($id);
+
+        if (!$movimiento->foto_formula) {
+            abort(404, 'No hay foto de fórmula para este movimiento');
+        }
+
+        $rutaArchivo = storage_path('app/public/' . $movimiento->foto_formula);
+
+        if (!file_exists($rutaArchivo)) {
+            abort(404, 'El archivo de la foto no existe');
+        }
+
+        return response()->file($rutaArchivo);
     }
 }
