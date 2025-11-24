@@ -41,6 +41,26 @@ class CreateMedicamentosControladosMovimientosTable extends Migration
             // Índices para foreign keys
             $table->index('medicamento_controlado_id');
             $table->index('user_id');
+
+             $table->boolean('anulado')->default(false)->after('saldo');
+
+            // ID del movimiento que anuló este movimiento (si fue anulado)
+            $table->unsignedInteger('anulado_por_movimiento_id')->nullable()->after('anulado');
+
+            // Usuario que anuló el movimiento
+            $table->unsignedInteger('anulado_por_user_id')->nullable()->after('anulado_por_movimiento_id');
+
+            // Fecha y hora de anulación
+            $table->timestamp('anulado_at')->nullable()->after('anulado_por_user_id');
+
+            // Motivo de anulación
+            $table->string('motivo_anulacion', 200)->nullable()->after('anulado_at');
+
+            // Índices
+            $table->index('anulado');
+            $table->index('anulado_por_movimiento_id');
+
+
         });
 
         // Agregar foreign keys después de crear la tabla
@@ -63,5 +83,6 @@ class CreateMedicamentosControladosMovimientosTable extends Migration
     public function down()
     {
         Schema::dropIfExists('medicamentos_controlados_movimientos');
+      
     }
 }
