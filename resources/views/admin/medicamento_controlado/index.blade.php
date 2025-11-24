@@ -245,7 +245,7 @@ $(document).ready(function() {
         var formData = new FormData(this);
 
         $.ajax({
-            url: 'medicamento-controlado/guardar',
+            url: 'medicamento-controlado',
             type: 'POST',
             data: formData,
             processData: false,
