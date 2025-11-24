@@ -185,6 +185,33 @@ Movimientos de Medicamentos Controlados
         </div>
     </div>
 </div>
+
+<!-- Modal para ver foto de fórmula -->
+<div class="modal fade" id="modal-foto-formula" tabindex="-1" role="dialog" aria-labelledby="modalFotoFormulaLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered" role="document">
+        <div class="modal-content" style="background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(10px); border-radius: 15px; border: 1px solid rgba(255, 255, 255, 0.3);">
+            <div class="modal-header" style="border-bottom: 1px solid rgba(0, 0, 0, 0.1);">
+                <h5 class="modal-title" id="modal-foto-formula-title">
+                    <i class="fas fa-image mr-2"></i>Foto Fórmula
+                </h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body text-center" style="padding: 20px;">
+                <img id="modal-foto-formula-img" src="" alt="Foto Fórmula" class="img-fluid" style="max-height: 70vh; border-radius: 10px; box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);">
+            </div>
+            <div class="modal-footer" style="border-top: 1px solid rgba(0, 0, 0, 0.1);">
+                <a id="modal-foto-formula-download" href="" download class="btn btn-success btn-sm">
+                    <i class="fas fa-download mr-1"></i>Descargar
+                </a>
+                <button type="button" class="btn btn-secondary btn-sm" data-dismiss="modal">
+                    <i class="fas fa-times mr-1"></i>Cerrar
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
 @endsection
 
 
@@ -467,6 +494,30 @@ $(document).ready(function() {
                 });
             }
         });
+    });
+
+    // =====================================================
+    // VER FOTO EN MODAL
+    // =====================================================
+    $(document).on('click', '.btn-ver-foto', function() {
+        var fotoUrl = $(this).data('foto-url');
+        var movimientoId = $(this).data('movimiento-id');
+
+        // Actualizar la imagen en el modal
+        $('#modal-foto-formula-img').attr('src', fotoUrl);
+        $('#modal-foto-formula-title').text('Foto Fórmula - Movimiento #' + movimientoId);
+
+        // Actualizar el botón de descarga
+        $('#modal-foto-formula-download').attr('href', fotoUrl);
+
+        // Mostrar el modal
+        $('#modal-foto-formula').modal('show');
+    });
+
+    // Limpiar imagen cuando se cierra el modal
+    $('#modal-foto-formula').on('hidden.bs.modal', function() {
+        $('#modal-foto-formula-img').attr('src', '');
+        $('#modal-foto-formula-download').attr('href', '');
     });
 
 });

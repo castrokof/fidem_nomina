@@ -101,10 +101,14 @@ class MedicamentoControladoMovimientoController extends Controller
                     $html = '<div class="btn-group-ios">';
 
                     if ($mov->foto_formula) {
-                        $html .= '<a href="'.route('foto.formula', $mov->id).'" target="_blank"
-                                     class="btn btn-info btn-sm" title="Ver foto fórmula" data-toggle="tooltip">
+                        $html .= '<button type="button"
+                                     class="btn btn-info btn-sm btn-ver-foto"
+                                     data-foto-url="'.route('foto.formula', $mov->id).'"
+                                     data-movimiento-id="'.$mov->id.'"
+                                     title="Ver foto fórmula"
+                                     data-toggle="tooltip">
                                     <i class="fas fa-image"></i>
-                                  </a> ';
+                                  </button> ';
                     }
                     if ($mov->numero_factura) {
                         $html .= '<span class="badge badge-info mr-1" title="Factura: '.$mov->numero_factura.'" data-toggle="tooltip">
