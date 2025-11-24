@@ -38,38 +38,27 @@ class CreateMedicamentosControladosMovimientosTable extends Migration
             $table->unsignedInteger('user_id')->nullable();
             $table->timestamps();
 
-            // Índices para foreign keys
-            $table->index('medicamento_controlado_id');
-            $table->index('user_id');
+            // Campos de anulación
+            $table->boolean('anulado')->default(false);
+            $table->unsignedInteger('anulado_por_movimiento_id')->nullable();
+            $table->unsignedInteger('anulado_por_user_id')->nullable();
+            $table->timestamp('anulado_at')->nullable();
+            $table->string('motivo_anulacion', 200)->nullable();
 
-             $table->boolean('anulado')->default(false)->after('saldo');
-
-            // ID del movimiento que anuló este movimiento (si fue anulado)
-            $table->unsignedInteger('anulado_por_movimiento_id')->nullable()->after('anulado');
-
-            // Usuario que anuló el movimiento
-            $table->unsignedInteger('anulado_por_user_id')->nullable()->after('anulado_por_movimiento_id');
-
-            // Fecha y hora de anulación
-            $table->timestamp('anulado_at')->nullable()->after('anulado_por_user_id');
-
-            // Motivo de anulación
-            $table->string('motivo_anulacion', 200)->nullable()->after('anulado_at');
-
-            // Índices
-            $table->index('anulado');
-            $table->index('anulado_por_movimiento_id');
-
-
+            // Índices con nombres personalizados cortos
+            $table->index('medicamento_controlado_id', 'idx_mov_medicamento_id');
+            $table->index('user_id', 'idx_mov_user_id');
+            $table->index('anulado', 'idx_mov_anulado');
+            $table->index('anulado_por_movimiento_id', 'idx_mov_anulado_por_mov');
         });
 
         // Agregar foreign keys después de crear la tabla
         Schema::table('medicamentos_controlados_movimientos', function (Blueprint $table) {
-            $table->foreign('medicamento_controlado_id', 'fk_movmedicamento_medicamento')
+            $table->foreign('medicamento_controlado_id', 'fk_mov_medicamento')
                 ->references('id')->on('medicamentos_controlados')
                 ->onDelete('restrict')->onUpdate('restrict');
 
-            $table->foreign('user_id', 'fk_movmedicamento_user')
+            $table->foreign('user_id', 'fk_mov_user')
                 ->references('id')->on('usuario')
                 ->onDelete('set null')->onUpdate('restrict');
         });
@@ -83,6 +72,5 @@ class CreateMedicamentosControladosMovimientosTable extends Migration
     public function down()
     {
         Schema::dropIfExists('medicamentos_controlados_movimientos');
-      
     }
 }
