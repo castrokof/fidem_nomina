@@ -114,6 +114,7 @@ Route::group(['prefix' => 'admin', 'namespace' => 'Admin', 'middleware' => ['aut
     Route::get('medicamento-controlado-movimiento/estadisticas', 'MedicamentoControladoMovimientoController@obtenerEstadisticas')->name('obtener_estadisticas_movimientos');
     Route::post('medicamento-controlado-movimiento/{id}/anular', 'MedicamentoControladoMovimientoController@anular')->name('anular_medicamento_controlado_movimiento');
     Route::get('medicamento-controlado-movimiento/{id}', 'MedicamentoControladoMovimientoController@mostrar')->name('mostrar_medicamento_controlado_movimiento');
+    Route::get('foto-formula/{id}', 'MedicamentoControladoMovimientoController@verFotoFormula')->name('foto.formula');
 });
 
 
