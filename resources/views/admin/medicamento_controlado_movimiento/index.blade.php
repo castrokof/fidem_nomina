@@ -12,6 +12,34 @@ Movimientos de Medicamentos Controlados
         background-size: 400% 400%;
         animation: gradientBG 15s ease infinite;
     }
+
+    /* Estilos para el control responsive de DataTables */
+    table.dataTable tbody td.dtr-control {
+        position: relative;
+        text-align: center;
+        cursor: pointer;
+    }
+
+    table.dataTable tbody td.dtr-control:before {
+        display: inline-block;
+        color: rgba(0, 188, 212, 0.9);
+        content: '⊕';
+        font-size: 18px;
+        font-weight: bold;
+        line-height: 1;
+        text-shadow: 0 0 5px rgba(0, 188, 212, 0.5);
+    }
+
+    table.dataTable tbody tr.parent td.dtr-control:before {
+        content: '⊖';
+        color: rgba(255, 152, 0, 0.9);
+        text-shadow: 0 0 5px rgba(255, 152, 0, 0.5);
+    }
+
+    table.dataTable tbody td.dtr-control:hover:before {
+        transform: scale(1.2);
+        transition: transform 0.2s ease;
+    }
 </style>
 @endsection
 
@@ -164,6 +192,7 @@ Movimientos de Medicamentos Controlados
                         <table class="table glass-table table-hover table-sm" id="tabla-movimientos">
                             <thead>
                                 <tr>
+                                    <th width="3%"></th>
                                     <th width="8%"><i class="fas fa-calendar"></i> Fecha</th>
                                     <th width="18%"><i class="fas fa-capsules"></i> Medicamento</th>
                                     <th width="8%" class="text-center"><i class="fas fa-exchange-alt"></i> Tipo</th>
@@ -181,6 +210,33 @@ Movimientos de Medicamentos Controlados
                         </table>
                     </div>
                 </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal para ver foto de fórmula -->
+<div class="modal fade" id="modal-foto-formula" tabindex="-1" role="dialog" aria-labelledby="modalFotoFormulaLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg modal-dialog-centered" role="document">
+        <div class="modal-content" style="background: rgba(255, 255, 255, 0.95); backdrop-filter: blur(10px); border-radius: 15px; border: 1px solid rgba(255, 255, 255, 0.3);">
+            <div class="modal-header" style="border-bottom: 1px solid rgba(0, 0, 0, 0.1);">
+                <h5 class="modal-title" id="modal-foto-formula-title">
+                    <i class="fas fa-image mr-2"></i>Foto Fórmula
+                </h5>
+                <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body text-center" style="padding: 20px;">
+                <img id="modal-foto-formula-img" src="" alt="Foto Fórmula" class="img-fluid" style="max-height: 70vh; border-radius: 10px; box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);">
+            </div>
+            <div class="modal-footer" style="border-top: 1px solid rgba(0, 0, 0, 0.1);">
+                <a id="modal-foto-formula-download" href="" download class="btn btn-success btn-sm">
+                    <i class="fas fa-download mr-1"></i>Descargar
+                </a>
+                <button type="button" class="btn btn-secondary btn-sm" data-dismiss="modal">
+                    <i class="fas fa-times mr-1"></i>Cerrar
+                </button>
             </div>
         </div>
     </div>
@@ -272,10 +328,15 @@ $(document).ready(function() {
         language: idioma_espanol,
         processing: true,
         serverSide: true,
-        responsive: true,
+        responsive: {
+            details: {
+                type: 'column',
+                target: 0
+            }
+        },
         lengthMenu: [[10, 25, 50, 100, -1], [10, 25, 50, 100, "Todos"]],
         pageLength: 25,
-        order: [[0, 'desc']],
+        order: [[1, 'desc']],
         ajax: {
             url: "{{ route('medicamento_controlado_movimiento') }}",
             type: 'GET',
@@ -287,6 +348,13 @@ $(document).ready(function() {
             }
         },
         columns: [
+            {
+                className: 'dtr-control',
+                orderable: false,
+                data: null,
+                defaultContent: '',
+                width: '3%'
+            },
             { data: 'fecha', name: 'fecha', width: '8%' },
             { data: 'medicamento', name: 'medicamentoControlado.nombre', width: '18%', orderable: false },
             { data: 'tipo_movimiento', name: 'tipo_movimiento', width: '8%', className: 'text-center' },
@@ -308,7 +376,7 @@ $(document).ready(function() {
                 titleAttr: 'Copiar',
                 className: 'btn btn-secondary btn-sm',
                 exportOptions: {
-                    columns: [0, 1, 2, 3, 4, 5, 6, 7]
+                    columns: [1, 2, 3, 4, 5, 6, 7, 8]
                 }
             },
             {
@@ -318,7 +386,7 @@ $(document).ready(function() {
                 className: 'btn btn-success btn-sm',
                 title: 'Movimientos de Medicamentos Controlados',
                 exportOptions: {
-                    columns: [0, 1, 2, 3, 4, 5, 6, 7]
+                    columns: [1, 2, 3, 4, 5, 6, 7, 8]
                 }
             },
             {
@@ -328,7 +396,7 @@ $(document).ready(function() {
                 className: 'btn btn-info btn-sm',
                 title: 'Movimientos de Medicamentos Controlados',
                 exportOptions: {
-                    columns: [0, 1, 2, 3, 4, 5, 6, 7]
+                    columns: [1, 2, 3, 4, 5, 6, 7, 8]
                 }
             },
             {
@@ -340,7 +408,7 @@ $(document).ready(function() {
                 pageSize: 'LEGAL',
                 title: 'Movimientos de Medicamentos Controlados',
                 exportOptions: {
-                    columns: [0, 1, 2, 3, 4, 5, 6, 7]
+                    columns: [1, 2, 3, 4, 5, 6, 7, 8]
                 },
                 customize: function(doc) {
                     doc.defaultStyle.fontSize = 8;
@@ -467,6 +535,30 @@ $(document).ready(function() {
                 });
             }
         });
+    });
+
+    // =====================================================
+    // VER FOTO EN MODAL
+    // =====================================================
+    $(document).on('click', '.btn-ver-foto', function() {
+        var fotoUrl = $(this).data('foto-url');
+        var movimientoId = $(this).data('movimiento-id');
+
+        // Actualizar la imagen en el modal
+        $('#modal-foto-formula-img').attr('src', fotoUrl);
+        $('#modal-foto-formula-title').text('Foto Fórmula - Movimiento #' + movimientoId);
+
+        // Actualizar el botón de descarga
+        $('#modal-foto-formula-download').attr('href', fotoUrl);
+
+        // Mostrar el modal
+        $('#modal-foto-formula').modal('show');
+    });
+
+    // Limpiar imagen cuando se cierra el modal
+    $('#modal-foto-formula').on('hidden.bs.modal', function() {
+        $('#modal-foto-formula-img').attr('src', '');
+        $('#modal-foto-formula-download').attr('href', '');
     });
 
 });
