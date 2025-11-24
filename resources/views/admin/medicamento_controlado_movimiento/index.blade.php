@@ -12,6 +12,34 @@ Movimientos de Medicamentos Controlados
         background-size: 400% 400%;
         animation: gradientBG 15s ease infinite;
     }
+
+    /* Estilos para el control responsive de DataTables */
+    table.dataTable tbody td.dtr-control {
+        position: relative;
+        text-align: center;
+        cursor: pointer;
+    }
+
+    table.dataTable tbody td.dtr-control:before {
+        display: inline-block;
+        color: rgba(0, 188, 212, 0.9);
+        content: '⊕';
+        font-size: 18px;
+        font-weight: bold;
+        line-height: 1;
+        text-shadow: 0 0 5px rgba(0, 188, 212, 0.5);
+    }
+
+    table.dataTable tbody tr.parent td.dtr-control:before {
+        content: '⊖';
+        color: rgba(255, 152, 0, 0.9);
+        text-shadow: 0 0 5px rgba(255, 152, 0, 0.5);
+    }
+
+    table.dataTable tbody td.dtr-control:hover:before {
+        transform: scale(1.2);
+        transition: transform 0.2s ease;
+    }
 </style>
 @endsection
 
@@ -164,6 +192,7 @@ Movimientos de Medicamentos Controlados
                         <table class="table glass-table table-hover table-sm" id="tabla-movimientos">
                             <thead>
                                 <tr>
+                                    <th width="3%"></th>
                                     <th width="8%"><i class="fas fa-calendar"></i> Fecha</th>
                                     <th width="18%"><i class="fas fa-capsules"></i> Medicamento</th>
                                     <th width="8%" class="text-center"><i class="fas fa-exchange-alt"></i> Tipo</th>
@@ -299,10 +328,15 @@ $(document).ready(function() {
         language: idioma_espanol,
         processing: true,
         serverSide: true,
-        responsive: true,
+        responsive: {
+            details: {
+                type: 'column',
+                target: 0
+            }
+        },
         lengthMenu: [[10, 25, 50, 100, -1], [10, 25, 50, 100, "Todos"]],
         pageLength: 25,
-        order: [[0, 'desc']],
+        order: [[1, 'desc']],
         ajax: {
             url: "{{ route('medicamento_controlado_movimiento') }}",
             type: 'GET',
@@ -314,6 +348,13 @@ $(document).ready(function() {
             }
         },
         columns: [
+            {
+                className: 'dtr-control',
+                orderable: false,
+                data: null,
+                defaultContent: '',
+                width: '3%'
+            },
             { data: 'fecha', name: 'fecha', width: '8%' },
             { data: 'medicamento', name: 'medicamentoControlado.nombre', width: '18%', orderable: false },
             { data: 'tipo_movimiento', name: 'tipo_movimiento', width: '8%', className: 'text-center' },
@@ -335,7 +376,7 @@ $(document).ready(function() {
                 titleAttr: 'Copiar',
                 className: 'btn btn-secondary btn-sm',
                 exportOptions: {
-                    columns: [0, 1, 2, 3, 4, 5, 6, 7]
+                    columns: [1, 2, 3, 4, 5, 6, 7, 8]
                 }
             },
             {
@@ -345,7 +386,7 @@ $(document).ready(function() {
                 className: 'btn btn-success btn-sm',
                 title: 'Movimientos de Medicamentos Controlados',
                 exportOptions: {
-                    columns: [0, 1, 2, 3, 4, 5, 6, 7]
+                    columns: [1, 2, 3, 4, 5, 6, 7, 8]
                 }
             },
             {
@@ -355,7 +396,7 @@ $(document).ready(function() {
                 className: 'btn btn-info btn-sm',
                 title: 'Movimientos de Medicamentos Controlados',
                 exportOptions: {
-                    columns: [0, 1, 2, 3, 4, 5, 6, 7]
+                    columns: [1, 2, 3, 4, 5, 6, 7, 8]
                 }
             },
             {
@@ -367,7 +408,7 @@ $(document).ready(function() {
                 pageSize: 'LEGAL',
                 title: 'Movimientos de Medicamentos Controlados',
                 exportOptions: {
-                    columns: [0, 1, 2, 3, 4, 5, 6, 7]
+                    columns: [1, 2, 3, 4, 5, 6, 7, 8]
                 },
                 customize: function(doc) {
                     doc.defaultStyle.fontSize = 8;
