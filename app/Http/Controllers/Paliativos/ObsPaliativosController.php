@@ -125,18 +125,7 @@ class ObsPaliativosController extends Controller
 
             ObsPaliativos::create($request->all());
 
-         //   if ($request->type_obs == 'EGRESO') {
-         //       $profesional = BasePaliativos::findOrFail($request->pac_id);
-         //       $profesional->update([
-           //         'state' => $request->type_obs
-         //       ]);
-
-         //   }
-
-          //  if ($request->type_obs == 'EGRESO') {
-             //   return response()->json(['success' => 'okEgreso']);
-         //   }
-
+         
             return response()->json(['success' => 'ok']);
         }
     }

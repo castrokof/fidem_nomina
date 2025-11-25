@@ -19,8 +19,8 @@
                     <th>Aux David</th>
                     <th>Aux Deiby</th>
                     <th>Aux Nicolas</th>
-                    <th>Enf Claudia</th>
-                    <th>Enf Lorena</th>
+                    <th>Aux Valentina</th>
+                    <th>Enf Nn</th>
                     <th>Aux Gerald</th>
                     <th>Estado</th>
                     <th>tipo</th>
@@ -30,8 +30,8 @@
                     <th>Dias David</th>
                     <th>Dias Deiby</th>
                     <th>Dias Nicolas</th>
-                    <th>Dias Claudia</th>
-                    <th>Dias Lorena</th>
+                    <th>Dias Valentina</th>
+                    <th>Dias Nn</th>
                     <th>Dias Gerald</th>
                     
 

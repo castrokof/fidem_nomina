@@ -64,6 +64,7 @@ class Kernel extends HttpKernel
         'superAnalista' => \App\Http\Middleware\PermisoAnalista::class,
         'superPsicologica' => \App\Http\Middleware\PermisoPsicologia::class,
         'pruebaava' => \App\Http\Middleware\PermisoPruebaAva::class,
+        'farmacia' => \App\Http\Middleware\PermisoFarmacia::class,
         'signed' => \Illuminate\Routing\Middleware\ValidateSignature::class,
         'throttle' => \Illuminate\Routing\Middleware\ThrottleRequests::class,
         
