@@ -16,9 +16,11 @@ class PermisoFarmacia
      */
     public function handle(Request $request, Closure $next)
     {
-         if ((session()->get('rol_nombre') == ('administrador')) || (session()->get('rol_nombre') == ('farmacia')))
+         if ((session()->get('rol_nombre') == ('administrador')) || (session()->get('rol_nombre') == ('farmacia'))){
 
         return $next($request);
+
+         }
 
         abort(403, "No tienes autorización para ingresar.");
     }

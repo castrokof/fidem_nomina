@@ -66,7 +66,12 @@ class LoginController extends Controller
            $user->setSession();
             return redirect('consultar_evolucion');
 
-        }{
+        }else if ($roles1->id == 7 && $useractivo >= 1) {
+           $user->setSession();
+            return redirect('admin/medicamento-controlado');
+
+        
+        }else{
             $this->guard()->logout();
             $request->session()->invalidate();
             return redirect('seguridad/login')->withErrors(['error'=>'Este usuario no esta activo y no tiene rol ']);
