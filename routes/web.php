@@ -125,7 +125,23 @@ Route::group(['middleware' => ['auth']], function () {
     Route::put('empleado/{id}', 'Nomina\EmpleadosController@update')->name('actualizar_empleado')->middleware('superAnalista');
     Route::get('select_emp', 'Nomina\EmpleadosController@select')->name('select_emp');
 
-   /* RUTAS DE EMPLEADO */
+   /* RUTAS DE CONTRATOS */
+
+   Route::get('contratos', 'Nomina\ContratoController@index')->name('contratos')->middleware('superAnalista');
+   Route::post('contratos', 'Nomina\ContratoController@store')->name('guardar_contrato')->middleware('superAnalista');
+   Route::get('contratos/{id}/editar', 'Nomina\ContratoController@edit')->name('editar_contrato')->middleware('superAnalista');
+   Route::put('contratos/{id}', 'Nomina\ContratoController@update')->name('actualizar_contrato')->middleware('superAnalista');
+   Route::delete('contratos/{id}', 'Nomina\ContratoController@destroy')->name('eliminar_contrato')->middleware('superAnalista');
+
+   /* RUTAS DE NOVEDADES DE EMPLEADOS */
+
+   Route::get('empleados-novedades', 'Nomina\EmpleadosNovedadesController@index')->name('empleados_novedades')->middleware('superAnalista');
+   Route::post('empleados-novedades', 'Nomina\EmpleadosNovedadesController@store')->name('guardar_empleado_novedad')->middleware('superAnalista');
+   Route::get('empleados-novedades/{id}/editar', 'Nomina\EmpleadosNovedadesController@edit')->name('editar_empleado_novedad')->middleware('superAnalista');
+   Route::put('empleados-novedades/{id}', 'Nomina\EmpleadosNovedadesController@update')->name('actualizar_empleado_novedad')->middleware('superAnalista');
+   Route::delete('empleados-novedades/{id}', 'Nomina\EmpleadosNovedadesController@destroy')->name('eliminar_empleado_novedad')->middleware('superAnalista');
+
+   /* RUTAS DE NOVEDADES DE NOMINA (ANTERIOR) */
 
    Route::get('novedades', 'Nomina\NovedadesController@index')->name('novedades')->middleware('superAnalista');
    Route::post('novedades', 'Nomina\NovedadesController@store')->name('guardar_novedades')->middleware('superAnalista');
