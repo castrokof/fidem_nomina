@@ -125,6 +125,16 @@ Route::group(['middleware' => ['auth']], function () {
     Route::put('empleado/{id}', 'Nomina\EmpleadosController@update')->name('actualizar_empleado')->middleware('superAnalista');
     Route::get('select_emp', 'Nomina\EmpleadosController@select')->name('select_emp');
 
+    /* RUTAS DE HISTORIAL DE SALARIOS */
+    Route::prefix('empleados/{empleado_id}')->name('empleados.')->middleware('superAnalista')->group(function () {
+        Route::get('salary-history', 'Nomina\SalaryHistoryController@index')->name('salary-history.index');
+        Route::get('salary-history/create', 'Nomina\SalaryHistoryController@create')->name('salary-history.create');
+        Route::post('salary-history', 'Nomina\SalaryHistoryController@store')->name('salary-history.store');
+        Route::get('salary-history/{id}', 'Nomina\SalaryHistoryController@show')->name('salary-history.show');
+        Route::get('salary-history-ajax', 'Nomina\SalaryHistoryController@getHistory')->name('salary-history.ajax');
+        Route::post('salary-at-date', 'Nomina\SalaryHistoryController@getSalaryAtDate')->name('salary-at-date');
+    });
+
    /* RUTAS DE CONTRATOS */
 
    Route::get('contratos', 'Nomina\ContratoController@index')->name('contratos')->middleware('superAnalista');
