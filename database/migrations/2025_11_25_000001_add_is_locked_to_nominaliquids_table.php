@@ -14,7 +14,7 @@ class AddIsLockedToNominaliquidsTable extends Migration
     public function up()
     {
         Schema::table('nominaliquids', function (Blueprint $table) {
-            $table->boolean('is_locked')->default(false)->after('activo');
+            $table->boolean('is_locked')->default(false);
         });
     }
 
