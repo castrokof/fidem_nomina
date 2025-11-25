@@ -19,6 +19,7 @@
     @include('nomina.empleados.tablas.tablaIndexEmpleados')
     @include('nomina.empleados.modal.modalEmpleado')
     @include('nomina.empleados.modal.modalContrato')
+    @include('nomina.empleados.modal.modalNovedades')
 @endsection
 
 
@@ -859,10 +860,210 @@
 
             });
 
+            // ========== FUNCIONALIDAD DE NOVEDADES ==========
 
+            // Abrir modal de novedades
+            $(document).on('click', '.addnovedad', function() {
+                var id = $(this).attr('id');
+                $('#form-novedad')[0].reset();
+                $('#empleado_id_novedad').val(id);
 
+                $.ajax({
+                    url: "empleado/" + id + "/editar",
+                    dataType: "json",
+                    success: function(data) {
+                        $('.card-title-novedad').text("Novedades: " + data.empleado.pnombre + " " + data.empleado.papellido);
+                        $('#empleado-info-novedad').text(data.empleado.pnombre + " " + data.empleado.papellido + " - " + data.empleado.documento);
+                        $('#action_novedad').val('Add');
 
+                        // Cargar tabla de novedades del empleado
+                        if ($.fn.DataTable.isDataTable('#tabla-novedades-empleado')) {
+                            $('#tabla-novedades-empleado').DataTable().destroy();
+                        }
 
+                        $('#tabla-novedades-empleado').DataTable({
+                            language: idioma_espanol,
+                            processing: true,
+                            serverSide: true,
+                            ajax: {
+                                url: "{{ route('empleados_novedades') }}",
+                                data: { empleado_id: id }
+                            },
+                            columns: [
+                                { data: 'action', name: 'action', orderable: false },
+                                { data: 'tipo_badge', name: 'tipo_novedad' },
+                                { data: 'fecha_inicio', name: 'fecha_inicio' },
+                                { data: 'fecha_fin', name: 'fecha_fin' },
+                                { data: 'dias', name: 'dias' },
+                                { data: 'valor', name: 'valor' },
+                                { data: 'estado_badge', name: 'estado' }
+                            ],
+                            dom: 't'
+                        });
+
+                        $('#modal-novedad').modal('show');
+                    }
+                }).fail(function(jqXHR, textStatus, errorThrown) {
+                    if (jqXHR.status === 403) {
+                        Swal.fire({
+                            icon: 'error',
+                            title: 'No tienes permisos para realizar esta acción',
+                            showConfirmButton: true
+                        });
+                    }
+                });
+            });
+
+            // Calcular días automáticamente
+            $('#fecha_inicio_novedad, #fecha_fin_novedad').change(function() {
+                var fecha_inicio = $('#fecha_inicio_novedad').val();
+                var fecha_fin = $('#fecha_fin_novedad').val();
+
+                if (fecha_inicio && fecha_fin) {
+                    var inicio = new Date(fecha_inicio);
+                    var fin = new Date(fecha_fin);
+                    var dias = Math.floor((fin - inicio) / (1000 * 60 * 60 * 24)) + 1;
+                    $('#dias_novedad').val(dias);
+                }
+            });
+
+            // Guardar novedad
+            $(document).on('click', '.addnovedad-empleado', function(event) {
+                event.preventDefault();
+                var url = '';
+                var method = '';
+                var text = '';
+
+                if ($('#action_novedad').val() == 'Add') {
+                    text = "Estás por crear una novedad"
+                    url = "{{ route('guardar_empleado_novedad') }}";
+                    method = 'post';
+                }
+
+                if ($('#action_novedad').val() == 'Edit') {
+                    text = "Estás por actualizar una novedad"
+                    var updateid = $('#hidden_id_novedad').val();
+                    url = "empleados-novedades/" + updateid;
+                    method = 'put';
+                }
+
+                Swal.fire({
+                    title: "¿Estás seguro?",
+                    text: text,
+                    icon: "question",
+                    showCancelButton: true,
+                    showCloseButton: true,
+                    confirmButtonText: 'Aceptar',
+                }).then((result) => {
+                    if (result.value) {
+                        $.ajax({
+                            url: url,
+                            method: method,
+                            data: {
+                                _token: '{{ csrf_token() }}',
+                                tipo_novedad: $('#tipo_novedad').val(),
+                                fecha_inicio: $('#fecha_inicio_novedad').val(),
+                                fecha_fin: $('#fecha_fin_novedad').val(),
+                                dias: $('#dias_novedad').val(),
+                                valor: $('#valor_novedad').val(),
+                                observacion: $('#observacion_novedad').val(),
+                                documento_soporte: $('#documento_soporte_novedad').val(),
+                                estado: $('#estado_novedad').val(),
+                                empleado_id: $('#empleado_id_novedad').val()
+                            },
+                            dataType: "json",
+                            success: function(data) {
+                                if (data.success == 'ok') {
+                                    $('#form-novedad')[0].reset();
+                                    $('#tabla-novedades-empleado').DataTable().ajax.reload();
+                                    Swal.fire({
+                                        icon: 'success',
+                                        title: 'Novedad creada correctamente',
+                                        showConfirmButton: false,
+                                        timer: 1500
+                                    });
+                                } else if (data.success == 'ok1') {
+                                    $('#form-novedad')[0].reset();
+                                    $('#tabla-novedades-empleado').DataTable().ajax.reload();
+                                    $('#action_novedad').val('Add');
+                                    Swal.fire({
+                                        icon: 'success',
+                                        title: 'Novedad actualizada correctamente',
+                                        showConfirmButton: false,
+                                        timer: 1500
+                                    });
+                                }
+                            }
+                        }).fail(function(jqXHR, textStatus, errorThrown) {
+                            if (jqXHR.status === 422) {
+                                var error = jqXHR.responseJSON;
+                                var errores = [];
+                                $.each(error.errors, function(i, item) {
+                                    errores.push(item + '<br>');
+                                });
+                                Swal.fire({
+                                    icon: 'error',
+                                    title: 'El formulario contiene errores',
+                                    html: errores.join(''),
+                                    showConfirmButton: true
+                                });
+                            }
+                        });
+                    }
+                });
+            });
+
+            // Editar novedad
+            $(document).on('click', '.editnovedad', function() {
+                var id = $(this).attr('id');
+                $.ajax({
+                    url: "empleados-novedades/" + id + "/editar",
+                    dataType: "json",
+                    success: function(data) {
+                        $('#tipo_novedad').val(data.novedad.tipo_novedad);
+                        $('#fecha_inicio_novedad').val(data.novedad.fecha_inicio);
+                        $('#fecha_fin_novedad').val(data.novedad.fecha_fin);
+                        $('#dias_novedad').val(data.novedad.dias);
+                        $('#valor_novedad').val(data.novedad.valor);
+                        $('#observacion_novedad').val(data.novedad.observacion);
+                        $('#documento_soporte_novedad').val(data.novedad.documento_soporte);
+                        $('#estado_novedad').val(data.novedad.estado);
+                        $('#hidden_id_novedad').val(id);
+                        $('#action_novedad').val('Edit');
+                    }
+                });
+            });
+
+            // Eliminar novedad
+            $(document).on('click', '.deletenovedad', function() {
+                var id = $(this).attr('id');
+                Swal.fire({
+                    title: "¿Estás seguro?",
+                    text: "Estás por eliminar esta novedad",
+                    icon: "warning",
+                    showCancelButton: true,
+                    confirmButtonText: 'Sí, eliminar',
+                    cancelButtonText: 'Cancelar'
+                }).then((result) => {
+                    if (result.value) {
+                        $.ajax({
+                            url: "empleados-novedades/" + id,
+                            method: 'delete',
+                            data: { _token: '{{ csrf_token() }}' },
+                            dataType: "json",
+                            success: function(data) {
+                                $('#tabla-novedades-empleado').DataTable().ajax.reload();
+                                Swal.fire({
+                                    icon: 'success',
+                                    title: 'Novedad eliminada correctamente',
+                                    showConfirmButton: false,
+                                    timer: 1500
+                                });
+                            }
+                        });
+                    }
+                });
+            });
 
 
         });

@@ -50,6 +50,17 @@ class Empleados extends Model
     {
         return $this->hasMany(nominaliquid::class, 'empleado_id');
     }
+
+    public function contratos()
+    {
+        return $this->hasMany('App\Models\Models\Nomina\Contrato', 'empleadosc_id');
+    }
+
+    public function novedades()
+    {
+        return $this->hasMany(EmpleadosNovedades::class, 'empleado_id');
+    }
+
     protected function serializeDate(DateTimeInterface $date)
     {
         return $date->format('Y-m-d H:i:s');
