@@ -327,7 +327,10 @@ if($request->supervisor != null){
             ->where([
                      ['id', '=', $id],
                     ])
-            ->update(['supervisor' => $request->supervisor]);
+            ->update([
+                'supervisor' => $request->supervisor,
+                'is_locked' => true  // Bloquear la nómina después de supervisar
+            ]);
 
          }
 
@@ -459,7 +462,8 @@ if($request->supervisor != null){
                'date_endcontrat' => $empleado->date_endcontrat,
                'empleado_id' => $id,
                'user_id'  => $user_id,
-               'supervisor'  => $request->supervisor
+               'supervisor'  => $request->supervisor,
+               'is_locked' => false  // Iniciar desbloqueada
 
                ]);
 
@@ -662,6 +666,7 @@ if($request->supervisor != null){
             'observation'  => $request->observation,
             'hours' => $hours,
             'user_id'  => $request->user_id,
+            'is_locked' => false  // Iniciar desbloqueada
 
             ]);
 
@@ -714,6 +719,15 @@ if($request->supervisor != null){
      */
     public function update(Request $request, $id)
     {
+        // Verificar si la nómina está bloqueada
+        $nominaliquid = nominaliquid::findOrFail($id);
+
+        if($nominaliquid->is_locked) {
+            return response()->json([
+                'errors' => ['Esta nómina está bloqueada y no puede ser modificada. Contacte al administrador si necesita hacer cambios.'],
+                'locked' => true
+            ]);
+        }
 
         $rules = array(
             'date_hour_initial_turn'  => 'required',
@@ -761,8 +775,7 @@ if($request->supervisor != null){
 
 
 
-            nominaliquid::findOrFail($id)
-            ->update([
+            $nominaliquid->update([
                 'date_hour_initial_turn'  => $request->date_hour_initial_turn,
                 'date_hour_end_turn'  => $request->date_hour_end_turn,
                 'working_type'  => $request->working_type,
@@ -787,6 +800,21 @@ if($request->supervisor != null){
      */
     public function destroy($id)
     {
-        //
+        if(request()->ajax()){
+            // Verificar si la nómina está bloqueada
+            $nominaliquid = nominaliquid::findOrFail($id);
+
+            if($nominaliquid->is_locked) {
+                return response()->json([
+                    'errors' => ['Esta nómina está bloqueada y no puede ser eliminada. Contacte al administrador si necesita hacer cambios.'],
+                    'locked' => true
+                ]);
+            }
+
+            // Si no está bloqueada, permitir la eliminación
+            $nominaliquid->delete();
+
+            return response()->json(['success' => 'ok']);
+        }
     }
 }

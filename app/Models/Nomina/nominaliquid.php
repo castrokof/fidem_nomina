@@ -45,7 +45,8 @@ class nominaliquid extends Model
         'date_incontrat',
         'date_endcontrat',
         'empleado_id',
-        'activo'
+        'activo',
+        'is_locked'
     ];
 
 
