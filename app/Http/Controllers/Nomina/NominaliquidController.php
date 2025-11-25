@@ -4,6 +4,7 @@ namespace App\Http\Controllers\Nomina;
 use App\Http\Controllers\Controller;
 use App\Models\nomina\Empleados;
 use App\Models\Nomina\nominaliquid;
+use App\Services\NovedadesNominaService;
 use Carbon\Carbon;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
@@ -431,7 +432,23 @@ if($request->supervisor != null){
                     
                }
 
-            nominaliquid::create([
+            // Calcular novedades del empleado para el período
+            $novedadesService = new NovedadesNominaService();
+            $novedadesCalculo = $novedadesService->calcularNovedades(
+                $id,
+                $request->date_hour_initial_turn,
+                $request->date_hour_end_turn,
+                null // No pasamos ID todavía porque no existe el registro
+            );
+
+            // Calcular días trabajados efectivos
+            $diasTrabajados = $novedadesService->calcularDiasTrabajados(
+                15, // Días de la quincena
+                $novedadesCalculo['dias_afectados'],
+                $novedadesCalculo['novedades_detalle']
+            );
+
+            $nomina = nominaliquid::create([
                'date_hour_initial_turn'  => $request->date_hour_initial_turn,
                'date_hour_end_turn'  => $request->date_hour_end_turn,
                'working_type'  => $request->working_type,
@@ -463,9 +480,24 @@ if($request->supervisor != null){
                'empleado_id' => $id,
                'user_id'  => $user_id,
                'supervisor'  => $request->supervisor,
-               'is_locked' => false  // Iniciar desbloqueada
-
+               'is_locked' => false,  // Iniciar desbloqueada
+               // Campos de novedades
+               'descuento_incapacidad' => $novedadesCalculo['descuento_incapacidad'],
+               'descuento_suspension' => $novedadesCalculo['descuento_suspension'],
+               'pago_vacaciones' => $novedadesCalculo['pago_vacaciones'],
+               'otros_descuentos_novedades' => $novedadesCalculo['otros_descuentos'],
+               'otros_bonos_novedades' => $novedadesCalculo['otros_bonos'],
+               'novedades_aplicadas' => json_encode($novedadesCalculo['novedades_detalle']),
+               'dias_trabajados' => $diasTrabajados
                ]);
+
+            // Ahora registrar las novedades aplicadas con el ID de la nómina
+            $novedadesService->calcularNovedades(
+                $id,
+                $request->date_hour_initial_turn,
+                $request->date_hour_end_turn,
+                $nomina->id
+            );
 
 
             $usuariosn[] = $id ;
@@ -816,5 +848,275 @@ if($request->supervisor != null){
 
             return response()->json(['success' => 'ok']);
         }
+    }
+
+    /**
+     * Validar y bloquear nómina
+     */
+    public function validarNomina(Request $request)
+    {
+        if($request->ajax()) {
+            $quincena = $request->quincena;
+            $ips = $request->ips;
+
+            // Obtener registros de nómina no bloqueados
+            $nominas = nominaliquid::where('quincena', $quincena)
+                ->where('is_locked', false)
+                ->when($ips, function($query) use ($ips) {
+                    return $query->join('empleados', 'nominaliquids.empleado_id', '=', 'empleados.id')
+                        ->where('empleados.ips', $ips);
+                })
+                ->with(['empleadoid', 'novedadesAplicadas'])
+                ->get();
+
+            $resumen = [
+                'total_registros' => $nominas->count(),
+                'total_salarios' => $nominas->sum('salary'),
+                'total_descuentos_incapacidad' => $nominas->sum('descuento_incapacidad'),
+                'total_descuentos_suspension' => $nominas->sum('descuento_suspension'),
+                'total_pago_vacaciones' => $nominas->sum('pago_vacaciones'),
+                'total_otros_descuentos' => $nominas->sum('otros_descuentos_novedades'),
+                'total_otros_bonos' => $nominas->sum('otros_bonos_novedades'),
+                'nominas' => $nominas
+            ];
+
+            return response()->json($resumen);
+        }
+
+        return view('nomina.nomina_fijos.validar');
+    }
+
+    /**
+     * Bloquear nómina por quincena
+     */
+    public function bloquearNomina(Request $request)
+    {
+        if($request->ajax()) {
+            $quincena = $request->quincena;
+            $ips = $request->ips;
+
+            $query = nominaliquid::where('quincena', $quincena)
+                ->where('is_locked', false);
+
+            if($ips) {
+                $query->join('empleados', 'nominaliquids.empleado_id', '=', 'empleados.id')
+                    ->where('empleados.ips', $ips);
+            }
+
+            $updated = $query->update([
+                'is_locked' => true,
+                'supervisor' => $request->session()->get('usuario_nombre', 'Sistema')
+            ]);
+
+            return response()->json([
+                'success' => 'ok',
+                'message' => "Se bloquearon {$updated} registros de nómina",
+                'registros_bloqueados' => $updated
+            ]);
+        }
+    }
+
+    /**
+     * Desbloquear nómina (solo administradores)
+     */
+    public function desbloquearNomina(Request $request)
+    {
+        if($request->ajax()) {
+            $quincena = $request->quincena;
+            $motivo = $request->motivo;
+
+            // Solo roles 1 (admin) y 4 pueden desbloquear
+            if(!in_array($request->session()->get('rol_id'), [1, 4])) {
+                return response()->json([
+                    'error' => 'No tiene permisos para desbloquear nóminas',
+                    'forbidden' => true
+                ], 403);
+            }
+
+            $updated = nominaliquid::where('quincena', $quincena)
+                ->where('is_locked', true)
+                ->update([
+                    'is_locked' => false,
+                    'observation' => DB::raw("CONCAT(COALESCE(observation, ''), ' [DESBLOQUEADA: {$motivo}]')")
+                ]);
+
+            return response()->json([
+                'success' => 'ok',
+                'message' => "Se desbloquearon {$updated} registros de nómina",
+                'registros_desbloqueados' => $updated
+            ]);
+        }
+    }
+
+    /**
+     * Exportar nómina a Excel
+     */
+    public function exportarExcel(Request $request)
+    {
+        $quincena = $request->quincena;
+        $ips = $request->ips;
+
+        $nominas = nominaliquid::where('quincena', $quincena)
+            ->when($ips, function($query) use ($ips) {
+                return $query->join('empleados', 'nominaliquids.empleado_id', '=', 'empleados.id')
+                    ->where('empleados.ips', $ips)
+                    ->select('nominaliquids.*');
+            })
+            ->with(['empleadoid'])
+            ->get();
+
+        // Crear archivo Excel usando PhpSpreadsheet
+        $spreadsheet = new \PhpOffice\PhpSpreadsheet\Spreadsheet();
+        $sheet = $spreadsheet->getActiveSheet();
+
+        // Encabezados
+        $headers = [
+            'A1' => 'ID',
+            'B1' => 'Empleado',
+            'C1' => 'Documento',
+            'D1' => 'Cargo',
+            'E1' => 'Salario Base',
+            'F1' => 'Días Trabajados',
+            'G1' => 'Desc. Incapacidad',
+            'H1' => 'Desc. Suspensión',
+            'I1' => 'Pago Vacaciones',
+            'J1' => 'Otros Desc.',
+            'K1' => 'Otros Bonos',
+            'L1' => 'Total Descuentos',
+            'M1' => 'Total Bonos',
+            'N1' => 'Neto a Pagar',
+            'O1' => 'Estado'
+        ];
+
+        foreach ($headers as $cell => $value) {
+            $sheet->setCellValue($cell, $value);
+            $sheet->getStyle($cell)->getFont()->setBold(true);
+        }
+
+        // Datos
+        $row = 2;
+        foreach ($nominas as $nomina) {
+            $empleado = $nomina->empleadoid;
+            $salarioBase = $nomina->salary ?: $nomina->salary_ps;
+            $totalDescuentos = $nomina->descuento_incapacidad + $nomina->descuento_suspension + $nomina->otros_descuentos_novedades;
+            $totalBonos = $nomina->pago_vacaciones + $nomina->otros_bonos_novedades;
+            $netoAPagar = $salarioBase - $totalDescuentos + $totalBonos;
+
+            $sheet->setCellValue('A' . $row, $nomina->id);
+            $sheet->setCellValue('B' . $row, $empleado->pnombre . ' ' . $empleado->papellido);
+            $sheet->setCellValue('C' . $row, $empleado->documento);
+            $sheet->setCellValue('D' . $row, $nomina->position);
+            $sheet->setCellValue('E' . $row, $salarioBase);
+            $sheet->setCellValue('F' . $row, $nomina->dias_trabajados ?? 15);
+            $sheet->setCellValue('G' . $row, $nomina->descuento_incapacidad);
+            $sheet->setCellValue('H' . $row, $nomina->descuento_suspension);
+            $sheet->setCellValue('I' . $row, $nomina->pago_vacaciones);
+            $sheet->setCellValue('J' . $row, $nomina->otros_descuentos_novedades);
+            $sheet->setCellValue('K' . $row, $nomina->otros_bonos_novedades);
+            $sheet->setCellValue('L' . $row, $totalDescuentos);
+            $sheet->setCellValue('M' . $row, $totalBonos);
+            $sheet->setCellValue('N' . $row, $netoAPagar);
+            $sheet->setCellValue('O' . $row, $nomina->is_locked ? 'Bloqueada' : 'Activa');
+
+            $row++;
+        }
+
+        // Auto-ajustar columnas
+        foreach (range('A', 'O') as $col) {
+            $sheet->getColumnDimension($col)->setAutoSize(true);
+        }
+
+        // Descargar archivo
+        $writer = new \PhpOffice\PhpSpreadsheet\Writer\Xlsx($spreadsheet);
+        $filename = "nomina_{$quincena}_" . date('YmdHis') . ".xlsx";
+
+        header('Content-Type: application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
+        header("Content-Disposition: attachment;filename=\"{$filename}\"");
+        header('Cache-Control: max-age=0');
+
+        $writer->save('php://output');
+        exit;
+    }
+
+    /**
+     * Exportar nómina a archivo plano (TXT)
+     */
+    public function exportarPlano(Request $request)
+    {
+        $quincena = $request->quincena;
+        $ips = $request->ips;
+
+        $nominas = nominaliquid::where('quincena', $quincena)
+            ->when($ips, function($query) use ($ips) {
+                return $query->join('empleados', 'nominaliquids.empleado_id', '=', 'empleados.id')
+                    ->where('empleados.ips', $ips)
+                    ->select('nominaliquids.*');
+            })
+            ->with(['empleadoid'])
+            ->get();
+
+        $contenido = "";
+
+        // Encabezado del archivo
+        $contenido .= str_pad("NOMINA QUINCENA: {$quincena}", 150, " ") . "\n";
+        $contenido .= str_repeat("=", 150) . "\n";
+        $contenido .= str_pad("ID", 5) . "|";
+        $contenido .= str_pad("EMPLEADO", 40) . "|";
+        $contenido .= str_pad("DOCUMENTO", 15) . "|";
+        $contenido .= str_pad("BANCO", 20) . "|";
+        $contenido .= str_pad("CUENTA", 20) . "|";
+        $contenido .= str_pad("SALARIO", 12, " ", STR_PAD_LEFT) . "|";
+        $contenido .= str_pad("DESCUENTOS", 12, " ", STR_PAD_LEFT) . "|";
+        $contenido .= str_pad("BONOS", 12, " ", STR_PAD_LEFT) . "|";
+        $contenido .= str_pad("NETO", 12, " ", STR_PAD_LEFT) . "\n";
+        $contenido .= str_repeat("=", 150) . "\n";
+
+        // Datos
+        $totalSalarios = 0;
+        $totalDescuentos = 0;
+        $totalBonos = 0;
+        $totalNeto = 0;
+
+        foreach ($nominas as $nomina) {
+            $empleado = $nomina->empleadoid;
+            $nombreCompleto = trim($empleado->pnombre . ' ' . $empleado->snombre . ' ' . $empleado->papellido . ' ' . $empleado->sapellido);
+            $salarioBase = $nomina->salary ?: $nomina->salary_ps;
+            $descuentos = $nomina->descuento_incapacidad + $nomina->descuento_suspension + $nomina->otros_descuentos_novedades;
+            $bonos = $nomina->pago_vacaciones + $nomina->otros_bonos_novedades;
+            $neto = $salarioBase - $descuentos + $bonos;
+
+            $contenido .= str_pad($nomina->id, 5) . "|";
+            $contenido .= str_pad(substr($nombreCompleto, 0, 40), 40) . "|";
+            $contenido .= str_pad($empleado->documento, 15) . "|";
+            $contenido .= str_pad($nomina->name_bank ?? '', 20) . "|";
+            $contenido .= str_pad($nomina->account ?? '', 20) . "|";
+            $contenido .= str_pad(number_format($salarioBase, 2), 12, " ", STR_PAD_LEFT) . "|";
+            $contenido .= str_pad(number_format($descuentos, 2), 12, " ", STR_PAD_LEFT) . "|";
+            $contenido .= str_pad(number_format($bonos, 2), 12, " ", STR_PAD_LEFT) . "|";
+            $contenido .= str_pad(number_format($neto, 2), 12, " ", STR_PAD_LEFT) . "\n";
+
+            $totalSalarios += $salarioBase;
+            $totalDescuentos += $descuentos;
+            $totalBonos += $bonos;
+            $totalNeto += $neto;
+        }
+
+        // Totales
+        $contenido .= str_repeat("=", 150) . "\n";
+        $contenido .= str_pad("TOTALES:", 82) . "|";
+        $contenido .= str_pad(number_format($totalSalarios, 2), 12, " ", STR_PAD_LEFT) . "|";
+        $contenido .= str_pad(number_format($totalDescuentos, 2), 12, " ", STR_PAD_LEFT) . "|";
+        $contenido .= str_pad(number_format($totalBonos, 2), 12, " ", STR_PAD_LEFT) . "|";
+        $contenido .= str_pad(number_format($totalNeto, 2), 12, " ", STR_PAD_LEFT) . "\n";
+
+        // Descargar archivo
+        $filename = "nomina_{$quincena}_" . date('YmdHis') . ".txt";
+
+        header('Content-Type: text/plain');
+        header("Content-Disposition: attachment;filename=\"{$filename}\"");
+        header('Cache-Control: max-age=0');
+
+        echo $contenido;
+        exit;
     }
 }

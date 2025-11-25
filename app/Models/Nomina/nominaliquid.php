@@ -46,7 +46,14 @@ class nominaliquid extends Model
         'date_endcontrat',
         'empleado_id',
         'activo',
-        'is_locked'
+        'is_locked',
+        'descuento_incapacidad',
+        'descuento_suspension',
+        'pago_vacaciones',
+        'otros_descuentos_novedades',
+        'otros_bonos_novedades',
+        'novedades_aplicadas',
+        'dias_trabajados'
     ];
 
 
@@ -58,6 +65,11 @@ class nominaliquid extends Model
     public function empleadoid()
     {
         return $this->belongsTo(Empleados::class, 'empleado_id');
+    }
+
+    public function novedadesAplicadas()
+    {
+        return $this->hasMany(NominaNovedadesAplicadas::class, 'nominaliquid_id');
     }
 
     protected function serializeDate(DateTimeInterface $date)

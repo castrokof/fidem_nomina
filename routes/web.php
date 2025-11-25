@@ -170,11 +170,22 @@ Route::group(['middleware' => ['auth']], function () {
     Route::post('nominaf_guardar', 'Nomina\NominaliquidController@store_nominaf')->name('guardar_nomina')->middleware('superAnalista');
     Route::get('informesnominafijos', 'Nomina\NominaliquidController@informesf')->name('informesnominaf')->middleware('superAnalista');
     Route::post('informesnominafijos1', 'Nomina\NominaliquidController@informesf1')->name('informesnominaf1')->middleware('superAnalista');
+
+    /* RUTAS DE VALIDACIÓN Y BLOQUEO DE NÓMINA */
+    Route::get('nomina-validar', 'Nomina\NominaliquidController@validarNomina')->name('nomina_validar')->middleware('superAnalista');
+    Route::post('nomina-validar', 'Nomina\NominaliquidController@validarNomina')->name('nomina_validar_data')->middleware('superAnalista');
+    Route::post('nomina-bloquear', 'Nomina\NominaliquidController@bloquearNomina')->name('nomina_bloquear')->middleware('superAnalista');
+    Route::post('nomina-desbloquear', 'Nomina\NominaliquidController@desbloquearNomina')->name('nomina_desbloquear')->middleware('superAnalista');
+
+    /* RUTAS DE EXPORTACIÓN DE NÓMINA */
+    Route::get('nomina-exportar-excel', 'Nomina\NominaliquidController@exportarExcel')->name('nomina_exportar_excel')->middleware('superAnalista');
+    Route::get('nomina-exportar-plano', 'Nomina\NominaliquidController@exportarPlano')->name('nomina_exportar_plano')->middleware('superAnalista');
+
     // Route::get('nominaliquid/{id}/editar', 'Nomina\HoursxuserController@edit')->name('editar_turno')->middleware('superEditor');
     // Route::put('hoursxuser/{id}', 'Nomina\HoursxuserController@update')->name('actualizar_turno')->middleware('superEditor');
     // Route::post('liquidar', 'Nomina\HoursxuserController@supervisar')->name('liquidar');
-    
-    
+
+
     /* RUTAS DE NOMINA PS */
 
     //Route::get('nominaf1', 'Nomina\HoursxuserController@index_nominaf1')->name('nominaf1')->middleware('superEditor');
