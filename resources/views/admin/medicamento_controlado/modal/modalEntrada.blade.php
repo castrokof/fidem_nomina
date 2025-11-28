@@ -100,6 +100,47 @@
                                     </div>
                                 </div>
 
+                                <!-- Sección de campos adicionales -->
+                                <div class="row mt-3">
+                                    <div class="col-12">
+                                        <h5 style="color: #495057; font-weight: bold; border-bottom: 2px solid #4facfe; padding-bottom: 10px; margin-bottom: 20px;">
+                                            <i class="fas fa-info-circle mr-2" style="color: #4facfe;"></i>Información Adicional
+                                        </h5>
+                                    </div>
+
+                                    <div class="col-lg-6">
+                                        <div class="form-group">
+                                            <label for="entrada_fecha_vencimiento" style="color: #495057; font-weight: bold;">
+                                                <i class="fas fa-calendar-times mr-2" style="color: #4facfe;"></i>Fecha de Vencimiento
+                                            </label>
+                                            <input type="date" name="fecha_vencimiento" id="entrada_fecha_vencimiento" class="form-control" placeholder="Fecha de vencimiento" style="border: 2px solid #e0e0e0; border-radius: 8px; padding: 10px;">
+                                        </div>
+
+                                        <div class="form-group">
+                                            <label for="entrada_registro_invima" style="color: #495057; font-weight: bold;">
+                                                <i class="fas fa-certificate mr-2" style="color: #4facfe;"></i>Registro INVIMA
+                                            </label>
+                                            <input type="text" name="registro_invima" id="entrada_registro_invima" class="form-control" maxlength="100" placeholder="Número de registro INVIMA" style="border: 2px solid #e0e0e0; border-radius: 8px; padding: 10px;">
+                                        </div>
+                                    </div>
+
+                                    <div class="col-lg-6">
+                                        <div class="form-group">
+                                            <label for="entrada_lote" style="color: #495057; font-weight: bold;">
+                                                <i class="fas fa-barcode mr-2" style="color: #4facfe;"></i>Lote
+                                            </label>
+                                            <input type="text" name="lote" id="entrada_lote" class="form-control" maxlength="100" placeholder="Número de lote" style="border: 2px solid #e0e0e0; border-radius: 8px; padding: 10px;">
+                                        </div>
+
+                                        <div class="form-group">
+                                            <label for="entrada_observaciones" style="color: #495057; font-weight: bold;">
+                                                <i class="fas fa-comment-alt mr-2" style="color: #4facfe;"></i>Observaciones
+                                            </label>
+                                            <textarea name="observaciones" id="entrada_observaciones" class="form-control" rows="3" placeholder="Observaciones adicionales" style="border: 2px solid #e0e0e0; border-radius: 8px; padding: 10px;"></textarea>
+                                        </div>
+                                    </div>
+                                </div>
+
                                 <div class="row mt-4">
                                     <div class="col-12 text-center">
                                         <button type="button" class="btn btn-secondary" onclick="limpiarFormEntrada()" style="margin-right: 10px; border-radius: 8px; padding: 10px 25px;">

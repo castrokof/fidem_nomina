@@ -125,6 +125,16 @@ Route::group(['middleware' => ['auth']], function () {
     Route::put('empleado/{id}', 'Nomina\EmpleadosController@update')->name('actualizar_empleado')->middleware('superAnalista');
     Route::get('select_emp', 'Nomina\EmpleadosController@select')->name('select_emp');
 
+    /* RUTAS DE HISTORIAL DE SALARIOS */
+    Route::prefix('empleados/{empleado_id}')->name('empleados.')->middleware('superAnalista')->group(function () {
+        Route::get('salary-history', 'Nomina\SalaryHistoryController@index')->name('salary-history.index');
+        Route::get('salary-history/create', 'Nomina\SalaryHistoryController@create')->name('salary-history.create');
+        Route::post('salary-history', 'Nomina\SalaryHistoryController@store')->name('salary-history.store');
+        Route::get('salary-history/{id}', 'Nomina\SalaryHistoryController@show')->name('salary-history.show');
+        Route::get('salary-history-ajax', 'Nomina\SalaryHistoryController@getHistory')->name('salary-history.ajax');
+        Route::post('salary-at-date', 'Nomina\SalaryHistoryController@getSalaryAtDate')->name('salary-at-date');
+    });
+
    /* RUTAS DE CONTRATOS */
 
    Route::get('contratos', 'Nomina\ContratoController@index')->name('contratos')->middleware('superAnalista');
@@ -170,11 +180,22 @@ Route::group(['middleware' => ['auth']], function () {
     Route::post('nominaf_guardar', 'Nomina\NominaliquidController@store_nominaf')->name('guardar_nomina')->middleware('superAnalista');
     Route::get('informesnominafijos', 'Nomina\NominaliquidController@informesf')->name('informesnominaf')->middleware('superAnalista');
     Route::post('informesnominafijos1', 'Nomina\NominaliquidController@informesf1')->name('informesnominaf1')->middleware('superAnalista');
+
+    /* RUTAS DE VALIDACIÓN Y BLOQUEO DE NÓMINA */
+    Route::get('nomina-validar', 'Nomina\NominaliquidController@validarNomina')->name('nomina_validar')->middleware('superAnalista');
+    Route::post('nomina-validar', 'Nomina\NominaliquidController@validarNomina')->name('nomina_validar_data')->middleware('superAnalista');
+    Route::post('nomina-bloquear', 'Nomina\NominaliquidController@bloquearNomina')->name('nomina_bloquear')->middleware('superAnalista');
+    Route::post('nomina-desbloquear', 'Nomina\NominaliquidController@desbloquearNomina')->name('nomina_desbloquear')->middleware('superAnalista');
+
+    /* RUTAS DE EXPORTACIÓN DE NÓMINA */
+    Route::get('nomina-exportar-excel', 'Nomina\NominaliquidController@exportarExcel')->name('nomina_exportar_excel')->middleware('superAnalista');
+    Route::get('nomina-exportar-plano', 'Nomina\NominaliquidController@exportarPlano')->name('nomina_exportar_plano')->middleware('superAnalista');
+
     // Route::get('nominaliquid/{id}/editar', 'Nomina\HoursxuserController@edit')->name('editar_turno')->middleware('superEditor');
     // Route::put('hoursxuser/{id}', 'Nomina\HoursxuserController@update')->name('actualizar_turno')->middleware('superEditor');
     // Route::post('liquidar', 'Nomina\HoursxuserController@supervisar')->name('liquidar');
-    
-    
+
+
     /* RUTAS DE NOMINA PS */
 
     //Route::get('nominaf1', 'Nomina\HoursxuserController@index_nominaf1')->name('nominaf1')->middleware('superEditor');
@@ -385,6 +406,7 @@ Route::group(['prefix' => 'admin', 'namespace' => 'Admin', 'middleware' => ['far
     Route::get('medicamento-controlado-movimiento/crear-salida', 'MedicamentoControladoMovimientoController@crearSalida')->name('crear_salida_medicamento_controlado');
     Route::post('medicamento-controlado-movimiento/guardar', 'MedicamentoControladoMovimientoController@guardar')->name('guardar_medicamento_controlado_movimiento');
     Route::get('medicamento-controlado-movimiento/saldo/{medicamento_id}', 'MedicamentoControladoMovimientoController@obtenerSaldo')->name('obtener_saldo_medicamento');
+    Route::get('medicamento-controlado-movimiento/lotes/{medicamento_id}', 'MedicamentoControladoMovimientoController@obtenerLotesDisponibles')->name('obtener_lotes_medicamento');
     Route::get('medicamento-controlado-movimiento/estadisticas', 'MedicamentoControladoMovimientoController@obtenerEstadisticas')->name('obtener_estadisticas_movimientos');
     Route::post('medicamento-controlado-movimiento/{id}/anular', 'MedicamentoControladoMovimientoController@anular')->name('anular_medicamento_controlado_movimiento');
     Route::get('medicamento-controlado-movimiento/{id}', 'MedicamentoControladoMovimientoController@mostrar')->name('mostrar_medicamento_controlado_movimiento');

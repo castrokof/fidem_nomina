@@ -286,6 +286,64 @@ class MedicamentoControladoMovimientoController extends Controller
     }
 
     /**
+     * Obtener lotes disponibles de un medicamento ordenados por fecha de vencimiento
+     *
+     * @param  int  $medicamento_id
+     * @return \Illuminate\Http\Response
+     */
+    public function obtenerLotesDisponibles($medicamento_id)
+    {
+        // Obtener todas las entradas de este medicamento que tienen lote y no están anuladas
+        $lotes = MedicamentoControladoMovimiento::where('medicamento_controlado_id', $medicamento_id)
+            ->where('tipo_movimiento', 'entrada')
+            ->where('anulado', false)
+            ->whereNotNull('lote')
+            ->select('id', 'lote', 'fecha_vencimiento', 'registro_invima', 'entrada', 'fecha')
+            ->orderByRaw('CASE WHEN fecha_vencimiento IS NULL THEN 1 ELSE 0 END')
+            ->orderBy('fecha_vencimiento', 'asc')
+            ->orderBy('fecha', 'asc')
+            ->get();
+
+        // Para cada lote, calcular cuánto queda disponible
+        $lotesConDisponibilidad = [];
+
+        foreach ($lotes as $lote) {
+            // Calcular cuánto se ha sacado de este lote específico
+            $totalSalidas = MedicamentoControladoMovimiento::where('medicamento_controlado_id', $medicamento_id)
+                ->where('tipo_movimiento', 'salida')
+                ->where('lote_entrada_id', $lote->id)
+                ->where('anulado', false)
+                ->sum('salida');
+
+            $disponible = $lote->entrada - $totalSalidas;
+
+            // Solo incluir lotes que aún tienen stock disponible
+            if ($disponible > 0) {
+                $lotesConDisponibilidad[] = [
+                    'id' => $lote->id,
+                    'lote' => $lote->lote,
+                    'fecha_vencimiento' => $lote->fecha_vencimiento,
+                    'fecha_vencimiento_formateada' => $lote->fecha_vencimiento ? date('d/m/Y', strtotime($lote->fecha_vencimiento)) : 'Sin fecha',
+                    'registro_invima' => $lote->registro_invima ?? 'N/A',
+                    'entrada_original' => $lote->entrada,
+                    'disponible' => $disponible,
+                    'fecha_entrada' => date('d/m/Y', strtotime($lote->fecha)),
+                    // Calcular días hasta vencimiento para alertas
+                    'dias_hasta_vencimiento' => $lote->fecha_vencimiento ?
+                        \Carbon\Carbon::parse($lote->fecha_vencimiento)->diffInDays(now(), false) : null,
+                    'vence_pronto' => $lote->fecha_vencimiento &&
+                        \Carbon\Carbon::parse($lote->fecha_vencimiento)->diffInDays(now()) <= 90
+                ];
+            }
+        }
+
+        return response()->json([
+            'lotes' => $lotesConDisponibilidad,
+            'total_lotes' => count($lotesConDisponibilidad)
+        ]);
+    }
+
+    /**
      * Obtener estadísticas de movimientos con filtros
      *
      * @param  \Illuminate\Http\Request  $request

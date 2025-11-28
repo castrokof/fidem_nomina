@@ -33,6 +33,10 @@ class ValidacionMedicamentoControladoMovimiento extends FormRequest
         if ($this->tipo_movimiento == 'entrada') {
             $rules['proveedor'] = 'required|max:200';
             $rules['numero_factura'] = 'nullable|max:100';
+            $rules['fecha_vencimiento'] = 'nullable|date|after:today';
+            $rules['registro_invima'] = 'nullable|max:100';
+            $rules['lote'] = 'nullable|max:100';
+            $rules['observaciones'] = 'nullable|max:1000';
             $rules['entrada'] = 'required|integer|min:1';
         }
 
@@ -63,6 +67,11 @@ class ValidacionMedicamentoControladoMovimiento extends FormRequest
             'tipo_movimiento.required' => 'El tipo de movimiento es obligatorio',
             'tipo_movimiento.in' => 'El tipo de movimiento debe ser entrada o salida',
             'proveedor.required' => 'El proveedor es obligatorio para entradas',
+            'fecha_vencimiento.date' => 'La fecha de vencimiento no es válida',
+            'fecha_vencimiento.after' => 'La fecha de vencimiento debe ser posterior a hoy',
+            'registro_invima.max' => 'El registro INVIMA no puede exceder 100 caracteres',
+            'lote.max' => 'El lote no puede exceder 100 caracteres',
+            'observaciones.max' => 'Las observaciones no pueden exceder 1000 caracteres',
             'entrada.required' => 'La cantidad de entrada es obligatoria',
             'entrada.min' => 'La cantidad debe ser mayor a 0',
             'nombre_paciente.required' => 'El nombre del paciente es obligatorio para salidas',

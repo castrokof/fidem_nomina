@@ -1,4 +1,21 @@
 
+                        <!-- Historial de Salarios -->
+                        @if(isset($empleado) && $empleado->id)
+                        <div class="form-group row">
+                            <div class="col-lg-12">
+                                <div class="alert alert-info">
+                                    <h5><i class="fas fa-history"></i> Historial de Salarios</h5>
+                                    <p>Ver y gestionar el historial completo de cambios salariales del empleado.</p>
+                                    <a href="{{ route('empleados.salary-history.index', $empleado->id) }}"
+                                       class="btn btn-primary btn-sm"
+                                       target="_blank">
+                                        <i class="fas fa-list"></i> Ver Historial de Salarios
+                                    </a>
+                                </div>
+                            </div>
+                        </div>
+                        @endif
+
                         <div class="form-group row">
                              <div class="col-lg-3">
                                 <label for="name_bank" class="col-xs-4 control-label ">Banco</label>

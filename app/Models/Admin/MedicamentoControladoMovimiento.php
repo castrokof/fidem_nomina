@@ -11,10 +11,15 @@ class MedicamentoControladoMovimiento extends Model
 
     protected $fillable = [
         'medicamento_controlado_id',
+        'lote_entrada_id',
         'fecha',
         'tipo_movimiento',
         'proveedor',
         'numero_factura',
+        'fecha_vencimiento',
+        'registro_invima',
+        'lote',
+        'observaciones',
         'nombre_paciente',
         'cedula_paciente',
         'numero_formula_control',
@@ -44,6 +49,14 @@ class MedicamentoControladoMovimiento extends Model
     public function usuario()
     {
         return $this->belongsTo('App\Models\Seguridad\Usuario', 'user_id');
+    }
+
+    /**
+     * Relación con el lote de entrada usado en esta salida
+     */
+    public function loteEntrada()
+    {
+        return $this->belongsTo('App\Models\Admin\MedicamentoControladoMovimiento', 'lote_entrada_id');
     }
 
     /**

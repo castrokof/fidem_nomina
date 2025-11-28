@@ -67,6 +67,32 @@
                                             </div>
                                         </div>
 
+                                        <div class="form-group" id="salida-lote-container" style="display: none;">
+                                            <label for="salida_lote_entrada_id" style="color: #495057; font-weight: bold;">
+                                                <i class="fas fa-barcode mr-2" style="color: #43e97b;"></i>Seleccionar Lote *
+                                            </label>
+                                            <select name="lote_entrada_id" id="salida_lote_entrada_id" class="form-control" style="border: 2px solid #e0e0e0; border-radius: 8px; padding: 10px;">
+                                                <option value="">Seleccione un lote...</option>
+                                            </select>
+                                            <small style="color: #6c757d;">Los lotes se ordenan por fecha de vencimiento (próximos a vencer primero)</small>
+
+                                            <!-- Información del lote seleccionado -->
+                                            <div id="salida-info-lote" style="display: none; margin-top: 10px; padding: 15px; background: #f8f9fa; border-radius: 8px; border: 2px solid #e0e0e0;">
+                                                <div style="margin-bottom: 8px;">
+                                                    <strong><i class="fas fa-barcode mr-2"></i>Lote:</strong> <span id="info-lote-numero">-</span>
+                                                </div>
+                                                <div style="margin-bottom: 8px;">
+                                                    <strong><i class="fas fa-calendar-times mr-2"></i>Vencimiento:</strong> <span id="info-lote-vencimiento">-</span>
+                                                </div>
+                                                <div style="margin-bottom: 8px;">
+                                                    <strong><i class="fas fa-certificate mr-2"></i>Reg. INVIMA:</strong> <span id="info-lote-invima">-</span>
+                                                </div>
+                                                <div>
+                                                    <strong><i class="fas fa-box mr-2"></i>Disponible:</strong> <span id="info-lote-disponible">-</span>
+                                                </div>
+                                            </div>
+                                        </div>
+
                                         <div class="form-group">
                                             <label for="salida_nombre_paciente" style="color: #495057; font-weight: bold;">
                                                 <i class="fas fa-user-injured mr-2" style="color: #43e97b;"></i>Nombre del Paciente *
