@@ -364,8 +364,90 @@ $(document).ready(function() {
     // Actualizar saldo cuando se selecciona medicamento
     $('#salida_medicamento_id').on('change', function() {
         var saldo = $(this).find(':selected').data('saldo') || 0;
+        var medicamentoId = $(this).val();
+
         $('#salida-saldo-actual').text(saldo);
         calcularNuevoSaldoSalida();
+
+        // Cargar lotes disponibles para este medicamento
+        if (medicamentoId) {
+            cargarLotesDisponibles(medicamentoId);
+        } else {
+            $('#salida-lote-container').hide();
+            $('#salida_lote_entrada_id').empty().append('<option value="">Seleccione un lote...</option>');
+            $('#salida-info-lote').hide();
+        }
+    });
+
+    // Función para cargar lotes disponibles
+    function cargarLotesDisponibles(medicamentoId) {
+        $.ajax({
+            url: '{{ url("admin/medicamento-controlado-movimiento/lotes") }}/' + medicamentoId,
+            type: 'GET',
+            success: function(response) {
+                var $selectLote = $('#salida_lote_entrada_id');
+                $selectLote.empty();
+
+                if (response.lotes && response.lotes.length > 0) {
+                    $selectLote.append('<option value="">Seleccione un lote (ordenados por vencimiento)...</option>');
+
+                    $.each(response.lotes, function(index, lote) {
+                        var optionText = 'Lote: ' + (lote.lote || 'S/N') +
+                                       ' | Vence: ' + lote.fecha_vencimiento_formateada +
+                                       ' | Disp: ' + lote.disponible;
+
+                        // Agregar indicador si vence pronto
+                        if (lote.vence_pronto) {
+                            optionText += ' ⚠️ PRÓXIMO A VENCER';
+                        }
+
+                        var $option = $('<option>')
+                            .val(lote.id)
+                            .text(optionText)
+                            .data('lote', lote);
+
+                        // Resaltar lotes que vencen pronto
+                        if (lote.vence_pronto) {
+                            $option.css('background-color', '#fff3cd');
+                        }
+
+                        $selectLote.append($option);
+                    });
+
+                    $('#salida-lote-container').show();
+                } else {
+                    $selectLote.append('<option value="">No hay lotes disponibles</option>');
+                    $('#salida-lote-container').show();
+                }
+            },
+            error: function() {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Error',
+                    text: 'No se pudieron cargar los lotes disponibles'
+                });
+            }
+        });
+    }
+
+    // Mostrar información del lote seleccionado
+    $('#salida_lote_entrada_id').on('change', function() {
+        var $selected = $(this).find(':selected');
+        var lote = $selected.data('lote');
+
+        if (lote) {
+            $('#info-lote-numero').text(lote.lote || 'Sin número');
+            $('#info-lote-vencimiento').text(lote.fecha_vencimiento_formateada);
+            $('#info-lote-invima').text(lote.registro_invima);
+            $('#info-lote-disponible').text(lote.disponible + ' unidades');
+            $('#salida-info-lote').show();
+
+            // Actualizar el máximo de la cantidad basado en el lote seleccionado
+            $('#salida_cantidad').attr('max', lote.disponible);
+        } else {
+            $('#salida-info-lote').hide();
+            $('#salida_cantidad').removeAttr('max');
+        }
     });
 
     // Calcular nuevo saldo al cambiar cantidad
@@ -582,6 +664,11 @@ function limpiarFormSalida() {
     $('#salida-preview-container').hide();
     $('#salida-preview-imagen').attr('src', '');
     $('#salida_fecha').val(new Date().toISOString().split('T')[0]);
+
+    // Limpiar información de lotes
+    $('#salida-lote-container').hide();
+    $('#salida_lote_entrada_id').empty().append('<option value="">Seleccione un lote...</option>');
+    $('#salida-info-lote').hide();
 }
 </script>
 @endsection
