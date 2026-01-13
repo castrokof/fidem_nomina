@@ -141,8 +141,8 @@
                 <option value="JIMENA CALLE">JIMENA CALLE</option>
                 <option value="KATALINA ESPINOSA">KATALINA ESPINOSA</option>
                 <option value="DIANA MURCIA">DIANA MURCIA</option>
-                <option value="DIANA MURCIA">ISABELLA DELGADO </option>
-                <option value="DIANA MURCIA">NICOLAS CUARTAS </option>
+                <option value="ISABELLA DELGADO">ISABELLA DELGADO </option>
+                <option value="DAVID LOPEZ">DAVID LOPEZ</option>
                 
             </select>
             

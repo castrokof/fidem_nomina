@@ -121,7 +121,14 @@ class ObsPaliativosController extends Controller
             if ($error->fails()) {
                 return response()->json(['errors' => $error->errors()->all()]);
             }
-
+            
+            
+            if($request->type_obs == 'EGRESO'){
+                $updatebase = BasePaliativos::findOrFail($request->pac_id);
+                $updatebase->state = $request->type_obs;
+                $updatebase->fecha_egreso = $request->future2;
+                $updatebase->save();
+            }
 
             ObsPaliativos::create($request->all());
 
