@@ -234,7 +234,7 @@
                 },
                 async loadMessages() {
                     try {
-                        const response = await axios.get(\`/api/chat/\${this.selectedChat.id}/messages\`);
+                        const response = await axios.get('/api/chat/' + this.selectedChat.id + '/messages');
                         if (response.data.success) {
                             this.messages = response.data.messages;
                             this.lastMessageDate = this.getLastMessageDate();
@@ -255,7 +255,7 @@
                     this.newMessage = '';
 
                     try {
-                        const response = await axios.post(\`/api/chat/\${this.selectedChat.id}/messages\`, {
+                        const response = await axios.post('/api/chat/' + this.selectedChat.id + '/messages', {
                             message: messageText
                         });
 
@@ -293,7 +293,7 @@
                     if (!this.selectedChat || !this.lastMessageDate) return;
 
                     try {
-                        const response = await axios.get(\`/api/chat/\${this.selectedChat.id}/messages/poll\`, {
+                        const response = await axios.get('/api/chat/' + this.selectedChat.id + '/messages/poll', {
                             params: {
                                 since: this.lastMessageDate
                             }
@@ -342,7 +342,7 @@
                     }
                     if (message.sender_patient) {
                         const p = message.sender_patient;
-                        return \`\${p.pnombre || ''} \${p.snombre || ''} \${p.papellido || ''} \${p.sapellido || ''}\`.trim();
+                        return ((p.pnombre || '') + ' ' + (p.snombre || '') + ' ' + (p.papellido || '') + ' ' + (p.sapellido || '')).trim();
                     }
                     return 'Usuario';
                 },
@@ -355,9 +355,9 @@
                     const hours = Math.floor(minutes / 60);
                     const days = Math.floor(hours / 24);
 
-                    if (days > 0) return \`Hace \${days} día\${days > 1 ? 's' : ''}\`;
-                    if (hours > 0) return \`Hace \${hours} hora\${hours > 1 ? 's' : ''}\`;
-                    if (minutes > 0) return \`Hace \${minutes} minuto\${minutes > 1 ? 's' : ''}\`;
+                    if (days > 0) return 'Hace ' + days + ' día' + (days > 1 ? 's' : '');
+                    if (hours > 0) return 'Hace ' + hours + ' hora' + (hours > 1 ? 's' : '');
+                    if (minutes > 0) return 'Hace ' + minutes + ' minuto' + (minutes > 1 ? 's' : '');
                     return 'Justo ahora';
                 },
                 scrollToBottom() {
