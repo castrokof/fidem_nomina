@@ -247,7 +247,7 @@ Route::group(['middleware' => ['auth']], function () {
     
      Route::get('consultardocumento', 'Psicologica\LineaPsicologicaController@consultarDocumento')->name('consultardocumento')->middleware('superPsicologica');
      
-     Route::put('anular_evolucion/{id}', 'Psicologica\LineaPsicologicaController@anularEvolucion')->name('anular_evolucion')->name('analistapsico')->middleware('superPsicologica');
+     Route::put('anular_evolucionpsi/{id}', 'Psicologica\LineaPsicologicaController@anularEvolucion')->name('anular_evolucionpsi')->name('analistapsico')->middleware('superPsicologica');
 
 
     //RUTA LINEA AVA
