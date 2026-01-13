@@ -104,6 +104,11 @@ Route::group(['middleware' => ['auth']], function () {
 
     Route::get('/tablero', 'AdminController@index')->name('tablero');
 
+    /* RUTA DEL CHAT */
+    Route::get('chat', function() {
+        return view('chat.index');
+    })->name('chat');
+
     Route::get('informes', 'AdminController@informes')->name('informes')->middleware('superConsultor');
 
     /* RUTAS DEL USUARIO */
