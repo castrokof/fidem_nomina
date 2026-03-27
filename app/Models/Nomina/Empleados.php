@@ -3,7 +3,6 @@
 namespace App\Models\nomina;
 use DateTimeInterface;
 use App\Models\Nomina\nominaliquid;
-use App\Models\Nomina\SalaryHistory;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 

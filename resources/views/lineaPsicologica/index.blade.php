@@ -55,23 +55,6 @@ Procedimientos
 
 $(document).ready(function(){
 
-                    $('#consultation').select2({
-                        language: "es",
-                        
-                        placeholder: 'Seleccione',
-                       
-                    });
-
-
-                    $('#future4').select2({
-                        language: "es",
-                       
-                        placeholder: 'Seleccione',
-                       
-                    });
-
-
-
        // Funcion para pintar con data table
 var datatable = $('#psicologica').DataTable({
             language: idioma_espanol,
@@ -398,7 +381,7 @@ $(document).on('click', '.anular', function(){
             }).then((result)=>{
             if(result.value){
             $.ajax({
-                url:"anular_evolucionpsi/"+idevoa+"",
+                url:"anular_evolucion/"+idevoa+"",
                 method:'put',
                 headers: {
                     'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
