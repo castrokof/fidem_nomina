@@ -381,7 +381,7 @@ $(document).on('click', '.anular', function(){
             }).then((result)=>{
             if(result.value){
             $.ajax({
-                url:"anular_evolucion/"+idevoa+"",
+                url:"anular_evolucionpsi/"+idevoa+"",
                 method:'put',
                 headers: {
                     'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')

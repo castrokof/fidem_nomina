@@ -418,6 +418,15 @@ Route::group(['prefix' => 'admin', 'namespace' => 'Admin', 'middleware' => ['far
     Route::get('foto-formula/{id}', 'MedicamentoControladoMovimientoController@verFotoFormula')->name('foto.formula');
 });
 
+Route::prefix('rh/contratacion')->middleware('superadmin')->group(function () {
+    Route::get('/', 'RH\ContratacionController@index')->name('rh.contratacion.index');
+    Route::post('/', 'RH\ContratacionController@store')->name('rh.contratacion.store');
+    Route::get('/{candidato}', 'RH\ContratacionController@show')->name('rh.contratacion.show');
+    Route::post('/checklist/toggle', 'RH\ContratacionController@toggleItem')->name('rh.contratacion.toggle');
+    Route::post('/{candidato}/fase', 'RH\ContratacionController@avanzarFase')->name('rh.contratacion.fase');
+    Route::delete('/{candidato}', 'RH\ContratacionController@destroy')->name('rh.contratacion.destroy');
+});
+
 
 
     

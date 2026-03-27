@@ -35,7 +35,8 @@ class BasePaliativos extends Model
             'sex', //Sexo
             'diagn', //Diagnostico
             'ips', //Ips
-            'estado_paci' 
+            'estado_paci',
+            'fecha_egreso' 
     ];
 
 
