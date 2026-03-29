@@ -53,6 +53,16 @@ Route::get('seguridad/login', 'Seguridad\LoginController@index')->name('login');
 Route::post('seguridad/login', 'Seguridad\LoginController@login')->name('login_post');
 Route::get('seguridad/logout', 'Seguridad\LoginController@logout')->name('logout');
 
+// Rutas públicas para firma de consentimientos (sin autenticación)
+Route::get('firmar-consentimiento/{token}', 'ConsentimientoController@mostrarFirma')->name('consentimientos.firmar');
+Route::post('firmar-consentimiento/{token}', 'ConsentimientoController@guardarFirma')->name('consentimientos.guardar-firma');
+
+// Rutas para usuarios autenticados (profesionales)
+Route::group(['middleware' => ['auth']], function () {
+    Route::get('perfil/firma', 'PerfilController@mostrarFirma')->name('perfil.firma');
+    Route::post('perfil/firma', 'PerfilController@guardarFirma')->name('perfil.guardar-firma');
+});
+
 Route::group(['prefix' => 'admin', 'namespace' => 'Admin', 'middleware' => ['auth', 'superadmin']], function () {
 
 
@@ -416,6 +426,54 @@ Route::group(['prefix' => 'admin', 'namespace' => 'Admin', 'middleware' => ['far
     Route::post('medicamento-controlado-movimiento/{id}/anular', 'MedicamentoControladoMovimientoController@anular')->name('anular_medicamento_controlado_movimiento');
     Route::get('medicamento-controlado-movimiento/{id}', 'MedicamentoControladoMovimientoController@mostrar')->name('mostrar_medicamento_controlado_movimiento');
     Route::get('foto-formula/{id}', 'MedicamentoControladoMovimientoController@verFotoFormula')->name('foto.formula');
+
+    /* RUTAS DEL MÓDULO CI-FIDEM (Consentimientos Informados con Firma Electrónica) */
+
+    // Especialidades
+    Route::get('especialidades', 'EspecialidadController@index')->name('especialidades.index');
+    Route::get('especialidades/crear', 'EspecialidadController@create')->name('especialidades.create');
+    Route::post('especialidades', 'EspecialidadController@store')->name('especialidades.store');
+    Route::get('especialidades/{id}/editar', 'EspecialidadController@edit')->name('especialidades.edit');
+    Route::put('especialidades/{id}', 'EspecialidadController@update')->name('especialidades.update');
+    Route::delete('especialidades/{id}', 'EspecialidadController@destroy')->name('especialidades.destroy');
+
+    // Profesionales
+    Route::get('profesionales', 'ProfesionalController@index')->name('profesionales.index');
+    Route::get('profesionales/crear', 'ProfesionalController@create')->name('profesionales.create');
+    Route::post('profesionales', 'ProfesionalController@store')->name('profesionales.store');
+    Route::get('profesionales/{id}/editar', 'ProfesionalController@edit')->name('profesionales.edit');
+    Route::put('profesionales/{id}', 'ProfesionalController@update')->name('profesionales.update');
+    Route::delete('profesionales/{id}', 'ProfesionalController@destroy')->name('profesionales.destroy');
+    Route::get('profesionales/{id}/firma', 'ProfesionalController@mostrarFirma')->name('profesionales.firma');
+    Route::post('profesionales/{id}/firma', 'ProfesionalController@guardarFirma')->name('profesionales.guardar-firma');
+
+    // Pacientes
+    Route::get('pacientes', 'PacienteController@index')->name('pacientes.index');
+    Route::get('pacientes/{id}', 'PacienteController@show')->name('pacientes.show');
+    Route::get('pacientes/{id}/editar', 'PacienteController@edit')->name('pacientes.edit');
+    Route::put('pacientes/{id}', 'PacienteController@update')->name('pacientes.update');
+
+    // Plantillas CI
+    Route::get('plantillas-ci', 'PlantillaCIController@index')->name('plantillas-ci.index');
+    Route::get('plantillas-ci/crear', 'PlantillaCIController@create')->name('plantillas-ci.create');
+    Route::post('plantillas-ci', 'PlantillaCIController@store')->name('plantillas-ci.store');
+    Route::get('plantillas-ci/{id}/editar', 'PlantillaCIController@edit')->name('plantillas-ci.edit');
+    Route::put('plantillas-ci/{id}', 'PlantillaCIController@update')->name('plantillas-ci.update');
+    Route::delete('plantillas-ci/{id}', 'PlantillaCIController@destroy')->name('plantillas-ci.destroy');
+
+    // Importador de Plantillas
+    Route::get('importador-plantillas', 'PlantillaCIImportadorController@index')->name('importador-plantillas.index');
+    Route::post('importador-plantillas', 'PlantillaCIImportadorController@store')->name('importador-plantillas.store');
+    Route::post('importador-plantillas/{id}/procesar', 'PlantillaCIImportadorController@procesar')->name('importador-plantillas.procesar');
+    Route::post('importador-plantillas/procesar-todas', 'PlantillaCIImportadorController@procesarTodas')->name('importador-plantillas.procesar-todas');
+    Route::delete('importador-plantillas/{id}', 'PlantillaCIImportadorController@destroy')->name('importador-plantillas.destroy');
+
+    // Consentimientos Informados
+    Route::get('consentimientos', 'ConsentimientoController@index')->name('consentimientos.index');
+    Route::get('consentimientos/crear', 'ConsentimientoController@create')->name('consentimientos.create');
+    Route::post('consentimientos', 'ConsentimientoController@store')->name('consentimientos.store');
+    Route::get('consentimientos/{id}', 'ConsentimientoController@show')->name('consentimientos.show');
+    Route::get('consentimientos/{id}/pdf', 'ConsentimientoController@descargarPdf')->name('consentimientos.pdf');
 });
 
 

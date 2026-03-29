@@ -24,8 +24,16 @@ class Kernel extends ConsoleKernel
      */
     protected function schedule(Schedule $schedule)
     {
-        // $schedule->command('inspire')
-        //          ->hourly();
+        // Sincronizar agenda de citas cada 30 minutos
+        $schedule->command('agenda:sincronizar')
+                 ->everyThirtyMinutes()
+                 ->withoutOverlapping();
+
+        // Actualizar llegadas cada 10 minutos durante horario laboral
+        $schedule->command('agenda:actualizar-llegadas')
+                 ->everyTenMinutes()
+                 ->between('7:00', '19:00')
+                 ->withoutOverlapping();
     }
 
     /**
