@@ -32,233 +32,287 @@ class BasePaliativosController extends Controller
          return view('paliativos.index');
         
     }
+
+
     public function index1(Request $request)
-    {
+{
+    if (!$request->ajax()) {
+        return view('paliativos.index');
+    }
+
+    $rol_id = $request->session()->get('rol_id');
+
+    // ✅ Subquery optimizada con NOT EXISTS en lugar de doble subquery MAX+JOIN
+    $ultimoEstado = DB::table('estados as e1')
+        ->select('e1.*')
+        ->whereNotExists(function ($q) {
+            $q->from('estados as e2')
+              ->whereColumn('e2.documento', 'e1.documento')
+              ->whereColumn('e2.id_estado', '>', 'e1.id_estado');
+        });
+
+    // ✅ Query base única — se construye una sola vez
+    $query = DB::table('bdpaliativos')
+        ->leftJoinSub($ultimoEstado, 'ue', fn($join) =>
+            $join->on('bdpaliativos.document', '=', 'ue.documento')
+        )
+        ->selectRaw('bdpaliativos.*, ue.*, TIMESTAMPDIFF(YEAR, bdpaliativos.date_birth, NOW()) as edad')
+        ->orderBy('bdpaliativos.state');
+
+    // ✅ Filtros con filled() — detecta null, '', y ausente correctamente
+    if ($request->filled('state'))       $query->where('bdpaliativos.state',      $request->state);
+    if ($request->filled('profesional')) $query->where('bdpaliativos.profesional', $request->profesional);
+    if ($request->filled('future1'))     $query->where('bdpaliativos.future1',     $request->future1);
+    if ($request->filled('estado_pac'))  $query->where('ue.estado_pac',            $request->estado_pac);
+
+    $isAdmin = in_array($rol_id, [1, 2]);
+
+    // ✅ Se pasa $query (Builder), NO $query->get() — DataTables pagina en DB
+    return DataTables()->of($query)
+        ->addColumn('action', function ($row) use ($isAdmin) {
+            $id = $row->id;
+
+            $btn  = '<button type="button" name="novedad" id="'.$id.'" class="novedad btn btn-float btn-sm btn-success tooltipsC" title="Adicionar novedad"><i class="fas fa-notes-medical"></i></button>';
+            $btn .= '<button type="button" name="estado" id="'.$id.'" class="addestado btn btn-float btn-sm btn-warning tooltipsC" title="Adicionar estado"><i class="fas fa-user-check"></i></button><br>';
+
+            if ($isAdmin) {
+                $btn .= '<button type="button" name="fallecido" id="'.$id.'" class="addfallecido btn btn-float btn-sm btn-danger tooltipsC" title="Adicionar fallecido"><i class="fas fa-bible"></i></button>';
+            }
+
+            $btn .= '<button type="button" name="asociarpro" id="'.$id.'" class="asociarpro btn btn-float btn-sm btn-info tooltipsC" title="Asociar a profesional"><i class="fas fa-clinic-medical"></i></button>';
+
+            return $btn;
+        })
+        ->rawColumns(['action'])
+        ->make(true);
+}
+//     public function index1(Request $request)
+// {
 
  
 
-        if ($request->ajax()) {
+//         if ($request->ajax()) {
             
             
-      $rol_id = $request->session()->get('rol_id');
+//       $rol_id = $request->session()->get('rol_id');
       
-       $user = $request->session()->get('usuario');
+//        $user = $request->session()->get('usuario');
      
-       if($rol_id == 1 || $rol_id == 2) {
+//        if($rol_id == 1 || $rol_id == 2) {
 
-        if ($request->state != '' ||  $request->profesional != '' ||$request->future1 != '' || $request->estado_pac != '') {
+//         if ($request->state != '' ||  $request->profesional != '' ||$request->future1 != '' || $request->estado_pac != '') {
 
 
-            $estadomax =  DB::table('estados')
-            ->select(DB::raw('MAX(id_estado) as last_id_estado'))
-            ->groupBy('documento');
+//             $estadomax =  DB::table('estados')
+//             ->select(DB::raw('MAX(id_estado) as last_id_estado'))
+//             ->groupBy('documento');
 
-        $estadomaxc = DB::table('estados')
-            ->rightJoinSub($estadomax, 'last_ids', function ($join) {
-                $join->on('estados.id_estado', '=', 'last_ids.last_id_estado');
-            });
+//         $estadomaxc = DB::table('estados')
+//             ->rightJoinSub($estadomax, 'last_ids', function ($join) {
+//                 $join->on('estados.id_estado', '=', 'last_ids.last_id_estado');
+//             });
     
-         $datas = DB::table('bdpaliativos')
-            ->leftJoinSub($estadomaxc, 'last_ids2', function ($join) {
-                $join->on('bdpaliativos.document', '=', 'last_ids2.documento');
-            })
-            ->selectRaw('bdpaliativos.*, last_ids2.*, TIMESTAMPDIFF(YEAR, bdpaliativos.date_birth, now()) as edad')
-            ->orderBy('bdpaliativos.state');
+//          $datas = DB::table('bdpaliativos')
+//             ->leftJoinSub($estadomaxc, 'last_ids2', function ($join) {
+//                 $join->on('bdpaliativos.document', '=', 'last_ids2.documento');
+//             })
+//             ->selectRaw('bdpaliativos.*, last_ids2.*, TIMESTAMPDIFF(YEAR, bdpaliativos.date_birth, now()) as edad')
+//             ->orderBy('bdpaliativos.state');
     
     
-    if($request->state != ''){
+//     if($request->state != ''){
 
-       $datas->where('bdpaliativos.state',$request->state);
+//        $datas->where('bdpaliativos.state',$request->state);
 
-    }
+//     }
     
-    if($request->profesional != ''){
+//     if($request->profesional != ''){
 
-       $datas->where('bdpaliativos.profesional',$request->profesional);
+//        $datas->where('bdpaliativos.profesional',$request->profesional);
 
-    }
+//     }
     
-    if($request->future1 != ''){
+//     if($request->future1 != ''){
 
-        $datas->where('bdpaliativos.future1',$request->future1);
+//         $datas->where('bdpaliativos.future1',$request->future1);
 
-    }
+//     }
     
-    if($request->estado_pac != ''){
+//     if($request->estado_pac != ''){
 
-       $datas->where('last_ids2.estado_pac',$request->estado_pac);
+//        $datas->where('last_ids2.estado_pac',$request->estado_pac);
 
-    }
+//     }
     
-        $datas->get();
+//         $datas->get();
     
-        return  DataTables()->of($datas)
-            ->addColumn('action', function ($datas) {
-                $button = '<button type="button" name="novedad" id="' . $datas->id . '" class="novedad btn btn-float btn-sm btn-success tooltipsC" title="Adicionar novedad"  ><i class="fas fa-notes-medical "></i></button>' .
-                    $button = '<button type="button" name="estado" id="' . $datas->id . '" class="addestado btn btn-float btn-sm btn-warning tooltipsC" title="Adicionar estado"  ><i class="fas fa-user-check"></i></button><br>' .
-                    $button = '<button type="button" name="fallecido" id="' . $datas->id . '" class="addfallecido btn btn-float btn-sm btn-danger tooltipsC" title="Adicionar fallecido"  ><i class="fas fa-bible"></i></button>' .
-                    $button = '<button type="button" name="asociarpro" id="' . $datas->id . '" class="asociarpro btn btn-float btn-sm btn-info tooltipsC" title="Asociar a profesional"  ><i class="fas fa-clinic-medical"></i></button>'
-                    //$button = '<button type="button" name="editarpaciente" id="' . $datas->id . '" class="editarpaciente btn btn-float btn-sm btn-dark tooltipsC" title="Editar Paciente"  ><i class="fas fa-edit"></i></button>'
-                    // . $button = '<button type="button" name="seguimiento" class="seguimientoadd btn btn-app bg-danger tooltipsC" title="Add seguimiento" value="' . $datas->id . '" ><span class="badge bg-teal">Seguimiento</span><i class="fas fa-laptop-medical"></i> Seguimiento </button>'
-                ;
+//         return  DataTables()->of($datas)
+//             ->addColumn('action', function ($datas) {
+//                 $button = '<button type="button" name="novedad" id="' . $datas->id . '" class="novedad btn btn-float btn-sm btn-success tooltipsC" title="Adicionar novedad"  ><i class="fas fa-notes-medical "></i></button>' .
+//                     $button = '<button type="button" name="estado" id="' . $datas->id . '" class="addestado btn btn-float btn-sm btn-warning tooltipsC" title="Adicionar estado"  ><i class="fas fa-user-check"></i></button><br>' .
+//                     $button = '<button type="button" name="fallecido" id="' . $datas->id . '" class="addfallecido btn btn-float btn-sm btn-danger tooltipsC" title="Adicionar fallecido"  ><i class="fas fa-bible"></i></button>' .
+//                     $button = '<button type="button" name="asociarpro" id="' . $datas->id . '" class="asociarpro btn btn-float btn-sm btn-info tooltipsC" title="Asociar a profesional"  ><i class="fas fa-clinic-medical"></i></button>'
+//                     //$button = '<button type="button" name="editarpaciente" id="' . $datas->id . '" class="editarpaciente btn btn-float btn-sm btn-dark tooltipsC" title="Editar Paciente"  ><i class="fas fa-edit"></i></button>'
+//                     // . $button = '<button type="button" name="seguimiento" class="seguimientoadd btn btn-app bg-danger tooltipsC" title="Add seguimiento" value="' . $datas->id . '" ><span class="badge bg-teal">Seguimiento</span><i class="fas fa-laptop-medical"></i> Seguimiento </button>'
+//                 ;
 
-                return $button;
-            })
-            ->rawColumns(['action'])
-            ->make(true);
+//                 return $button;
+//             })
+//             ->rawColumns(['action'])
+//             ->make(true);
 
-            }else{
-
-
-            $estadomax =  DB::table('estados')
-            ->select(DB::raw('MAX(id_estado) as last_id_estado'))
-            ->groupBy('documento');
-
-        $estadomaxc = DB::table('estados')
-            ->rightJoinSub($estadomax, 'last_ids', function ($join) {
-                $join->on('estados.id_estado', '=', 'last_ids.last_id_estado');
-            });
+//             }else{
 
 
+//             $estadomax =  DB::table('estados')
+//             ->select(DB::raw('MAX(id_estado) as last_id_estado'))
+//             ->groupBy('documento');
 
-        $datas = DB::table('bdpaliativos')
-            ->leftJoinSub($estadomaxc, 'last_ids2', function ($join) {
-                $join->on('bdpaliativos.document', '=', 'last_ids2.documento');
-            })->selectRaw('bdpaliativos.*, last_ids2.*, TIMESTAMPDIFF(YEAR, bdpaliativos.date_birth, now()) as edad')->orderBy('bdpaliativos.state')->get();
-
-
-        return  DataTables()->of($datas)
-            ->addColumn('action', function ($datas) {
-                $button = '<button type="button" name="novedad" id="' . $datas->id . '" class="novedad btn btn-float btn-sm btn-success tooltipsC" title="Adicionar novedad"  ><i class="fas fa-notes-medical "></i></button>' .
-                    $button = '<button type="button" name="estado" id="' . $datas->id . '" class="addestado btn btn-float btn-sm btn-warning tooltipsC" title="Adicionar estado"  ><i class="fas fa-user-check"></i></button><br>' .
-                    $button = '<button type="button" name="fallecido" id="' . $datas->id . '" class="addfallecido btn btn-float btn-sm btn-danger tooltipsC" title="Adicionar fallecido"  ><i class="fas fa-bible"></i></button>' .
-                    $button = '<button type="button" name="asociarpro" id="' . $datas->id . '" class="asociarpro btn btn-float btn-sm btn-info tooltipsC" title="Asociar a profesional"  ><i class="fas fa-clinic-medical"></i></button>'
-                    //$button = '<button type="button" name="editarpaciente" id="' . $datas->id . '" class="editarpaciente btn btn-float btn-sm btn-dark tooltipsC" title="Editar Paciente"  ><i class="fas fa-edit"></i></button>'
-                    // . $button = '<button type="button" name="seguimiento" class="seguimientoadd btn btn-app bg-danger tooltipsC" title="Add seguimiento" value="' . $datas->id . '" ><span class="badge bg-teal">Seguimiento</span><i class="fas fa-laptop-medical"></i> Seguimiento </button>'
-                ;
-
-                return $button;
-            })
-            ->rawColumns(['action'])
-            ->make(true);
+//         $estadomaxc = DB::table('estados')
+//             ->rightJoinSub($estadomax, 'last_ids', function ($join) {
+//                 $join->on('estados.id_estado', '=', 'last_ids.last_id_estado');
+//             });
 
 
-            }
+
+//         $datas = DB::table('bdpaliativos')
+//             ->leftJoinSub($estadomaxc, 'last_ids2', function ($join) {
+//                 $join->on('bdpaliativos.document', '=', 'last_ids2.documento');
+//             })->selectRaw('bdpaliativos.*, last_ids2.*, TIMESTAMPDIFF(YEAR, bdpaliativos.date_birth, now()) as edad')->orderBy('bdpaliativos.state')->get();
+
+
+//         return  DataTables()->of($datas)
+//             ->addColumn('action', function ($datas) {
+//                 $button = '<button type="button" name="novedad" id="' . $datas->id . '" class="novedad btn btn-float btn-sm btn-success tooltipsC" title="Adicionar novedad"  ><i class="fas fa-notes-medical "></i></button>' .
+//                     $button = '<button type="button" name="estado" id="' . $datas->id . '" class="addestado btn btn-float btn-sm btn-warning tooltipsC" title="Adicionar estado"  ><i class="fas fa-user-check"></i></button><br>' .
+//                     $button = '<button type="button" name="fallecido" id="' . $datas->id . '" class="addfallecido btn btn-float btn-sm btn-danger tooltipsC" title="Adicionar fallecido"  ><i class="fas fa-bible"></i></button>' .
+//                     $button = '<button type="button" name="asociarpro" id="' . $datas->id . '" class="asociarpro btn btn-float btn-sm btn-info tooltipsC" title="Asociar a profesional"  ><i class="fas fa-clinic-medical"></i></button>'
+//                     //$button = '<button type="button" name="editarpaciente" id="' . $datas->id . '" class="editarpaciente btn btn-float btn-sm btn-dark tooltipsC" title="Editar Paciente"  ><i class="fas fa-edit"></i></button>'
+//                     // . $button = '<button type="button" name="seguimiento" class="seguimientoadd btn btn-app bg-danger tooltipsC" title="Add seguimiento" value="' . $datas->id . '" ><span class="badge bg-teal">Seguimiento</span><i class="fas fa-laptop-medical"></i> Seguimiento </button>'
+//                 ;
+
+//                 return $button;
+//             })
+//             ->rawColumns(['action'])
+//             ->make(true);
+
+
+//             }
             
-       }else if($rol_id == 3) {
+//        }else if($rol_id == 3) {
            
-           if ($request->state != '' ||  $request->profesional != '' ||$request->future1 != '' || $request->estado_pac != '') {
+//            if ($request->state != '' ||  $request->profesional != '' ||$request->future1 != '' || $request->estado_pac != '') {
 
 
-            $estadomax =  DB::table('estados')
-            ->select(DB::raw('MAX(id_estado) as last_id_estado'))
-            ->groupBy('documento');
+//             $estadomax =  DB::table('estados')
+//             ->select(DB::raw('MAX(id_estado) as last_id_estado'))
+//             ->groupBy('documento');
 
-        $estadomaxc = DB::table('estados')
-            ->rightJoinSub($estadomax, 'last_ids', function ($join) {
-                $join->on('estados.id_estado', '=', 'last_ids.last_id_estado');
-            });
+//         $estadomaxc = DB::table('estados')
+//             ->rightJoinSub($estadomax, 'last_ids', function ($join) {
+//                 $join->on('estados.id_estado', '=', 'last_ids.last_id_estado');
+//             });
     
-         $datas = DB::table('bdpaliativos')
-            ->leftJoinSub($estadomaxc, 'last_ids2', function ($join) {
-                $join->on('bdpaliativos.document', '=', 'last_ids2.documento');
-            })
-            ->selectRaw('bdpaliativos.*, last_ids2.*, TIMESTAMPDIFF(YEAR, bdpaliativos.date_birth, now()) as edad')
-            ->orderBy('bdpaliativos.state');
+//          $datas = DB::table('bdpaliativos')
+//             ->leftJoinSub($estadomaxc, 'last_ids2', function ($join) {
+//                 $join->on('bdpaliativos.document', '=', 'last_ids2.documento');
+//             })
+//             ->selectRaw('bdpaliativos.*, last_ids2.*, TIMESTAMPDIFF(YEAR, bdpaliativos.date_birth, now()) as edad')
+//             ->orderBy('bdpaliativos.state');
     
     
-    if($request->state != ''){
+//     if($request->state != ''){
 
-       $datas->where('bdpaliativos.state',$request->state);
+//        $datas->where('bdpaliativos.state',$request->state);
 
-    }
+//     }
     
-    if($request->profesional != ''){
+//     if($request->profesional != ''){
 
-       $datas->where('bdpaliativos.profesional',$request->profesional);
+//        $datas->where('bdpaliativos.profesional',$request->profesional);
 
-    }
+//     }
     
-    if($request->future1 != ''){
+//     if($request->future1 != ''){
 
-        $datas->where('bdpaliativos.future1',$request->future1);
+//         $datas->where('bdpaliativos.future1',$request->future1);
 
-    }
+//     }
     
-    if($request->estado_pac != ''){
+//     if($request->estado_pac != ''){
 
-       $datas->where('last_ids2.estado_pac',$request->estado_pac);
+//        $datas->where('last_ids2.estado_pac',$request->estado_pac);
 
-    }
+//     }
     
-        $datas->get();
+//         $datas->get();
 
 
-        return  DataTables()->of($datas)
-            ->addColumn('action', function ($datas) {
-                    $button = '<button type="button" name="novedad" id="' . $datas->id . '" class="novedad btn btn-float btn-sm btn-success tooltipsC" title="Adicionar novedad"  ><i class="fas fa-notes-medical "></i></button>' .
-                    $button = '<button type="button" name="estado" id="' . $datas->id . '" class="addestado btn btn-float btn-sm btn-warning tooltipsC" title="Adicionar estado"  ><i class="fas fa-user-check"></i></button><br>' .
-                    $button = '<div id="ocultarid"><button type="button" name="asociarpro" id="' . $datas->id . '" class="asociarpro btn btn-float btn-sm btn-info tooltipsC" title="Asociar a profesional"  ><i class="fas fa-clinic-medical"></i></button></div>'
-                    // . $button = '<button type="button" name="agendar" class="agenda btn btn-app bg-warning tooltipsC" title="Clic para agendar" value="' . $datas->id . '" ><span class="badge bg-teal">Psico</span><i class="fas fa-file-medical"></i> Agendar </button>'
-                    // . $button = '<button type="button" name="seguimiento" class="seguimientoadd btn btn-app bg-danger tooltipsC" title="Add seguimiento" value="' . $datas->id . '" ><span class="badge bg-teal">Seguimiento</span><i class="fas fa-laptop-medical"></i> Seguimiento </button>'
-                ;
+//         return  DataTables()->of($datas)
+//             ->addColumn('action', function ($datas) {
+//                     $button = '<button type="button" name="novedad" id="' . $datas->id . '" class="novedad btn btn-float btn-sm btn-success tooltipsC" title="Adicionar novedad"  ><i class="fas fa-notes-medical "></i></button>' .
+//                     $button = '<button type="button" name="estado" id="' . $datas->id . '" class="addestado btn btn-float btn-sm btn-warning tooltipsC" title="Adicionar estado"  ><i class="fas fa-user-check"></i></button><br>' .
+//                     $button = '<div id="ocultarid"><button type="button" name="asociarpro" id="' . $datas->id . '" class="asociarpro btn btn-float btn-sm btn-info tooltipsC" title="Asociar a profesional"  ><i class="fas fa-clinic-medical"></i></button></div>'
+//                     // . $button = '<button type="button" name="agendar" class="agenda btn btn-app bg-warning tooltipsC" title="Clic para agendar" value="' . $datas->id . '" ><span class="badge bg-teal">Psico</span><i class="fas fa-file-medical"></i> Agendar </button>'
+//                     // . $button = '<button type="button" name="seguimiento" class="seguimientoadd btn btn-app bg-danger tooltipsC" title="Add seguimiento" value="' . $datas->id . '" ><span class="badge bg-teal">Seguimiento</span><i class="fas fa-laptop-medical"></i> Seguimiento </button>'
+//                 ;
 
-                return $button;
-            })
-            ->rawColumns(['action'])
-            ->make(true);
+//                 return $button;
+//             })
+//             ->rawColumns(['action'])
+//             ->make(true);
 
-            }else{
-
-
-            $estadomax =  DB::table('estados')
-            ->select(DB::raw('MAX(id_estado) as last_id_estado'))
-            ->groupBy('documento');
-
-        $estadomaxc = DB::table('estados')
-            ->rightJoinSub($estadomax, 'last_ids', function ($join) {
-                $join->on('estados.id_estado', '=', 'last_ids.last_id_estado');
-            });
+//             }else{
 
 
+//             $estadomax =  DB::table('estados')
+//             ->select(DB::raw('MAX(id_estado) as last_id_estado'))
+//             ->groupBy('documento');
 
-        $datas = DB::table('bdpaliativos')
-            ->leftJoinSub($estadomaxc, 'last_ids2', function ($join) {
-                $join->on('bdpaliativos.document', '=', 'last_ids2.documento');
-            })
-            ->selectRaw('bdpaliativos.*, last_ids2.*, TIMESTAMPDIFF(YEAR, bdpaliativos.date_birth, now()) as edad')
-            ->orderBy('bdpaliativos.state')->get();
-
-
-        return  DataTables()->of($datas)
-            ->addColumn('action', function ($datas) {
-                $button = '<button type="button" name="novedad" id="' . $datas->id . '" class="novedad btn btn-float btn-sm btn-success tooltipsC" title="Adicionar novedad"  ><i class="fas fa-notes-medical "></i></button>' .
-                    $button = '<button type="button" name="estado" id="' . $datas->id . '" class="addestado btn btn-float btn-sm btn-warning tooltipsC" title="Adicionar estado"  ><i class="fas fa-user-check"></i></button><br>'.
-                    $button = '<div id="ocultarid"><button type="button" name="asociarpro" id="' . $datas->id . '" class="asociarpro btn btn-float btn-sm btn-info tooltipsC" title="Asociar a profesional"  ><i class="fas fa-clinic-medical"></i></button></div>'
-                   // $button = '<button type="button" name="fallecido" id="' . $datas->id . '" class="addfallecido btn btn-float btn-sm btn-danger tooltipsC" title="Adicionar fallecido"  ><i class="fas fa-bible"></i></button>' .
-                    //$button = '<button type="button" name="asociarpro" id="' . $datas->id . '" class="asociarpro btn btn-float btn-sm btn-info tooltipsC" title="Asociar a profesional"  ><i class="fas fa-clinic-medical"></i></button>'
-                    // . $button = '<button type="button" name="agendar" class="agenda btn btn-app bg-warning tooltipsC" title="Clic para agendar" value="' . $datas->id . '" ><span class="badge bg-teal">Psico</span><i class="fas fa-file-medical"></i> Agendar </button>'
-                    // . $button = '<button type="button" name="seguimiento" class="seguimientoadd btn btn-app bg-danger tooltipsC" title="Add seguimiento" value="' . $datas->id . '" ><span class="badge bg-teal">Seguimiento</span><i class="fas fa-laptop-medical"></i> Seguimiento </button>'
-                ;
-
-                return $button;
-            })
-            ->rawColumns(['action'])
-            ->make(true);
+//         $estadomaxc = DB::table('estados')
+//             ->rightJoinSub($estadomax, 'last_ids', function ($join) {
+//                 $join->on('estados.id_estado', '=', 'last_ids.last_id_estado');
+//             });
 
 
-            }
+
+//         $datas = DB::table('bdpaliativos')
+//             ->leftJoinSub($estadomaxc, 'last_ids2', function ($join) {
+//                 $join->on('bdpaliativos.document', '=', 'last_ids2.documento');
+//             })
+//             ->selectRaw('bdpaliativos.*, last_ids2.*, TIMESTAMPDIFF(YEAR, bdpaliativos.date_birth, now()) as edad')
+//             ->orderBy('bdpaliativos.state')->get();
+
+
+//         return  DataTables()->of($datas)
+//             ->addColumn('action', function ($datas) {
+//                 $button = '<button type="button" name="novedad" id="' . $datas->id . '" class="novedad btn btn-float btn-sm btn-success tooltipsC" title="Adicionar novedad"  ><i class="fas fa-notes-medical "></i></button>' .
+//                     $button = '<button type="button" name="estado" id="' . $datas->id . '" class="addestado btn btn-float btn-sm btn-warning tooltipsC" title="Adicionar estado"  ><i class="fas fa-user-check"></i></button><br>'.
+//                     $button = '<div id="ocultarid"><button type="button" name="asociarpro" id="' . $datas->id . '" class="asociarpro btn btn-float btn-sm btn-info tooltipsC" title="Asociar a profesional"  ><i class="fas fa-clinic-medical"></i></button></div>'
+//                    // $button = '<button type="button" name="fallecido" id="' . $datas->id . '" class="addfallecido btn btn-float btn-sm btn-danger tooltipsC" title="Adicionar fallecido"  ><i class="fas fa-bible"></i></button>' .
+//                     //$button = '<button type="button" name="asociarpro" id="' . $datas->id . '" class="asociarpro btn btn-float btn-sm btn-info tooltipsC" title="Asociar a profesional"  ><i class="fas fa-clinic-medical"></i></button>'
+//                     // . $button = '<button type="button" name="agendar" class="agenda btn btn-app bg-warning tooltipsC" title="Clic para agendar" value="' . $datas->id . '" ><span class="badge bg-teal">Psico</span><i class="fas fa-file-medical"></i> Agendar </button>'
+//                     // . $button = '<button type="button" name="seguimiento" class="seguimientoadd btn btn-app bg-danger tooltipsC" title="Add seguimiento" value="' . $datas->id . '" ><span class="badge bg-teal">Seguimiento</span><i class="fas fa-laptop-medical"></i> Seguimiento </button>'
+//                 ;
+
+//                 return $button;
+//             })
+//             ->rawColumns(['action'])
+//             ->make(true);
+
+
+//             }
            
            
            
 
-        }
+//         }
         
-        }
+//         }
 
 
-        return view('paliativos.index');
-    }
+//         return view('paliativos.index');
+// }
     
     public function indexa(Request $request)
     {

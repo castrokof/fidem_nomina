@@ -268,6 +268,24 @@
     <script>
         $(document).ready(function() {
 
+            var tablaPaliativos = null;
+
+                // ✅ Filtros fuera de la instancia — accesibles siempre
+        var filtrosPaliativos = {
+            state:       '',
+            future1:     '',
+            profesional: '',
+            estado_pac:  ''
+        };
+
+                // ✅ Función helper para destruir limpiamente
+        function destroy_tabla_paliativos() {
+            if (tablaPaliativos !== null) {
+                tablaPaliativos.destroy();
+                tablaPaliativos = null; // ← esto es lo que faltaba
+            }
+        }
+
             let selectsub = "";
             let selectsub1 = "";
 
@@ -741,32 +759,29 @@
                 theme: "bootstrap4"
             });
 
-            // Función para activar la función de la bd de paliativos
-            $(document).on('click', '#buscarstate', function() {
+        // ── Botón buscar ──────────────────────────────────────────
+        $(document).on('click', '#buscarstate', function () {
 
-                if ($('#stateb').val() != null || $('#zonab').val() != null || $('#profesionalb').val() != null || $('#statepacb').val() != null) {
+            var statedateb   = $('#stateb').val();
+            var zonab        = $('#zonab').val();
+            var profesionalb = $('#profesionalb').val();
+            var statepacb    = $('#statepacb').val();
 
-                    var statedateb = $('#stateb').val();
-                    var zonab = $('#zonab').val();
-                    var profesionalb = $('#profesionalb').val();
-                    var statepacb = $('#statepacb').val();
-                    $('#basePaliativos').DataTable().destroy();
-                    
-                    fill_datatable_bdpaliativos(statedateb,zonab,profesionalb,statepacb );
+            // ✅ Validación correcta — al menos uno debe tener valor
+            if (statedateb || zonab || profesionalb || statepacb) {
 
-                } else {
+                destroy_tabla_paliativos();
+                fill_datatable_bdpaliativos(statedateb, zonab, profesionalb, statepacb);
 
-                    Swal.fire({
-                        icon: 'warning',
-                        title: 'Debes seleccionar un select',
-                        showConfirmButton: false,
-                        timer: 1500
-
-                    })
-
-                }
-
-            });
+            } else {
+                Swal.fire({
+                    icon: 'warning',
+                    title: 'Debes seleccionar al menos un filtro',
+                    showConfirmButton: false,
+                    timer: 1500
+                });
+            }
+        });
             
             
             $(document).on('click', '#reset_fill', function() {
@@ -784,179 +799,268 @@
             }
 
             // Función para activar la función de la bd de paliativos
-            $(document).on('click', '#custom-tabs-one-datos-de-bdpaliativos-tab', function() {
-                $('#basePaliativos').DataTable().destroy();
-                
+            // ── Tab de paliativos ─────────────────────────────────────
+            $(document).on('click', '#custom-tabs-one-datos-de-bdpaliativos-tab', function () {
+                destroy_tabla_paliativos();
                 destroy_selec();
                 fill_datatable_bdpaliativos();
             });
 
+
             fill_datatable_bdpaliativos();
 
-            // Función para pintar tabla de Paliativos
+            // // Función para pintar tabla de Paliativos
 
-            function fill_datatable_bdpaliativos(statedateb = '', zonab = '', profesionalb = '', statepacb = '') {
-                
-                var usuariosession = $("#user_id").val();
+     
+function fill_datatable_bdpaliativos(statedateb = '', zonab = '', profesionalb = '', statepacb = '') {
 
-                var datatable = $('#basePaliativos').DataTable({
+    var usuariosession = $("#user_id").val();
 
-                    language: idioma_espanol,
-                    lengthMenu: [
-                        [25, 50, 100, 500, -1],
-                        [25, 50, 100, 500, "Mostrar Todo"]
-                    ],
-                    processing: true,
-                    serverSide: true,
-                    aaSorting: [
-                        [1, "asc"]
-                    ],
-                    ajax: {
-                        url: "{{ route('indexpaliativos1') }}",
-                        data: {
-                           state: statedateb, future1: zonab, profesional: profesionalb, estado_pac: statepacb,
-                             _token:"{{ csrf_token() }}"
-                            
-                        },
-                        method: 'POST'
-                       
-                    },
-                    
-                    columns: [{
-                            data: 'action',
-                            orderable: false
-                        },
-                        {
-                            data: 'state'
-                        },
-                        {
-                            data: 'estado_pac', name: 'last_ids2.estado_pac'
-                        },
-                        {
-                            data: 'future1'
-                        },
-                        {
-                            data: 'profesional' // auxiliar
-                        },
-                        {
-                            data: 'date_in'
-                        },
-                        {
-                            data: 'surname'
-                        },
-                        {
-                            data: 'ssurname'
-                        },
-                        {
-                            data: 'fname'
-                        },
-                        {
-                            data: 'sname'
-                        },
-                        {
-                            data: 'type_document'
-                        },
-                        {
-                            data: 'document'
-                        },
-                        {
-                            data: 'dx_principal', name: 'last_ids2.dx_principal'
-                        },
-                        {
-                            data: 'dx_relacionado', name: 'last_ids2.dx_relacionado'
-                        },
-                        {
-                            data: 'date_birth'
-                        },
-                        {
-                            data: 'edad'
-                        },
-                        {
-                            data: 'diagnosis' //Diagnostico
-                        },
-                        {
-                            data: 'municipality'
-                        },
-                        {
-                            data: 'address'
-                        },
-                        {
-                            data: 'celular'
-                        },
-                        {
-                            data: 'phone'
-                        },
-                        {
-                            data: 'email'
-                        },
-                        {
-                            data: 'observacion'
-                        },
-                        
-                        {
-                            data: 'dead'
-                        },
-                        {
-                            data: 'date_dead'
-                        },
-                        {
-                            data: 'fecha_egreso'
-                        },
-                        {
-                            data: 'type'
-                        }
-                    ],
-                   "createdRow": function(row, data, dataIndex) {
-                  if (usuariosession == 7) {
-                  $('#ocultarid', row).eq(0).css("display", "block");
-                   }else{
-                  $('#ocultarid', row).eq(0).css("display", "none");
-                  }
-                   },
+    // Actualiza filtros globales
+    filtrosPaliativos.state       = statedateb;
+    filtrosPaliativos.future1     = zonab;
+    filtrosPaliativos.profesional = profesionalb;
+    filtrosPaliativos.estado_pac  = statepacb;
 
-                 //},
+    // Si ya existe solo recarga
+    if (tablaPaliativos !== null) {
+        tablaPaliativos.ajax.reload();
+        return;
+    }
 
+    tablaPaliativos = $('#basePaliativos').DataTable({
+        language: idioma_espanol,
+        lengthMenu: [
+            [25, 50, 100, 500, -1],
+            [25, 50, 100, 500, "Mostrar Todo"]
+        ],
+        processing: true,
+        serverSide: true,
+        aaSorting: [[1, "asc"]],
 
-                    //Botones----------------------------------------------------------------------
-                    "dom": '<"row"<"col-xs-1 form-inline"><"col-md-4 form-inline"l><"col-md-5 form-inline"f><"col-md-3 form-inline"B>>rt<"row"<"col-md-8 form-inline"i> <"col-md-4 form-inline"p>>',
-                    buttons: [
-
-                        {
-
-                            extend: 'copyHtml5',
-                            titleAttr: 'Copy',
-                            className: "btn btn-info"
-
-
-                        },
-                        {
-
-                            extend: 'excelHtml5',
-                            titleAttr: 'Excel',
-                            className: "btn btn-success"
-
-
-                        },
-                        {
-
-                            extend: 'csvHtml5',
-                            titleAttr: 'csv',
-                            className: "btn btn-warning"
-
-
-                        },
-                        {
-
-                            extend: 'pdfHtml5',
-                            titleAttr: 'pdf',
-                            className: "btn btn-primary"
-
-
-                        }
-                    ]
-                });
-
+        ajax: {
+            url: "{{ route('indexpaliativos1') }}",
+            method: 'POST',
+            // ✅ Lee filtrosPaliativos que siempre está disponible
+            data: function(d) {
+                d.state       = filtrosPaliativos.state;
+                d.future1     = filtrosPaliativos.future1;
+                d.profesional = filtrosPaliativos.profesional;
+                d.estado_pac  = filtrosPaliativos.estado_pac;
+                d._token      = "{{ csrf_token() }}";
             }
+        },
+
+        columns: [
+            { data: 'action',         orderable: false },
+            { data: 'state' },
+            { data: 'estado_pac',     name: 'ue.estado_pac' },
+            { data: 'future1' },
+            { data: 'profesional' },
+            { data: 'date_in' },
+            { data: 'surname' },
+            { data: 'ssurname' },
+            { data: 'fname' },
+            { data: 'sname' },
+            { data: 'type_document' },
+            { data: 'document' },
+            { data: 'dx_principal',   name: 'ue.dx_principal' },
+            { data: 'dx_relacionado', name: 'ue.dx_relacionado' },
+            { data: 'date_birth' },
+            { data: 'edad',           searchable: false, orderable: false },
+            { data: 'diagnosis' },
+            { data: 'municipality' },
+            { data: 'address' },
+            { data: 'celular' },
+            { data: 'phone' },
+            { data: 'email' },
+            { data: 'observacion' },
+            { data: 'dead' },
+            { data: 'date_dead' },
+            { data: 'fecha_egreso' },
+            { data: 'type' }
+        ],
+
+        createdRow: function(row, data) {
+            if (usuariosession == 7) {
+                $('.ocultarid', row).css("display", "block");
+            } else {
+                $('.ocultarid', row).css("display", "none");
+            }
+        },
+
+        dom: '<"row"<"col-xs-1 form-inline"><"col-md-4 form-inline"l><"col-md-5 form-inline"f><"col-md-3 form-inline"B>>rt<"row"<"col-md-8 form-inline"i><"col-md-4 form-inline"p>>',
+        buttons: [
+            { extend: 'copyHtml5',  titleAttr: 'Copy',  className: 'btn btn-info' },
+            { extend: 'excelHtml5', titleAttr: 'Excel', className: 'btn btn-success' },
+            { extend: 'csvHtml5',   titleAttr: 'CSV',   className: 'btn btn-warning' },
+            { extend: 'pdfHtml5',   titleAttr: 'PDF',   className: 'btn btn-primary' }
+        ]
+    });
+}
+
+            // function fill_datatable_bdpaliativos(statedateb = '', zonab = '', profesionalb = '', statepacb = '') {
+                
+            //     var usuariosession = $("#user_id").val();
+
+            //     var datatable = $('#basePaliativos').DataTable({
+
+            //         language: idioma_espanol,
+            //         lengthMenu: [
+            //             [25, 50, 100, 500, -1],
+            //             [25, 50, 100, 500, "Mostrar Todo"]
+            //         ],
+            //         processing: true,
+            //         serverSide: true,
+            //         aaSorting: [
+            //             [1, "asc"]
+            //         ],
+            //         ajax: {
+            //             url: "{{ route('indexpaliativos1') }}",
+            //             data: {
+            //                state: statedateb, future1: zonab, profesional: profesionalb, estado_pac: statepacb,
+            //                  _token:"{{ csrf_token() }}"
+                            
+            //             },
+            //             method: 'POST'
+                       
+            //         },
+                    
+            //         columns: [{
+            //                 data: 'action',
+            //                 orderable: false
+            //             },
+            //             {
+            //                 data: 'state'
+            //             },
+            //             {
+            //                 data: 'estado_pac', name: 'last_ids2.estado_pac'
+            //             },
+            //             {
+            //                 data: 'future1'
+            //             },
+            //             {
+            //                 data: 'profesional' // auxiliar
+            //             },
+            //             {
+            //                 data: 'date_in'
+            //             },
+            //             {
+            //                 data: 'surname'
+            //             },
+            //             {
+            //                 data: 'ssurname'
+            //             },
+            //             {
+            //                 data: 'fname'
+            //             },
+            //             {
+            //                 data: 'sname'
+            //             },
+            //             {
+            //                 data: 'type_document'
+            //             },
+            //             {
+            //                 data: 'document'
+            //             },
+            //             {
+            //                 data: 'dx_principal', name: 'last_ids2.dx_principal'
+            //             },
+            //             {
+            //                 data: 'dx_relacionado', name: 'last_ids2.dx_relacionado'
+            //             },
+            //             {
+            //                 data: 'date_birth'
+            //             },
+            //             {
+            //                 data: 'edad'
+            //             },
+            //             {
+            //                 data: 'diagnosis' //Diagnostico
+            //             },
+            //             {
+            //                 data: 'municipality'
+            //             },
+            //             {
+            //                 data: 'address'
+            //             },
+            //             {
+            //                 data: 'celular'
+            //             },
+            //             {
+            //                 data: 'phone'
+            //             },
+            //             {
+            //                 data: 'email'
+            //             },
+            //             {
+            //                 data: 'observacion'
+            //             },
+                        
+            //             {
+            //                 data: 'dead'
+            //             },
+            //             {
+            //                 data: 'date_dead'
+            //             },
+            //             {
+            //                 data: 'fecha_egreso'
+            //             },
+            //             {
+            //                 data: 'type'
+            //             }
+            //         ],
+            //        "createdRow": function(row, data, dataIndex) {
+            //       if (usuariosession == 7) {
+            //       $('#ocultarid', row).eq(0).css("display", "block");
+            //        }else{
+            //       $('#ocultarid', row).eq(0).css("display", "none");
+            //       }
+            //        },
+
+            //      //},
+
+
+            //         //Botones----------------------------------------------------------------------
+            //         "dom": '<"row"<"col-xs-1 form-inline"><"col-md-4 form-inline"l><"col-md-5 form-inline"f><"col-md-3 form-inline"B>>rt<"row"<"col-md-8 form-inline"i> <"col-md-4 form-inline"p>>',
+            //         buttons: [
+
+            //             {
+
+            //                 extend: 'copyHtml5',
+            //                 titleAttr: 'Copy',
+            //                 className: "btn btn-info"
+
+
+            //             },
+            //             {
+
+            //                 extend: 'excelHtml5',
+            //                 titleAttr: 'Excel',
+            //                 className: "btn btn-success"
+
+
+            //             },
+            //             {
+
+            //                 extend: 'csvHtml5',
+            //                 titleAttr: 'csv',
+            //                 className: "btn btn-warning"
+
+
+            //             },
+            //             {
+
+            //                 extend: 'pdfHtml5',
+            //                 titleAttr: 'pdf',
+            //                 className: "btn btn-primary"
+
+
+            //             }
+            //         ]
+            //     });
+
+            // }
 
 
             // Función para activar la función de la bd de paliativos

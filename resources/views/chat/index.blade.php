@@ -346,7 +346,7 @@
                     }
                     return 'Usuario';
                 },
-                formatDate(dateString) {
+                                formatDate(dateString) {
                     const date = new Date(dateString);
                     const now = new Date();
                     const diff = now - date;

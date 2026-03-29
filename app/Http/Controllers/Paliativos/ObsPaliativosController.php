@@ -123,6 +123,21 @@ class ObsPaliativosController extends Controller
             }
 
 
+            if($request->type_obs == "EGRESO"){
+                
+                $basepaliativos = BasePaliativos::where('id', $request->pac_id)->first();
+                
+                if($basepaliativos){
+                    
+                    $basepaliativos->update([
+                        'state' => 'EGRESO',
+                        'fecha_egreso' => $request->future2
+                    ]);
+                    
+                }
+                
+            }
+
             ObsPaliativos::create($request->all());
 
          

@@ -257,7 +257,7 @@ Route::group(['middleware' => ['auth']], function () {
     
      Route::get('consultardocumento', 'Psicologica\LineaPsicologicaController@consultarDocumento')->name('consultardocumento')->middleware('superPsicologica');
      
-     Route::put('anular_evolucion/{id}', 'Psicologica\LineaPsicologicaController@anularEvolucion')->name('anular_evolucion')->name('analistapsico')->middleware('superPsicologica');
+     Route::put('anular_evolucionpsi/{id}', 'Psicologica\LineaPsicologicaController@anularEvolucion')->name('anular_evolucionpsi')->name('analistapsico')->middleware('superPsicologica');
 
 
     //RUTA LINEA AVA
@@ -474,6 +474,15 @@ Route::group(['prefix' => 'admin', 'namespace' => 'Admin', 'middleware' => ['far
     Route::post('consentimientos', 'ConsentimientoController@store')->name('consentimientos.store');
     Route::get('consentimientos/{id}', 'ConsentimientoController@show')->name('consentimientos.show');
     Route::get('consentimientos/{id}/pdf', 'ConsentimientoController@descargarPdf')->name('consentimientos.pdf');
+});
+
+Route::prefix('rh/contratacion')->middleware('superadmin')->group(function () {
+    Route::get('/', 'RH\ContratacionController@index')->name('rh.contratacion.index');
+    Route::post('/', 'RH\ContratacionController@store')->name('rh.contratacion.store');
+    Route::get('/{candidato}', 'RH\ContratacionController@show')->name('rh.contratacion.show');
+    Route::post('/checklist/toggle', 'RH\ContratacionController@toggleItem')->name('rh.contratacion.toggle');
+    Route::post('/{candidato}/fase', 'RH\ContratacionController@avanzarFase')->name('rh.contratacion.fase');
+    Route::delete('/{candidato}', 'RH\ContratacionController@destroy')->name('rh.contratacion.destroy');
 });
 
 
