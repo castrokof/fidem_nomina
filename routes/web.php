@@ -3,6 +3,9 @@
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Paliativos\FidemContigoController;
+use App\Http\Controllers\Admin\PacienteController;
+use App\Http\Controllers\Admin\ConsentimientoController;
+use App\Http\Controllers\Admin\PerfilController;
 /*
 |--------------------------------------------------------------------------
 | Web Routes
@@ -54,13 +57,13 @@ Route::post('seguridad/login', 'Seguridad\LoginController@login')->name('login_p
 Route::get('seguridad/logout', 'Seguridad\LoginController@logout')->name('logout');
 
 // Rutas públicas para firma de consentimientos (sin autenticación)
-Route::get('firmar-consentimiento/{token}', 'ConsentimientoController@mostrarFirma')->name('consentimientos.firmar');
-Route::post('firmar-consentimiento/{token}', 'ConsentimientoController@guardarFirma')->name('consentimientos.guardar-firma');
+Route::get('firmar-consentimiento/{token}', [ConsentimientoController::class, 'mostrarFirma'])->name('consentimientos.firmar');
+Route::post('firmar-consentimiento/{token}', [ConsentimientoController::class, 'guardarFirma'])->name('consentimientos.guardar-firma');
 
 // Rutas para usuarios autenticados (profesionales)
 Route::group(['middleware' => ['auth']], function () {
-    Route::get('perfil/firma', 'PerfilController@mostrarFirma')->name('perfil.firma');
-    Route::post('perfil/firma', 'PerfilController@guardarFirma')->name('perfil.guardar-firma');
+    Route::get('perfil/firma', [PerfilController::class, 'mostrarFirma'])->name('perfil.firma');
+    Route::post('perfil/firma', [PerfilController::class, 'guardarFirma'])->name('perfil.guardar-firma');
 });
 
 Route::group(['prefix' => 'admin', 'namespace' => 'Admin', 'middleware' => ['auth', 'superadmin']], function () {
