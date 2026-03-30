@@ -15,7 +15,7 @@ class CreateProfesionalesTable extends Migration
     {
         Schema::create('profesionales', function (Blueprint $table) {
             $table->bigIncrements('id');
-            $table->unsignedBigInteger('usuario_id')->nullable()->unique()->comment('FK a Usuarios solo si tiene login');
+            $table->unsignedInteger('usuario_id')->nullable()->unique()->comment('FK a Usuarios solo si tiene login');
             $table->unsignedBigInteger('especialidad_id')->nullable()->comment('FK a especialidades');
             $table->string('codigo_usuario', 50)->nullable()->unique()->comment('Relaciona con CODIGO_USUARIO de fac_m_citas (trim)');
             $table->string('nombres', 100);
@@ -32,7 +32,7 @@ class CreateProfesionalesTable extends Migration
             $table->timestamps();
 
             // Foreign keys
-            $table->foreign('usuario_id')->references('id')->on('usuarios')->onDelete('set null');
+            $table->foreign('usuario_id')->references('id')->on('usuario')->onDelete('set null');
             $table->foreign('especialidad_id')->references('id')->on('especialidades')->onDelete('set null');
         });
     }
