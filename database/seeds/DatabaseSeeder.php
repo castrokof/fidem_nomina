@@ -30,6 +30,11 @@ class DatabaseSeeder extends Seeder
             $this->call(RolTablaSeeder::class);
             $this->call(UsuarioAdministradorSeeder::class);
 
+            // Seeders del módulo CI-Fidem
+            $this->call(EspecialidadSeeder::class);
+            $this->call(ProfesionalSeeder::class);
+            $this->call(PlantillaCISeeder::class);
+
     }
 
     protected function truncateTablas(array $tablas){
