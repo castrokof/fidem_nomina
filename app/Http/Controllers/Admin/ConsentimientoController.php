@@ -24,6 +24,71 @@ class ConsentimientoController extends Controller
     }
 
     /**
+     * Dashboard de consentimientos con estadísticas
+     */
+    public function dashboard()
+    {
+        // Estadísticas generales
+        $totalConsentimientos = ConsentimientoInformado::count();
+        $pendientes = ConsentimientoInformado::where('estado', 'pendiente')->count();
+        $enProceso = ConsentimientoInformado::where('estado', 'en_proceso')->count();
+        $firmados = ConsentimientoInformado::where('estado', 'firmado')->count();
+        $cancelados = ConsentimientoInformado::where('estado', 'cancelado')->count();
+
+        // Consentimientos del mes actual
+        $consentimientosMes = ConsentimientoInformado::whereMonth('created_at', date('m'))
+            ->whereYear('created_at', date('Y'))
+            ->count();
+
+        // Últimos 10 consentimientos creados
+        $ultimosConsentimientos = ConsentimientoInformado::with(['paciente', 'profesional', 'plantilla'])
+            ->orderBy('created_at', 'desc')
+            ->take(10)
+            ->get();
+
+        // Consentimientos por especialidad (top 5)
+        $porEspecialidad = ConsentimientoInformado::selectRaw('especialidad_id, count(*) as total')
+            ->with('especialidad')
+            ->groupBy('especialidad_id')
+            ->orderByDesc('total')
+            ->take(5)
+            ->get();
+
+        // Consentimientos por profesional (top 5)
+        $porProfesional = ConsentimientoInformado::selectRaw('profesional_id, profesional_nombre, count(*) as total')
+            ->groupBy('profesional_id', 'profesional_nombre')
+            ->orderByDesc('total')
+            ->take(5)
+            ->get();
+
+        // Consentimientos por mes (últimos 6 meses)
+        $porMes = ConsentimientoInformado::selectRaw('MONTH(created_at) as mes, YEAR(created_at) as anio, count(*) as total')
+            ->where('created_at', '>=', now()->subMonths(6))
+            ->groupByRaw('YEAR(created_at), MONTH(created_at)')
+            ->orderByRaw('YEAR(created_at) DESC, MONTH(created_at) DESC')
+            ->get();
+
+        // Tasa de finalización (firmados vs total)
+        $tasaFinalizacion = $totalConsentimientos > 0
+            ? round(($firmados / $totalConsentimientos) * 100, 1)
+            : 0;
+
+        return view('consentimientos.dashboard', compact(
+            'totalConsentimientos',
+            'pendientes',
+            'enProceso',
+            'firmados',
+            'cancelados',
+            'consentimientosMes',
+            'ultimosConsentimientos',
+            'porEspecialidad',
+            'porProfesional',
+            'porMes',
+            'tasaFinalizacion'
+        ));
+    }
+
+    /**
      * Mostrar listado de consentimientos
      */
     public function index(Request $request)
@@ -57,6 +122,7 @@ class ConsentimientoController extends Controller
         $consentimiento = ConsentimientoInformado::with([
             'paciente',
             'profesional',
+            'profesional.especialidad',
             'especialidad',
             'plantilla',
             'firmas',
@@ -353,7 +419,14 @@ public function store(Request $request)
      */
     public function descargarPdf($id)
     {
-        $consentimiento = ConsentimientoInformado::findOrFail($id);
+        $consentimiento = ConsentimientoInformado::with([
+            'paciente',
+            'profesional',
+            'especialidad',
+            'plantilla',
+            'firmas',
+            'acudiente'
+        ])->findOrFail($id);
 
         return $this->pdfService->descargar($consentimiento);
     }
