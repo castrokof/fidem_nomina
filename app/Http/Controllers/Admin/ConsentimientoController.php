@@ -114,24 +114,51 @@ class ConsentimientoController extends Controller
         return view('consentimientos.index', compact('consentimientos'));
     }
 
-    /**
-     * Mostrar detalle de un consentimiento
-     */
-    public function show($id)
-    {
-        $consentimiento = ConsentimientoInformado::with([
-            'paciente',
-            'profesional',
-            'profesional.especialidad',
-            'especialidad',
-            'plantilla',
-            'firmas',
-            'acudiente',
-            'agenda'
-        ])->findOrFail($id);
+   /**
+ * Mostrar detalle de un consentimiento con contenido renderizado
+ */
+public function show($id)
+{
+    $consentimiento = ConsentimientoInformado::with([
+        'paciente',
+        'profesional',
+        'profesional.especialidad',
+        'plantilla',
+        'firmas',
+        'acudiente',
+        'agenda'
+    ])->findOrFail($id);
 
-        return view('consentimientos.show', compact('consentimiento'));
-    }
+    // ✅ Preparar variables para reemplazo en la plantilla
+    $variables = [
+        'cups_descripcion'      => $consentimiento->cups_descripcion ?? $consentimiento->plantilla->nombre ?? '',
+        'cups_codigo'           => $consentimiento->cups_codigo ?? '',
+        'paciente_nombre'       => $consentimiento->paciente->nombres . ' ' . $consentimiento->paciente->apellidos,
+        'paciente_cedula'       => $consentimiento->paciente->numero_documento,
+        'paciente_tipo_doc'     => $consentimiento->paciente->tipo_documento,
+        'paciente_edad'         => $consentimiento->paciente->edad ?? 'N/A',
+        'paciente_genero'       => $consentimiento->paciente->genero ?? 'N/A',
+        'profesional_nombre'    => $consentimiento->profesional->nombres . ' ' . $consentimiento->profesional->apellidos,
+        'registro_medico'       => $consentimiento->profesional->registro_medico ?? 'N/A',
+        'tarjeta_profesional'   => $consentimiento->profesional->tarjeta_profesional ?? 'N/A',
+        'especialidad'          => $consentimiento->profesional->especialidad->nombre ?? 'N/A',
+        'fecha_procedimiento'   => \Carbon\Carbon::parse($consentimiento->fecha_procedimiento)->format('d/m/Y H:i'),
+        'fecha_actual'          => \Carbon\Carbon::now()->format('d/m/Y'),
+        'clinica_nombre'        => 'Clínica Fidem',
+        'clinica_direccion'     => 'Manizales, Colombia',
+        'token_firma'           => $consentimiento->token_firma ?? '',
+    ];
+
+    // ✅ Renderizar el contenido de la plantilla con las variables
+    $contenidoRenderizado = $consentimiento->plantilla->renderizar($variables);
+
+    // ✅ Pasar a la vista
+    return view('consentimientos.show', compact(
+        'consentimiento',
+        'contenidoRenderizado',  // ← Contenido con variables reemplazadas
+        'variables'              // ← Opcional: para usar en otras partes
+    ));
+}
 
 /**
  * Mostrar formulario para crear consentimiento

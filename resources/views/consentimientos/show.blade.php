@@ -119,11 +119,12 @@
                         @endif
                     </div>
 
-                    <!-- Contenido del Consentimiento -->
+                  {{-- Contenido del Consentimiento --}}
                     <div class="info-section">
                         <h5><i class="fas fa-file-alt"></i> Contenido del Consentimiento</h5>
                         <div style="max-height: 400px; overflow-y: auto; padding: 15px; background-color: white; border: 1px solid #dee2e6;">
-                            {!! nl2br(e($consentimiento->plantilla->contenido)) !!}
+                            {{-- ✅ Usar contenido ya renderizado con variables reemplazadas --}}
+                            {!! $contenidoRenderizado !!}
                         </div>
                     </div>
 

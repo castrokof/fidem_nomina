@@ -169,7 +169,7 @@
                             </tbody>
                         </table>
                     </div>
-                    <p class="mb-0"><strong>Ejemplo:</strong> "Yo, {{'{{'}}paciente_nombre{{'}}'}}, identificado con {{'{{'}}paciente_cedula{{'}}'}}, declaro que..."</p>
+                     <p class="mb-0"><strong>Ejemplo:</strong> "Yo, {nombre_paciente}, identificado con {documento_paciente}, declaro que..."</p>
                 </div>
             </div>
         </div>

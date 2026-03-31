@@ -116,13 +116,37 @@
                                 <strong>Fecha del procedimiento:</strong> {{ \Carbon\Carbon::parse($consentimiento->fecha_procedimiento)->format('d/m/Y H:i') }}
                             </div>
 
-                            <!-- Contenido del consentimiento -->
-                            <div class="section-title">
-                                <i class="fas fa-file-alt"></i> Contenido del Consentimiento
-                            </div>
-                            <div style="max-height: 300px; overflow-y: auto; border: 1px solid #dee2e6; padding: 15px; border-radius: 5px; background-color: #ffffff;">
-                                {!! nl2br(e($consentimiento->plantilla->contenido)) !!}
-                            </div>
+                           {{-- Contenido del Consentimiento --}}
+<div class="info-section">
+    <h5><i class="fas fa-file-alt"></i> Contenido del Consentimiento</h5>
+    
+    @php
+        // Preparar variables para reemplazo
+        $variables = [
+            'cups_descripcion'      => $consentimiento->cups_descripcion ?? $consentimiento->plantilla->nombre ?? '',
+            'cups_codigo'           => $consentimiento->cups_codigo ?? '',
+            'paciente_nombre'       => $consentimiento->paciente->nombres . ' ' . $consentimiento->paciente->apellidos,
+            'paciente_cedula'       => $consentimiento->paciente->numero_documento,
+            'paciente_tipo_doc'     => $consentimiento->paciente->tipo_documento,
+            'paciente_edad'         => $consentimiento->paciente->edad ?? 'N/A',
+            'paciente_genero'       => $consentimiento->paciente->genero ?? 'N/A',
+            'profesional_nombre'    => $consentimiento->profesional->nombres . ' ' . $consentimiento->profesional->apellidos,
+            'registro_medico'       => $consentimiento->profesional->registro_medico ?? 'N/A',
+            'especialidad'          => $consentimiento->profesional->especialidad->nombre ?? 'N/A',
+            'fecha_procedimiento'   => \Carbon\Carbon::parse($consentimiento->fecha_procedimiento)->format('d/m/Y H:i'),
+            'fecha_actual'          => \Carbon\Carbon::now()->format('d/m/Y'),
+            'clinica_nombre'        => 'Clínica Fidem',
+            'clinica_direccion'     => 'Manizales, Colombia',
+        ];
+        
+        // Renderizar contenido
+        $contenidoRenderizado = $consentimiento->plantilla->renderizar($variables);
+    @endphp
+    
+    <div style="max-height: 400px; overflow-y: auto; padding: 15px; background-color: white; border: 1px solid #dee2e6;">
+        {!! $contenidoRenderizado !!}
+    </div>
+</div>
 
                             <!-- Formulario de firma -->
                             <form id="formFirma" method="POST" action="{{ route('consentimientos.guardar-firma', $token) }}">
