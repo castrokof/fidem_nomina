@@ -1,4 +1,5 @@
 <?php
+// app/Services/AgendaSyncService.php
 
 namespace App\Services;
 
@@ -6,99 +7,42 @@ use App\AgendaCI;
 use App\Paciente;
 use App\Profesional;
 use Carbon\Carbon;
-use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class AgendaSyncService
 {
-    /**
-     * Sincroniza citas desde fac_m_citas en un rango de fechas
-     *
-     * @param int $diasAtras Días hacia atrás desde hoy
-     * @param int $diasAdelante Días hacia adelante desde hoy
-     * @return array Estadísticas de la sincronización
-     */
+    protected $apiService;
+
+    public function __construct(CitasApiService $apiService)
+    {
+        $this->apiService = $apiService;
+    }
+
     public function sincronizarRango($diasAtras = 2, $diasAdelante = 3)
     {
-        $fechaInicio = Carbon::today()->subDays($diasAtras)->format('Y-m-d') . ' 00:00:00';
-        $fechaFin    = Carbon::today()->addDays($diasAdelante)->format('Y-m-d') . ' 23:59:59';
+        $fechaInicio = Carbon::today()->subDays($diasAtras)->format('Y-m-d');
+        $fechaFin    = Carbon::today()->addDays($diasAdelante)->format('Y-m-d');
 
-        // CRÍTICO: Usar whereRaw con CONVERT para evitar problemas con SQL Server
-        $citas = DB::connection('sqlsrv1')
-            ->table('fac_m_citas')
-            ->whereRaw("FECHA >= CONVERT(datetime, '$fechaInicio', 120)")
-            ->whereRaw("FECHA <= CONVERT(datetime, '$fechaFin', 120)")
-            ->whereNotNull('CODIGO_USUARIO')
-            ->orderBy('FECHA')
-            ->get();
+        Log::info("Iniciando sincronización: {$fechaInicio} a {$fechaFin}");
+
+        $citas = $this->apiService->getCitasPorRango($fechaInicio, $fechaFin);
 
         $creados = 0;
         $actualizados = 0;
+        $errores = 0;
 
         foreach ($citas as $cita) {
-            $idRegistro    = trim($cita->ID_REGISTRO);
-            $codigoUsuario = trim($cita->CODIGO_USUARIO);
-
-            // Mapear tipo de documento
-            $tipoDoc = $this->mapTipoDoc((int)$cita->TIPDOCUM);
-            $cedula  = trim($cita->NUMDOCUM);
-
-            // Construir nombre completo del paciente
-            $nombrePaciente = trim(
-                trim($cita->NOMBRE1) . ' ' .
-                trim($cita->NOMBRE2) . ' ' .
-                trim($cita->APELLIDO1) . ' ' .
-                trim($cita->APELLIDO2)
-            );
-
-            // Buscar o crear paciente
-            $paciente = Paciente::firstOrCreate(
-                [
-                    'tipo_documento'   => $tipoDoc,
-                    'numero_documento' => $cedula
-                ],
-                [
-                    'nombres'          => trim(trim($cita->NOMBRE1) . ' ' . trim($cita->NOMBRE2)),
-                    'apellidos'        => trim(trim($cita->APELLIDO1) . ' ' . trim($cita->APELLIDO2)),
-                    'telefono'         => trim($cita->TELEFONO ?? ''),
-                    'historia_clinica' => trim($cita->HISTORIA ?? ''),
-                ]
-            );
-
-            // Buscar profesional por codigo_usuario
-            $profesional = Profesional::where('codigo_usuario', $codigoUsuario)->first();
-
-            // Preparar datos de la agenda
-            $datos = [
-                'fecha'              => Carbon::parse($cita->FECHA)->format('Y-m-d H:i:s'),
-                'codigo_consultorio' => trim($cita->CODIGO ?? ''),
-                'historia'           => trim($cita->HISTORIA ?? ''),
-                'paciente_id'        => $paciente->id,
-                'paciente_nombre'    => $nombrePaciente,
-                'paciente_cedula'    => $cedula,
-                'paciente_tipo_doc'  => $tipoDoc,
-                'paciente_telefono'  => trim($cita->TELEFONO ?? ''),
-                'profesional_id'     => $profesional ? $profesional->id : null,
-                'codigo_usuario'     => $codigoUsuario,
-                'cups_codigo'        => trim($cita->CODIGO_CUPS ?? ''),
-                'contrato'           => trim($cita->CONTRATO ?? ''),
-                'empresafac'         => trim($cita->EMPRESAFAC ?? ''),
-                'llegada_confirmada' => !empty(trim($cita->NUMERO_FACTURA ?? '')),
-                'numero_factura'     => !empty(trim($cita->NUMERO_FACTURA ?? '')) ? trim($cita->NUMERO_FACTURA) : null,
-                'atencion_factura'   => !empty($cita->ATENCION_FACTURA) ? Carbon::parse($cita->ATENCION_FACTURA)->format('Y-m-d H:i:s') : null,
-                'sincronizado_at'    => now(),
-            ];
-
-            // Verificar si ya existe
-            $existe = AgendaCI::where('id_registro', $idRegistro)->first();
-
-            if ($existe) {
-                $existe->update($datos);
-                $actualizados++;
-            } else {
-                AgendaCI::create(array_merge(['id_registro' => $idRegistro], $datos));
-                $creados++;
+            try {
+                $this->procesarCita($cita, $creados, $actualizados);
+            } catch (\Exception $e) {
+                $errores++;
+                $idRegistro = isset($cita['ID_REGISTRO']) ? $cita['ID_REGISTRO'] : 'N/A';
+                Log::error("Error procesando cita ID_REGISTRO={$idRegistro}: " . $e->getMessage());
+                continue;
             }
         }
+
+        Log::info("Sincronización completada: {$creados} creados, {$actualizados} actualizados, {$errores} errores");
 
         return [
             'creados'      => $creados,
@@ -107,21 +51,149 @@ class AgendaSyncService
         ];
     }
 
-    /**
-     * Mapea el tipo de documento desde el código numérico de SQL Server
-     *
-     * @param int $tipo
-     * @return string
-     */
+    protected function procesarCita($cita, &$creados, &$actualizados)
+{
+    $idRegistro    = trim($this->getValue($cita, 'ID_REGISTRO', ''));
+    $codigoUsuario = trim($this->getValue($cita, 'CODIGO_USUARIO', ''));
+
+    if (empty($idRegistro) || empty($codigoUsuario)) {
+        Log::warning("Cita sin ID_REGISTRO o CODIGO_USUARIO, omitiendo");
+        return;
+    }
+
+    $tipoDoc = $this->mapTipoDoc((int) $this->getValue($cita, 'TIPDOCUM', 1));
+    $cedula  = trim($this->getValue($cita, 'NUMDOCUM', ''));
+
+    $nombrePaciente = trim(
+        trim($this->getValue($cita, 'NOMBRE1', '')) . ' ' .
+        trim($this->getValue($cita, 'NOMBRE2', '')) . ' ' .
+        trim($this->getValue($cita, 'APELLIDO1', '')) . ' ' .
+        trim($this->getValue($cita, 'APELLIDO2', ''))
+    );
+
+    $paciente = Paciente::firstOrCreate(
+        [
+            'tipo_documento'   => $tipoDoc,
+            'numero_documento' => $cedula
+        ],
+        [
+            'nombres'          => trim(trim($this->getValue($cita, 'NOMBRE1', '')) . ' ' . trim($this->getValue($cita, 'NOMBRE2', ''))),
+            'apellidos'        => trim(trim($this->getValue($cita, 'APELLIDO1', '')) . ' ' . trim($this->getValue($cita, 'APELLIDO2', ''))),
+            'telefono'         => trim($this->getValue($cita, 'TELEFONO', '')),
+            'historia_clinica' => trim($this->getValue($cita, 'HISTORIA', '')),
+        ]
+    );
+
+    $profesional = Profesional::where('codigo_usuario', $codigoUsuario)->first();
+
+    $numeroFactura = trim($this->getValue($cita, 'NUMERO_FACTURA', ''));
+    $atencionFactura = $this->getValue($cita, 'ATENCION_FACTURA', null);
+
+    // ✅ Datos completos de la agenda (todos los campos de la API)
+    $datos = [
+        // Campos originales
+        'fecha'                 => $this->parseFecha($this->getValue($cita, 'FECHA', null)),
+        'codigo_consultorio'    => trim($this->getValue($cita, 'CODIGO', '')),
+        'historia'              => trim($this->getValue($cita, 'HISTORIA', '')),
+        'paciente_id'           => $paciente->id,
+        'paciente_nombre'       => $nombrePaciente,
+        'paciente_cedula'       => $cedula,
+        'paciente_tipo_doc'     => $tipoDoc,
+        'paciente_telefono'     => trim($this->getValue($cita, 'TELEFONO', '')),
+        'profesional_id'        => $profesional ? $profesional->id : null,
+        'codigo_usuario'        => $codigoUsuario,
+        'cups_codigo'           => trim($this->getValue($cita, 'CODIGO_CUPS', '')),
+        'contrato'              => trim($this->getValue($cita, 'CONTRATO', '')),
+        'empresafac'            => trim($this->getValue($cita, 'EMPRESAFAC', '')),
+        'llegada_confirmada'    => !empty($numeroFactura),
+        'numero_factura'        => !empty($numeroFactura) ? $numeroFactura : null,
+        'atencion_factura'      => $this->parseFecha($atencionFactura),
+        
+        // ✅ NUEVOS: Campos adicionales de la API
+        'orden'                 => trim($this->getValue($cita, 'ORDEN', '')),
+        'fecha_solicitud'       => $this->parseFecha($this->getValue($cita, 'FECHA_SOLICITUD', null)),
+        'fecha_solicitada'      => $this->parseFecha($this->getValue($cita, 'FECHA_SOLICITADA', null)),
+        'tipo_solicitud'        => trim($this->getValue($cita, 'TIPO_SOLICITUD', '')),
+        'ips'                   => trim($this->getValue($cita, 'IPS', '')),
+        'centroprod'            => trim($this->getValue($cita, 'CENTROPROD', '')),
+        'tipdocum'              => trim($this->getValue($cita, 'TIPDOCUM', '')),
+        'numdocum'              => trim($this->getValue($cita, 'NUMDOCUM', '')),
+        'nombre1'               => trim($this->getValue($cita, 'NOMBRE1', '')),
+        'nombre2'               => trim($this->getValue($cita, 'NOMBRE2', '')),
+        'apellido1'             => trim($this->getValue($cita, 'APELLIDO1', '')),
+        'apellido2'             => trim($this->getValue($cita, 'APELLIDO2', '')),
+        'nuevo'                 => trim($this->getValue($cita, 'NUEVO', '0')),
+        'estado'                => trim($this->getValue($cita, 'ESTADO', '')),
+        'atendido'              => trim($this->getValue($cita, 'ATENDIDO', '')),
+        'observaciones'         => trim($this->getValue($cita, 'OBSERVACIONES', '')),
+        'usuario_externo'       => $this->getValue($cita, 'USUARIO_EXTERNO', null),
+        'ips_factura'           => trim($this->getValue($cita, 'IPS_FACTURA', '')),
+        'documento_factura'     => trim($this->getValue($cita, 'DOCUMENTO_FACTURA', '')),
+        'px_factura'            => trim($this->getValue($cita, 'PX_FACTURA', '')),
+        'cupo_web'              => trim($this->getValue($cita, 'CUPO_WEB', '0')),
+        'cups_descripcion'      => trim($this->getValue($cita, 'CODIGO_CUPS', '')), // Puedes ajustar si hay campo separado
+        'ips_internacion'       => $this->getValue($cita, 'IPS_INTERNACION', null),
+        'documento_internacion' => $this->getValue($cita, 'DOCUMENTO_INTERNACION', null),
+        'orden_internacion'     => $this->getValue($cita, 'ORDEN_INTERNACION', null),
+        'atencion_internacion'  => $this->parseFecha($this->getValue($cita, 'ATENCION_INTERNACION', null)),
+        'px_internacion'        => trim($this->getValue($cita, 'PX_INTERNACION', '')),
+        'embarazo'              => trim($this->getValue($cita, 'EMBARAZO', '0')),
+        'regimenfac'            => trim($this->getValue($cita, 'REGIMENFAC', '')),
+        'nivelfac'              => trim($this->getValue($cita, 'NIVELFAC', '')),
+        'tipoafilfac'           => trim($this->getValue($cita, 'TIPOAFILFAC', '')),
+        
+        'sincronizado_at'       => now(),
+    ];
+
+    $existe = AgendaCI::where('id_registro', $idRegistro)->first();
+
+    if ($existe) {
+        $existe->update($datos);
+        $actualizados++;
+    } else {
+        AgendaCI::create(array_merge(['id_registro' => $idRegistro], $datos));
+        $creados++;
+    }
+}
+
+    protected function getValue($array, $key, $default = null)
+    {
+        if (!is_array($array)) {
+            return $default;
+        }
+        if (isset($array[$key]) && $array[$key] !== '') {
+            return $array[$key];
+        }
+        return $default;
+    }
+
+    protected function parseFecha($fecha)
+    {
+        if (empty($fecha)) {
+            return null;
+        }
+        try {
+            // Las fechas vienen como "2026-03-28 07:30:00.000"
+            return Carbon::parse($fecha)->format('Y-m-d H:i:s');
+        } catch (\Exception $e) {
+            Log::warning("Fecha inválida: " . print_r($fecha, true));
+            return null;
+        }
+    }
+
     private function mapTipoDoc($tipo)
     {
-        return match($tipo) {
-            1 => 'CC',  // Cédula de Ciudadanía
-            2 => 'TI',  // Tarjeta de Identidad
-            3 => 'CE',  // Cédula de Extranjería
-            4 => 'RC',  // Registro Civil
-            5 => 'PA',  // Pasaporte
-            default => 'CC'
-        };
+        $mapa = [
+            1 => 'CC',
+            2 => 'TI',
+            3 => 'CE',
+            4 => 'RC',
+            5 => 'PA',
+        ];
+        $tipoInt = (int) $tipo;
+        if (isset($mapa[$tipoInt])) {
+            return $mapa[$tipoInt];
+        }
+        return 'CC';
     }
 }
