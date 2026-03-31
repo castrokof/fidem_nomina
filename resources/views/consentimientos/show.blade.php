@@ -131,65 +131,61 @@
                         <!-- Firmas -->
                         <div class="row">
                             <!-- Firma del Paciente -->
-                            @foreach($consentimiento->firmas as $firma)
-                                @if($firma->tipo_firma == 'paciente')
-                                    <div class="col-md-4">
-                                        <h6><i class="fas fa-signature"></i> Firma del Paciente</h6>
-                                        <div class="firma-container">
-                                            <img src="{{$firma->firma_base64}}" alt="Firma del Paciente" class="firma-img">
-                                            <p class="mt-2 mb-0"><small>Firmado el: {{\Carbon\Carbon::parse($firma->fecha_firma)->format('d/m/Y H:i')}}</small></p>
-                                        </div>
+                            @if($consentimiento->firmaPaciente)
+                                <div class="col-md-4">
+                                    <h6><i class="fas fa-signature"></i> Firma del Paciente</h6>
+                                    <div class="firma-container">
+                                        <img src="{{$consentimiento->firmaPaciente->firma_base64}}" alt="Firma del Paciente" class="firma-img">
+                                        <p class="mt-2 mb-0"><small>{{$consentimiento->firmaPaciente->firmante_nombre}}</small></p>
+                                        <p class="mb-0"><small>Firmado el: {{\Carbon\Carbon::parse($consentimiento->firmaPaciente->firmado_at)->format('d/m/Y H:i')}}</small></p>
                                     </div>
-                                @endif
-                            @endforeach
+                                </div>
+                            @endif
 
                             <!-- Firma del Acudiente (si existe) -->
-                            @foreach($consentimiento->firmas as $firma)
-                                @if($firma->tipo_firma == 'acudiente')
-                                    <div class="col-md-4">
-                                        <h6><i class="fas fa-user-friends"></i> Firma del Acudiente</h6>
-                                        <div class="firma-container">
-                                            <img src="{{$firma->firma_base64}}" alt="Firma del Acudiente" class="firma-img">
-                                            <p class="mt-2 mb-0"><small>{{$firma->nombres}} {{$firma->apellidos}}</small></p>
-                                            <p class="mb-0"><small>{{$firma->tipo_documento}}-{{$firma->numero_documento}}</small></p>
-                                            <p class="mb-0"><small>Firmado el: {{\Carbon\Carbon::parse($firma->fecha_firma)->format('d/m/Y H:i')}}</small></p>
-                                        </div>
+                            @if($consentimiento->firmaAcudiente)
+                                <div class="col-md-4">
+                                    <h6><i class="fas fa-user-friends"></i> Firma del Acudiente</h6>
+                                    <div class="firma-container">
+                                        <img src="{{$consentimiento->firmaAcudiente->firma_base64}}" alt="Firma del Acudiente" class="firma-img">
+                                        <p class="mt-2 mb-0"><small>{{$consentimiento->firmaAcudiente->firmante_nombre}}</small></p>
+                                        <p class="mb-0"><small>{{$consentimiento->firmaAcudiente->firmante_cedula}}</small></p>
+                                        <p class="mb-0"><small>{{$consentimiento->firmaAcudiente->firmante_relacion}}</small></p>
+                                        <p class="mb-0"><small>Firmado el: {{\Carbon\Carbon::parse($consentimiento->firmaAcudiente->firmado_at)->format('d/m/Y H:i')}}</small></p>
                                     </div>
-                                @endif
-                            @endforeach
+                                </div>
+                            @endif
 
                             <!-- Firma del Profesional -->
-                            @foreach($consentimiento->firmas as $firma)
-                                @if($firma->tipo_firma == 'profesional')
-                                    <div class="col-md-4">
-                                        <h6><i class="fas fa-user-md"></i> Firma del Profesional</h6>
-                                        <div class="firma-container">
-                                            <img src="{{$firma->firma_base64}}" alt="Firma del Profesional" class="firma-img">
-                                            <p class="mt-2 mb-0"><small>{{$firma->nombres}} {{$firma->apellidos}}</small></p>
-                                            <p class="mb-0"><small>RM: {{$consentimiento->profesional->registro_medico}}</small></p>
-                                            <p class="mb-0"><small>Firmado el: {{\Carbon\Carbon::parse($firma->fecha_firma)->format('d/m/Y H:i')}}</small></p>
-                                        </div>
+                            @if($consentimiento->firmaProfesional)
+                                <div class="col-md-4">
+                                    <h6><i class="fas fa-user-md"></i> Firma del Profesional</h6>
+                                    <div class="firma-container">
+                                        <img src="{{$consentimiento->firmaProfesional->firma_base64}}" alt="Firma del Profesional" class="firma-img">
+                                        <p class="mt-2 mb-0"><small>{{$consentimiento->firmaProfesional->firmante_nombre}}</small></p>
+                                        @if($consentimiento->profesional)
+                                            <p class="mb-0"><small>RM: {{$consentimiento->profesional->registro_medico ?? 'N/A'}}</small></p>
+                                        @endif
+                                        <p class="mb-0"><small>Firmado el: {{\Carbon\Carbon::parse($consentimiento->firmaProfesional->firmado_at)->format('d/m/Y H:i')}}</small></p>
                                     </div>
-                                @endif
-                            @endforeach
+                                </div>
+                            @endif
                         </div>
 
                         <!-- Información del Acudiente (si existe) -->
-                        @if($consentimiento->acudientes->count() > 0)
+                        @if($consentimiento->acudiente)
                             <div class="info-section mt-3">
                                 <h5><i class="fas fa-user-friends"></i> Información del Acudiente</h5>
-                                @foreach($consentimiento->acudientes as $acudiente)
-                                    <div class="row">
-                                        <div class="col-md-6">
-                                            <p><strong>Nombre:</strong> {{$acudiente->nombres}} {{$acudiente->apellidos}}</p>
-                                            <p><strong>Documento:</strong> {{$acudiente->tipo_documento}}-{{$acudiente->numero_documento}}</p>
-                                        </div>
-                                        <div class="col-md-6">
-                                            <p><strong>Parentesco:</strong> {{$acudiente->parentesco}}</p>
-                                            <p><strong>Teléfono:</strong> {{$acudiente->telefono ?? 'N/A'}}</p>
-                                        </div>
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <p><strong>Nombre:</strong> {{$consentimiento->acudiente->nombre_completo}}</p>
+                                        <p><strong>Documento:</strong> {{$consentimiento->acudiente->cedula}}</p>
                                     </div>
-                                @endforeach
+                                    <div class="col-md-6">
+                                        <p><strong>Relación:</strong> {{$consentimiento->acudiente->relacion_con_paciente}}</p>
+                                        <p><strong>Teléfono:</strong> {{$consentimiento->acudiente->telefono ?? 'N/A'}}</p>
+                                    </div>
+                                </div>
                             </div>
                         @endif
                     @elseif($consentimiento->estado == 'pendiente')

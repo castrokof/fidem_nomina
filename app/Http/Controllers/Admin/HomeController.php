@@ -62,7 +62,9 @@ class HomeController extends Controller
                 'description' => 'Gestión de consentimientos informados para pacientes',
                 'color' => 'info',
                 'items' => [
+                    ['name' => 'Dashboard', 'route' => 'consentimientos.dashboard', 'permission' => true],
                     ['name' => 'Consentimientos', 'route' => 'consentimientos.index', 'permission' => true],
+                    ['name' => 'Crear Nuevo', 'route' => 'consentimientos.create', 'permission' => true],
                     ['name' => 'Plantillas', 'route' => 'plantillas-ci.index', 'permission' => true],
                     ['name' => 'Pacientes', 'route' => 'pacientes.index', 'permission' => true],
                     ['name' => 'Profesionales', 'route' => 'profesionales.index', 'permission' => true],

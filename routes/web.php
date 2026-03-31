@@ -474,6 +474,7 @@ Route::group(['prefix' => 'admin', 'namespace' => 'Admin', 'middleware' => ['far
     Route::delete('importador-plantillas/{id}', 'PlantillaCIImportadorController@destroy')->name('importador-plantillas.destroy');
 
     // Consentimientos Informados
+    Route::get('consentimientos/dashboard', 'ConsentimientoController@dashboard')->name('consentimientos.dashboard');
     Route::get('consentimientos', 'ConsentimientoController@index')->name('consentimientos.index');
     Route::get('consentimientos/crear', 'ConsentimientoController@create')->name('consentimientos.create');
     Route::post('consentimientos', 'ConsentimientoController@store')->name('consentimientos.store');

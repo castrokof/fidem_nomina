@@ -156,77 +156,63 @@
                 <tr>
                     <td style="width: 50%;">
                         <p><strong>FIRMA:</strong></p>
-                        @foreach($consentimiento->firmas as $firma)
-                            @if($firma->tipo_firma == 'paciente')
-                                <img src="{{$firma->firma_base64}}" alt="Firma Paciente" class="firma-img">
-                            @endif
-                        @endforeach
+                        @if($consentimiento->firmaPaciente)
+                            <img src="{{$consentimiento->firmaPaciente->firma_base64}}" alt="Firma Paciente" class="firma-img">
+                        @endif
                     </td>
                     <td style="width: 50%;">
                         <p><strong>FECHA:</strong></p>
-                        @foreach($consentimiento->firmas as $firma)
-                            @if($firma->tipo_firma == 'paciente')
-                                <p>{{\Carbon\Carbon::parse($firma->fecha_firma)->format('d/m/Y H:i')}}</p>
-                            @endif
-                        @endforeach
+                        @if($consentimiento->firmaPaciente)
+                            <p>{{\Carbon\Carbon::parse($consentimiento->firmaPaciente->firmado_at)->format('d/m/Y H:i')}}</p>
+                        @endif
                     </td>
                 </tr>
             </table>
         </div>
 
         <!-- BLOQUE 2 - FIRMA DEL FAMILIAR/TUTOR/REPRESENTANTE (si existe) -->
-        @if($consentimiento->acudientes->count() > 0)
-            @foreach($consentimiento->acudientes as $acudiente)
-                <div class="firma-bloque">
-                    <p><strong>FAMILIAR/TUTOR/REPRESENTANTE - DECLARO:</strong></p>
-                    <p style="text-align: justify;">
-                        Que he comprendido adecuadamente la información que contiene este documento, que firmo el
-                        consentimiento para la realización del procedimiento que se describe en el mismo, que he
-                        recibido copia del mismo y que conozco que el consentimiento puede ser revocado por escrito
-                        en cualquier momento.
-                    </p>
-                    <table>
-                        <tr>
-                            <td style="width: 50%;">
-                                <p><strong>NOMBRE/APELLIDOS:</strong></p>
-                                <p>{{$acudiente->nombres}} {{$acudiente->apellidos}}</p>
-                            </td>
-                            <td style="width: 50%;">
-                                <p><strong>IDENTIFICACIÓN:</strong></p>
-                                <p>{{$acudiente->tipo_documento}}-{{$acudiente->numero_documento}}</p>
-                            </td>
-                        </tr>
-                        <tr>
-                            <td style="width: 50%;">
-                                <p><strong>PARENTESCO:</strong></p>
-                                <p>{{$acudiente->parentesco}}</p>
-                            </td>
-                            <td style="width: 50%;">
-                                <p><strong>TELÉFONO:</strong></p>
-                                <p>{{$acudiente->telefono ?? 'N/A'}}</p>
-                            </td>
-                        </tr>
-                        <tr>
-                            <td style="width: 50%;">
-                                <p><strong>FIRMA:</strong></p>
-                                @foreach($consentimiento->firmas as $firma)
-                                    @if($firma->tipo_firma == 'acudiente')
-                                        <img src="{{$firma->firma_base64}}" alt="Firma Acudiente" class="firma-img">
-                                    @endif
-                                @endforeach
-                            </td>
-                            <td style="width: 50%;">
-                                <p><strong>FECHA:</strong></p>
-                                @foreach($consentimiento->firmas as $firma)
-                                    @if($firma->tipo_firma == 'acudiente')
-                                        <p>{{\Carbon\Carbon::parse($firma->fecha_firma)->format('d/m/Y H:i')}}</p>
-                                    @endif
-                                @endforeach
-                            </td>
-                        </tr>
-                    </table>
-                </div>
-            @endforeach
+        @if($consentimiento->acudiente && $consentimiento->firmaAcudiente)
+            <div class="firma-bloque">
+                <p><strong>FAMILIAR/TUTOR/REPRESENTANTE - DECLARO:</strong></p>
+                <p style="text-align: justify;">
+                    Que he comprendido adecuadamente la información que contiene este documento, que firmo el
+                    consentimiento para la realización del procedimiento que se describe en el mismo, que he
+                    recibido copia del mismo y que conozco que el consentimiento puede ser revocado por escrito
+                    en cualquier momento.
+                </p>
+                <table>
+                    <tr>
+                        <td style="width: 50%;">
+                            <p><strong>NOMBRE/APELLIDOS:</strong></p>
+                            <p>{{$consentimiento->firmaAcudiente->firmante_nombre}}</p>
+                        </td>
+                        <td style="width: 50%;">
+                            <p><strong>IDENTIFICACIÓN:</strong></p>
+                            <p>{{$consentimiento->firmaAcudiente->firmante_cedula}}</p>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td style="width: 50%;">
+                            <p><strong>RELACIÓN:</strong></p>
+                            <p>{{$consentimiento->firmaAcudiente->firmante_relacion}}</p>
+                        </td>
+                        <td style="width: 50%;">
+                            <p><strong>TELÉFONO:</strong></p>
+                            <p>{{$consentimiento->acudiente->telefono ?? 'N/A'}}</p>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td style="width: 50%;">
+                            <p><strong>FIRMA:</strong></p>
+                            <img src="{{$consentimiento->firmaAcudiente->firma_base64}}" alt="Firma Acudiente" class="firma-img">
+                        </td>
+                        <td style="width: 50%;">
+                            <p><strong>FECHA:</strong></p>
+                            <p>{{\Carbon\Carbon::parse($consentimiento->firmaAcudiente->firmado_at)->format('d/m/Y H:i')}}</p>
+                        </td>
+                    </tr>
+                </table>
+            </div>
         @endif
 
         <!-- BLOQUE 3 - FIRMA DEL MÉDICO RESPONSABLE -->
@@ -251,17 +237,17 @@
                 <tr>
                     <td style="width: 50%;">
                         <p><strong>FIRMA:</strong></p>
-                        @if($consentimiento->profesional->firma_base64)
+                        @if($consentimiento->firmaProfesional)
+                            <img src="{{$consentimiento->firmaProfesional->firma_base64}}" alt="Firma Profesional" class="firma-img">
+                        @elseif($consentimiento->profesional && $consentimiento->profesional->firma_base64)
                             <img src="{{$consentimiento->profesional->firma_base64}}" alt="Firma Profesional" class="firma-img">
                         @endif
                     </td>
                     <td style="width: 50%;">
                         <p><strong>FECHA:</strong></p>
-                        @foreach($consentimiento->firmas as $firma)
-                            @if($firma->tipo_firma == 'profesional')
-                                <p>{{\Carbon\Carbon::parse($firma->fecha_firma)->format('d/m/Y H:i')}}</p>
-                            @endif
-                        @endforeach
+                        @if($consentimiento->firmaProfesional)
+                            <p>{{\Carbon\Carbon::parse($consentimiento->firmaProfesional->firmado_at)->format('d/m/Y H:i')}}</p>
+                        @endif
                     </td>
                 </tr>
             </table>

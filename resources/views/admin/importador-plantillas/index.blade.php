@@ -78,7 +78,7 @@
                 <div class="card-header bg-primary">
                     <h3 class="card-title"><i class="fas fa-upload"></i> Importar Nueva Plantilla</h3>
                 </div>
-                <form action="{{route('admin.importar-plantillas.store')}}" method="POST">
+                <form action="{{route('importador-plantillas.store')}}" method="POST">
                     @csrf
                     <div class="card-body">
                         @if(session('success'))
