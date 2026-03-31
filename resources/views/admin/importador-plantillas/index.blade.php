@@ -30,7 +30,7 @@
         });
 
         // Previsualizar contenido
-        $('#contenido').on('input', function() {
+        $('#contenido_texto').on('input', function() {
             var texto = $(this).val();
             if (texto.trim() !== '') {
                 $('#preview').html(texto.replace(/\n/g, '<br>'));
@@ -94,17 +94,26 @@
                         </div>
 
                         <div class="form-group">
-                            <label for="especialidades_id">Especialidades <span class="text-danger">*</span></label>
-                            <select name="especialidades_id[]" id="especialidades_id" class="form-control select2" multiple required>
-                                @foreach($especialidades as $especialidad)
-                                    <option value="{{$especialidad->id}}">{{$especialidad->nombre}}</option>
-                                @endforeach
-                            </select>
+                            <label for="especialidades">Especialidades (separadas por comas)</label>
+                            <input type="text" name="especialidades" id="especialidades" class="form-control" placeholder="Ej: Cardiología, Neurología">
+                            <small class="form-text text-muted">Ingrese las especialidades separadas por comas. Déjelo vacío si es de uso general.</small>
                         </div>
 
                         <div class="form-group">
-                            <label for="contenido">Contenido <span class="text-danger">*</span></label>
-                            <textarea name="contenido" id="contenido" class="form-control" rows="15" required></textarea>
+                            <label for="cups_codigo">Código CUPS</label>
+                            <input type="text" name="cups_codigo" id="cups_codigo" class="form-control" placeholder="Ej: 890201">
+                        </div>
+
+                        <div class="form-check mb-3">
+                            <input type="checkbox" name="uso_general" id="uso_general" class="form-check-input" value="1">
+                            <label class="form-check-label" for="uso_general">
+                                Uso general (aplica para todas las especialidades)
+                            </label>
+                        </div>
+
+                        <div class="form-group">
+                            <label for="contenido_texto">Contenido <span class="text-danger">*</span></label>
+                            <textarea name="contenido_texto" id="contenido_texto" class="form-control" rows="15" required></textarea>
                         </div>
 
                         <div id="previewSection" style="display: none;">
@@ -115,11 +124,87 @@
 
                     <div class="card-footer">
                         <button type="submit" class="btn btn-primary">
-                            <i class="fas fa-upload"></i> Importar Plantilla
+                            <i class="fas fa-save"></i> Guardar para Importación
                         </button>
                     </div>
                 </form>
             </div>
+
+            @if($importaciones->count() > 0)
+            <div class="card mt-4">
+                <div class="card-header bg-secondary">
+                    <h3 class="card-title"><i class="fas fa-list"></i> Importaciones Guardadas</h3>
+                    <div class="card-tools">
+                        <form action="{{route('importador-plantillas.procesar-todas')}}" method="POST" style="display:inline;">
+                            @csrf
+                            <button type="submit" class="btn btn-success btn-sm">
+                                <i class="fas fa-cogs"></i> Procesar Todas
+                            </button>
+                        </form>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-bordered table-striped">
+                            <thead class="thead-dark">
+                                <tr>
+                                    <th>ID</th>
+                                    <th>Nombre</th>
+                                    <th>Especialidades</th>
+                                    <th>CUPS</th>
+                                    <th>Estado</th>
+                                    <th>Fecha</th>
+                                    <th>Acciones</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach($importaciones as $importacion)
+                                <tr>
+                                    <td>{{ $importacion->id }}</td>
+                                    <td>{{ $importacion->nombre }}</td>
+                                    <td>
+                                        @if($importacion->uso_general)
+                                            <span class="badge badge-info">Uso General</span>
+                                        @else
+                                            {{ $importacion->especialidades ?? 'N/A' }}
+                                        @endif
+                                    </td>
+                                    <td>{{ $importacion->cups_codigo ?? 'N/A' }}</td>
+                                    <td>
+                                        @if($importacion->estado == 'pendiente')
+                                            <span class="badge badge-warning">Pendiente</span>
+                                        @elseif($importacion->estado == 'procesada')
+                                            <span class="badge badge-success">Procesada</span>
+                                        @else
+                                            <span class="badge badge-danger">Error</span>
+                                        @endif
+                                    </td>
+                                    <td>{{ $importacion->created_at->format('d/m/Y H:i') }}</td>
+                                    <td>
+                                        @if($importacion->estado == 'pendiente')
+                                            <form action="{{route('importador-plantillas.procesar', $importacion->id)}}" method="POST" style="display:inline;">
+                                                @csrf
+                                                <button type="submit" class="btn btn-success btn-sm" title="Procesar">
+                                                    <i class="fas fa-cog"></i>
+                                                </button>
+                                            </form>
+                                        @endif
+                                        <form action="{{route('importador-plantillas.destroy', $importacion->id)}}" method="POST" style="display:inline;">
+                                            @csrf
+                                            @method('DELETE')
+                                            <button type="submit" class="btn btn-danger btn-sm" title="Eliminar" onclick="return confirm('¿Está seguro?')">
+                                                <i class="fas fa-trash"></i>
+                                            </button>
+                                        </form>
+                                    </td>
+                                </tr>
+                                @endforeach
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+            @endif
         </div>
     </section>
 </div>

@@ -38,6 +38,14 @@ class PlantillaCI extends Model
     }
 
     /**
+     * Relación uno a muchos con consentimientos
+     */
+    public function consentimientos()
+    {
+        return $this->hasMany(ConsentimientoInformado::class, 'plantilla_ci_id');
+    }
+
+    /**
      * Scope para plantillas activas
      */
     public function scopeActivo($query)

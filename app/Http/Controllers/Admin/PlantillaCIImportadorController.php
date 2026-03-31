@@ -21,8 +21,9 @@ class PlantillaCIImportadorController extends Controller
      */
     public function index()
     {
-        $importaciones = ImportacionPlantillaCI::orderBy('created_at', 'desc')->paginate(20);
-        return view('admin.importador-plantillas.index', compact('importaciones'));
+        $importaciones = ImportacionPlantillaCI::orderBy('created_at', 'desc')->get();
+        $especialidades = \App\Especialidad::activo()->orderBy('nombre')->get();
+        return view('admin.importador-plantillas.index', compact('importaciones', 'especialidades'));
     }
 
     /**
