@@ -62,10 +62,25 @@
                         @endif
 
                         <div class="row">
-                            <div class="col-md-12">
+                            <div class="col-md-8">
                                 <div class="form-group">
                                     <label for="nombre">Nombre de la Plantilla <span class="text-danger">*</span></label>
                                     <input type="text" name="nombre" id="nombre" class="form-control" value="{{old('nombre', $plantilla->nombre)}}" required placeholder="Ej: Consentimiento Informado para Cirugía">
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="form-group">
+                                    <label for="cups_codigo">Código CUPS</label>
+                                    <input type="text" name="cups_codigo" id="cups_codigo" class="form-control" value="{{old('cups_codigo', $plantilla->cups_codigo)}}" placeholder="Ej: 890201">
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="row">
+                            <div class="col-md-12">
+                                <div class="form-group">
+                                    <label for="descripcion">Descripción</label>
+                                    <textarea name="descripcion" id="descripcion" class="form-control" rows="2" placeholder="Descripción breve de la plantilla">{{old('descripcion', $plantilla->descripcion)}}</textarea>
                                 </div>
                             </div>
                         </div>
@@ -90,23 +105,29 @@
                         <div class="row">
                             <div class="col-md-12">
                                 <div class="form-group">
-                                    <label for="contenido">Contenido de la Plantilla <span class="text-danger">*</span></label>
-                                    <textarea name="contenido" id="contenido" class="form-control" rows="15" required>{{old('contenido', $plantilla->contenido)}}</textarea>
+                                    <label for="contenido_html">Contenido de la Plantilla <span class="text-danger">*</span></label>
+                                    <textarea name="contenido_html" id="contenido_html" class="form-control" rows="15" required>{{old('contenido_html', $plantilla->contenido_html)}}</textarea>
                                     <small class="form-text text-muted">
-                                        <strong>Variables disponibles:</strong>
-                                        {nombre_paciente}, {documento_paciente}, {edad_paciente}, {nombre_profesional},
-                                        {registro_medico}, {especialidad}, {fecha_actual}
+                                        <strong>Variables disponibles:</strong> Consulte la tabla de ayuda abajo para ver todas las variables disponibles.
                                     </small>
                                 </div>
                             </div>
                         </div>
 
                         <div class="row">
-                            <div class="col-md-12">
+                            <div class="col-md-6">
                                 <div class="form-check">
                                     <input type="checkbox" name="activo" id="activo" class="form-check-input" value="1" {{old('activo', $plantilla->activo) ? 'checked' : ''}}>
                                     <label class="form-check-label" for="activo">
                                         Plantilla Activa
+                                    </label>
+                                </div>
+                            </div>
+                            <div class="col-md-6">
+                                <div class="form-check">
+                                    <input type="checkbox" name="uso_general" id="uso_general" class="form-check-input" value="1" {{old('uso_general', $plantilla->uso_general) ? 'checked' : ''}}>
+                                    <label class="form-check-label" for="uso_general">
+                                        Uso General (aplica para todas las especialidades)
                                     </label>
                                 </div>
                             </div>
@@ -126,20 +147,29 @@
 
             <div class="card">
                 <div class="card-header">
-                    <h3 class="card-title"><i class="fas fa-info-circle"></i> Ayuda</h3>
+                    <h3 class="card-title"><i class="fas fa-info-circle"></i> Variables Disponibles</h3>
                 </div>
                 <div class="card-body">
-                    <p><strong>Variables disponibles para usar en el contenido:</strong></p>
-                    <ul>
-                        <li><code>{nombre_paciente}</code> - Nombre completo del paciente</li>
-                        <li><code>{documento_paciente}</code> - Documento de identidad del paciente</li>
-                        <li><code>{edad_paciente}</code> - Edad del paciente</li>
-                        <li><code>{nombre_profesional}</code> - Nombre completo del profesional</li>
-                        <li><code>{registro_medico}</code> - Registro médico del profesional</li>
-                        <li><code>{especialidad}</code> - Especialidad del profesional</li>
-                        <li><code>{fecha_actual}</code> - Fecha actual</li>
-                    </ul>
-                    <p class="mb-0"><strong>Ejemplo:</strong> "Yo, {nombre_paciente}, identificado con {documento_paciente}, declaro que..."</p>
+                    <p><strong>Variables disponibles para usar en el contenido de la plantilla:</strong></p>
+                    <div class="table-responsive">
+                        <table class="table table-sm table-bordered">
+                            <thead class="thead-light">
+                                <tr>
+                                    <th>Variable</th>
+                                    <th>Descripción</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                @foreach($variablesDisponibles as $variable => $descripcion)
+                                <tr>
+                                    <td><code>{{ $variable }}</code></td>
+                                    <td>{{ $descripcion }}</td>
+                                </tr>
+                                @endforeach
+                            </tbody>
+                        </table>
+                    </div>
+                    <p class="mb-0"><strong>Ejemplo:</strong> "Yo, {{'{{'}}paciente_nombre{{'}}'}}, identificado con {{'{{'}}paciente_cedula{{'}}'}}, declaro que..."</p>
                 </div>
             </div>
         </div>
