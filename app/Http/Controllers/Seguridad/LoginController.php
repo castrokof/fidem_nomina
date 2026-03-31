@@ -30,7 +30,12 @@ class LoginController extends Controller
            return view('seguridad.index');
     }
     
-  
+  public function index1(Request $request)
+    {
+
+           return view('seguridad.index');
+    }
+    
 
 
 

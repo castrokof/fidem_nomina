@@ -1,89 +1,122 @@
 <?php
+// app/Services/AgendaActualizadorService.php
 
 namespace App\Services;
 
 use App\AgendaCI;
 use Carbon\Carbon;
-use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 
 class AgendaActualizadorService
 {
+    protected $apiService;
+
+    public function __construct(CitasApiService $apiService)
+    {
+        $this->apiService = $apiService;
+    }
+
     /**
      * Actualiza el estado de llegada de una agenda específica
-     *
-     * @param AgendaCI $agenda
-     * @return bool True si la cita tiene llegada confirmada
      */
     public function actualizarUno(AgendaCI $agenda)
     {
         $idRegistro = $agenda->id_registro;
 
-        // Consultar solo este ID_REGISTRO específico en fac_m_citas
-        $cita = DB::connection('sqlsrv1')
-            ->table('fac_m_citas')
-            ->where('ID_REGISTRO', $idRegistro)
-            ->first();
+        try {
+            // Consultar cita específica en la API
+            $cita = $this->apiService->getCitaPorIdRegistro($idRegistro);
 
-        if (!$cita) {
+            if (!$cita) {
+                Log::warning("Cita no encontrada en API: {$idRegistro}");
+                return false;
+            }
+
+            $numeroFactura = trim(isset($cita['NUMERO_FACTURA']) ? $cita['NUMERO_FACTURA'] : '');
+            $atencionFactura = isset($cita['ATENCION_FACTURA']) ? $cita['ATENCION_FACTURA'] : null;
+
+            $llegadaConfirmada = !empty($numeroFactura);
+
+            $agenda->update([
+                'llegada_confirmada' => $llegadaConfirmada,
+                'numero_factura'     => $llegadaConfirmada ? $numeroFactura : null,
+                'atencion_factura'   => $this->parseFecha($atencionFactura),
+                'sincronizado_at'    => now(),
+            ]);
+
+            Log::info("Cita {$idRegistro} actualizada: llegada=" . ($llegadaConfirmada ? 'SI' : 'NO'));
+
+            return $llegadaConfirmada;
+
+        } catch (\Exception $e) {
+            Log::error("Error actualizando cita {$idRegistro}: " . $e->getMessage());
             return false;
         }
-
-        // Actualizar campos de llegada
-        $llegadaConfirmada = !empty(trim($cita->NUMERO_FACTURA ?? ''));
-
-        $agenda->update([
-            'llegada_confirmada' => $llegadaConfirmada,
-            'numero_factura'     => $llegadaConfirmada ? trim($cita->NUMERO_FACTURA) : null,
-            'atencion_factura'   => !empty($cita->ATENCION_FACTURA) ? Carbon::parse($cita->ATENCION_FACTURA)->format('Y-m-d H:i:s') : null,
-            'sincronizado_at'    => now(),
-        ]);
-
-        return $llegadaConfirmada;
     }
 
-    /**
-     * Actualiza todas las citas pendientes del día
-     *
-     * @return int Cantidad de citas actualizadas
-     */
-    public function actualizarPendientesDeHoy()
-    {
-        // Obtener IDs de registros pendientes de hoy
-        $agendas = AgendaCI::whereDate('fecha', today())
-            ->where('llegada_confirmada', false)
-            ->get();
+   /**
+ * Versión optimizada: Actualiza todas las citas pendientes del día en una sola llamada API
+ */
+public function actualizarPendientesDeHoy()
+{
+    $agendas = AgendaCI::whereDate('fecha', today())
+        ->where('llegada_confirmada', false)
+        ->get();
 
-        if ($agendas->isEmpty()) {
-            return 0;
+    if ($agendas->isEmpty()) {
+        return 0;
+    }
+
+    $idsRegistros = $agendas->pluck('id_registro')->toArray();
+
+    // Consultar todas las citas del día en una sola llamada
+    $fechaHoy = today()->format('Y-m-d');
+    $citasApi = $this->apiService->getCitasPorRango($fechaHoy, $fechaHoy);
+
+    // Indexar por ID_REGISTRO para búsqueda rápida
+    $citasMap = [];
+    foreach ($citasApi as $cita) {
+        if (isset($cita['ID_REGISTRO'])) {
+            $citasMap[$cita['ID_REGISTRO']] = $cita;
         }
+    }
 
-        $idsRegistros = $agendas->pluck('id_registro')->toArray();
+    $actualizadas = 0;
 
-        // Una sola query a fac_m_citas con whereIn
-        $citas = DB::connection('sqlsrv1')
-            ->table('fac_m_citas')
-            ->whereIn('ID_REGISTRO', $idsRegistros)
-            ->whereNotNull('NUMERO_FACTURA')
-            ->get()
-            ->keyBy('ID_REGISTRO');
+    foreach ($agendas as $agenda) {
+        $cita = isset($citasMap[$agenda->id_registro]) ? $citasMap[$agenda->id_registro] : null;
 
-        $actualizadas = 0;
+        if ($cita) {
+            $numeroFactura = trim(isset($cita['NUMERO_FACTURA']) ? $cita['NUMERO_FACTURA'] : '');
+            $llegadaConfirmada = !empty($numeroFactura);
 
-        foreach ($agendas as $agenda) {
-            $cita = $citas->get($agenda->id_registro);
-
-            if ($cita && !empty(trim($cita->NUMERO_FACTURA ?? ''))) {
+            if ($llegadaConfirmada) {
                 $agenda->update([
                     'llegada_confirmada' => true,
-                    'numero_factura'     => trim($cita->NUMERO_FACTURA),
-                    'atencion_factura'   => !empty($cita->ATENCION_FACTURA) ? Carbon::parse($cita->ATENCION_FACTURA)->format('Y-m-d H:i:s') : null,
+                    'numero_factura'     => $numeroFactura,
+                    'atencion_factura'   => $this->parseFecha(isset($cita['ATENCION_FACTURA']) ? $cita['ATENCION_FACTURA'] : null),
                     'sincronizado_at'    => now(),
                 ]);
-
                 $actualizadas++;
             }
         }
+    }
 
-        return $actualizadas;
+    return $actualizadas;
+}
+
+    /**
+     * Parsea fecha con manejo de errores
+     */
+    protected function parseFecha($fecha)
+    {
+        if (empty($fecha)) {
+            return null;
+        }
+        try {
+            return Carbon::parse($fecha)->format('Y-m-d H:i:s');
+        } catch (\Exception $e) {
+            return null;
+        }
     }
 }

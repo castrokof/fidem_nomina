@@ -34,5 +34,11 @@ return [
         'key' => env('STRIPE_KEY'),
         'secret' => env('STRIPE_SECRET'),
     ],
+    'citas_api' => [
+    'base_url' => env('CITAS_API_BASE_URL'),
+    'email' => env('CITAS_API_EMAIL'),
+    'password' => env('CITAS_API_PASSWORD'),
+    'token_cache_minutes' => env('CITAS_API_TOKEN_CACHE_MINUTES', 240),
+    ],
 
 ];

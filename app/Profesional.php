@@ -51,7 +51,7 @@ class Profesional extends Model
      */
     public function agendas()
     {
-        return $this->hasMany(AgendaCI::class, 'profesional_id');
+        return $this->hasMany(AgendaCI::class, 'codigo_usuario');
     }
 
     /**

@@ -14,11 +14,11 @@ class DatabaseSeeder extends Seeder
     {
         $this->truncateTablas([
 
-            'rol',
-            'usuario',
-            'usuario_rol',
-            'menu',
-            'menu_rol',
+            //'rol',
+           // 'usuario',
+           // 'usuario_rol',
+           // 'menu',
+           // 'menu_rol',
 
 
         ]
@@ -27,13 +27,14 @@ class DatabaseSeeder extends Seeder
         );
 
 
-            $this->call(RolTablaSeeder::class);
-            $this->call(UsuarioAdministradorSeeder::class);
+           // $this->call(RolTablaSeeder::class);
+          //  $this->call(UsuarioAdministradorSeeder::class);
 
             // Seeders del módulo CI-Fidem
             $this->call(EspecialidadSeeder::class);
             $this->call(ProfesionalSeeder::class);
             $this->call(PlantillaCISeeder::class);
+            $this->call(MenuCIFidemSeeder::class);
 
     }
 

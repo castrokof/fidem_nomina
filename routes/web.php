@@ -52,6 +52,8 @@ Route::get('/fidemcontigo', [FidemContigoController::class, 'observaciones'])->n
 
 
 Route::get('/', 'Seguridad\LoginController@index')->name('inicio');
+
+//Route::get('/', 'Seguridad\LoginController@index1')->name('home');
 Route::get('seguridad/login', 'Seguridad\LoginController@index')->name('login');
 Route::post('seguridad/login', 'Seguridad\LoginController@login')->name('login_post');
 Route::get('seguridad/logout', 'Seguridad\LoginController@logout')->name('logout');
@@ -265,7 +267,7 @@ Route::group(['middleware' => ['auth']], function () {
 
     //RUTA LINEA AVA
 
-    Route::get('ava-index', 'Psicologica\LineaPsicologicaController@indexava')->name('indexava')->middleware('superPsicologica');
+    Route::get('ava-index', 'Psicologica\LineaPsicologicaController@indexava')->name('home')->middleware('superPsicologica');
 
 
     //RUTA PARA CONSULTA DE PALIATIVOS
@@ -477,6 +479,19 @@ Route::group(['prefix' => 'admin', 'namespace' => 'Admin', 'middleware' => ['far
     Route::post('consentimientos', 'ConsentimientoController@store')->name('consentimientos.store');
     Route::get('consentimientos/{id}', 'ConsentimientoController@show')->name('consentimientos.show');
     Route::get('consentimientos/{id}/pdf', 'ConsentimientoController@descargarPdf')->name('consentimientos.pdf');
+
+    // Ruta para crear consentimiento desde una agenda específica
+Route::get('consentimientos/crear-desde-agenda/{agenda_id}','ConsentimientoController@createFromAgenda')->name('consentimientos.create-from-agenda');
+
+// ✅ RUTAS AJAX
+    Route::get('admin/ajax/pacientes-por-filtros', 'ConsentimientoController@ajaxPacientesPorFiltros')
+        ->name('consentimientos.ajax.pacientes');
+    
+    Route::get('admin/ajax/datos-paciente/{paciente_id}', 'ConsentimientoController@ajaxDatosPaciente')
+        ->name('consentimientos.ajax.datos');
+    
+    Route::get('admin/ajax/plantillas-por-especialidad/{especialidad_id}', 'ConsentimientoController@ajaxPlantillasPorEspecialidad')
+        ->name('consentimientos.ajax.plantillas');
 });
 
 Route::prefix('rh/contratacion')->middleware('superadmin')->group(function () {

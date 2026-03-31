@@ -162,7 +162,7 @@
                                     <button type="button" class="btn btn-clear btn-sm mt-2" onclick="clearSignature('signaturePadPaciente')">
                                         <i class="fas fa-eraser"></i> Limpiar Firma
                                     </button>
-                                    <input type="hidden" name="firma_paciente" id="firmaPacienteInput">
+                                    <input type="hidden" name="firma_base64" id="firmaPacienteInput">
                                 </div>
 
                                 <!-- Sección de Acudiente/Familiar/Tutor (Opcional) -->
@@ -224,7 +224,7 @@
                                         <button type="button" class="btn btn-clear btn-sm mt-2" onclick="clearSignature('signaturePadAcudiente')">
                                             <i class="fas fa-eraser"></i> Limpiar Firma
                                         </button>
-                                        <input type="hidden" name="firma_acudiente" id="firmaAcudienteInput">
+                                        <input type="hidden" name="firma_base64" id="firmaAcudienteInput">
                                     </div>
                                 </div>
 
