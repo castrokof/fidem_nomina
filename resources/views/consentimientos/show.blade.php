@@ -107,7 +107,7 @@
                         <div class="row">
                             <div class="col-md-6">
                                 <p><strong>Procedimiento:</strong> {{$consentimiento->plantilla->nombre}}</p>
-                                <p><strong>Fecha de la Cita:</strong> {{\Carbon\Carbon::parse($consentimiento->fecha_cita)->format('d/m/Y H:i')}}</p>
+                                <p><strong>Fecha del Procedimiento:</strong> {{\Carbon\Carbon::parse($consentimiento->fecha_procedimiento)->format('d/m/Y H:i')}}</p>
                             </div>
                             <div class="col-md-6">
                                 <p><strong>Profesional:</strong> {{$consentimiento->profesional->nombres}} {{$consentimiento->profesional->apellidos}}</p>

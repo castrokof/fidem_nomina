@@ -88,13 +88,18 @@ class ConsentimientoController extends Controller
         // Si viene desde una agenda, cargar datos
         $agenda = null;
         if ($request->has('agenda_id')) {
-            $agenda = AgendaCI::with('paciente')->findOrFail($request->agenda_id);
+            $agenda = AgendaCI::with(['paciente', 'profesional'])->findOrFail($request->agenda_id);
         }
+
+        // Cargar profesionales, pacientes y especialidades para los selects
+        $profesionales = Profesional::with('especialidad')->orderBy('nombres')->get();
+        $pacientes = Paciente::orderBy('nombres')->get();
+        $especialidades = \App\Especialidad::orderBy('nombre')->get();
 
         // Plantillas disponibles según la especialidad del profesional
         $plantillas = $profesional->plantillasDisponibles();
 
-        return view('consentimientos.create', compact('agenda', 'plantillas', 'profesional'));
+        return view('consentimientos.create', compact('agenda', 'plantillas', 'profesional', 'profesionales', 'pacientes', 'especialidades'));
     }
 
     /**

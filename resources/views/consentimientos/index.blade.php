@@ -71,7 +71,7 @@
                                     <th>Documento</th>
                                     <th>Procedimiento</th>
                                     <th>Profesional</th>
-                                    <th>Fecha Cita</th>
+                                    <th>Fecha Procedimiento</th>
                                     <th>Estado</th>
                                     <th>Acciones</th>
                                 </tr>
@@ -84,7 +84,7 @@
                                     <td>{{ $consentimiento->paciente->tipo_documento }}-{{ $consentimiento->paciente->numero_documento }}</td>
                                     <td>{{ $consentimiento->plantilla->nombre }}</td>
                                     <td>{{ $consentimiento->profesional->nombres }} {{ $consentimiento->profesional->apellidos }}</td>
-                                    <td>{{ \Carbon\Carbon::parse($consentimiento->fecha_cita)->format('d/m/Y H:i') }}</td>
+                                    <td>{{ \Carbon\Carbon::parse($consentimiento->fecha_procedimiento)->format('d/m/Y H:i') }}</td>
                                     <td>
                                         @if($consentimiento->estado == 'pendiente')
                                             <span class="badge badge-warning">

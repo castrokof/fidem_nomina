@@ -67,6 +67,11 @@
                 </div>
                 <form action="{{route('consentimientos.store')}}" method="POST">
                     @csrf
+
+                    @if(isset($agenda))
+                        <input type="hidden" name="agenda_ci_id" value="{{$agenda->id}}">
+                    @endif
+
                     <div class="card-body">
                         @if($errors->any())
                             <div class="alert alert-danger">
@@ -78,6 +83,13 @@
                             </div>
                         @endif
 
+                        @if(isset($agenda))
+                            <div class="alert alert-info">
+                                <i class="fas fa-info-circle"></i> <strong>Creando consentimiento desde cita agendada</strong>
+                                <br>Paciente: {{$agenda->paciente_nombre}} | Fecha: {{$agenda->fecha->format('d/m/Y H:i')}}
+                            </div>
+                        @endif
+
                         <div class="row">
                             <!-- Profesional -->
                             <div class="col-md-6">
@@ -86,7 +98,7 @@
                                     <select name="profesional_id" id="profesional_id" class="form-control select2" required>
                                         <option value="">Seleccione un profesional...</option>
                                         @foreach($profesionales as $profesional)
-                                            <option value="{{$profesional->id}}" {{ old('profesional_id') == $profesional->id ? 'selected' : '' }}>
+                                            <option value="{{$profesional->id}}" {{ old('profesional_id', isset($agenda) ? $agenda->profesional_id : '') == $profesional->id ? 'selected' : '' }}>
                                                 {{$profesional->nombres}} {{$profesional->apellidos}} - {{$profesional->especialidad->nombre ?? 'Sin especialidad'}}
                                             </option>
                                         @endforeach
@@ -101,7 +113,7 @@
                                     <select name="paciente_id" id="paciente_id" class="form-control select2" required>
                                         <option value="">Seleccione un paciente...</option>
                                         @foreach($pacientes as $paciente)
-                                            <option value="{{$paciente->id}}" {{ old('paciente_id') == $paciente->id ? 'selected' : '' }}>
+                                            <option value="{{$paciente->id}}" {{ old('paciente_id', isset($agenda) ? $agenda->paciente_id : '') == $paciente->id ? 'selected' : '' }}>
                                                 {{$paciente->nombres}} {{$paciente->apellidos}} - {{$paciente->tipo_documento}}-{{$paciente->numero_documento}}
                                             </option>
                                         @endforeach
@@ -138,11 +150,11 @@
                         </div>
 
                         <div class="row">
-                            <!-- Fecha de la cita -->
+                            <!-- Fecha del procedimiento -->
                             <div class="col-md-6">
                                 <div class="form-group">
-                                    <label for="fecha_cita">Fecha y Hora de la Cita <span class="text-danger">*</span></label>
-                                    <input type="datetime-local" name="fecha_cita" id="fecha_cita" class="form-control" value="{{old('fecha_cita')}}" required>
+                                    <label for="fecha_procedimiento">Fecha y Hora del Procedimiento <span class="text-danger">*</span></label>
+                                    <input type="datetime-local" name="fecha_procedimiento" id="fecha_procedimiento" class="form-control" value="{{old('fecha_procedimiento', isset($agenda) ? $agenda->fecha->format('Y-m-d\TH:i') : '')}}" required>
                                 </div>
                             </div>
 

@@ -107,7 +107,7 @@
                 @endif
             </p>
         @endif
-        <p><strong>Fecha de la Cita:</strong> {{\Carbon\Carbon::parse($consentimiento->fecha_cita)->format('d/m/Y H:i')}}</p>
+        <p><strong>Fecha del Procedimiento:</strong> {{\Carbon\Carbon::parse($consentimiento->fecha_procedimiento)->format('d/m/Y H:i')}}</p>
     </div>
 
     <!-- SECCIÓN INICIAL - Voluntad de información -->
