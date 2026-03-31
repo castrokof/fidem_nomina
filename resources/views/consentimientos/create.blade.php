@@ -76,15 +76,64 @@
     <section class="content">
         <div class="container-fluid">
             <div class="card">
-                <div class="card-header"><h3 class="card-title"><i class="fas fa-filter"></i> Filtrar</h3></div>
-                <div class="card-body">
-                    
-                    {{-- Filtros iniciales --}}
-                    <form id="formFiltros" class="form-inline mb-4 flex-wrap">
-                        @csrf
-                        <div class="form-group mr-3 mb-2">
-                            <label class="mr-2 small">Fecha:</label>
-                            <input type="date" name="fecha" id="fecha" class="form-control form-control-sm" value="{{ date('Y-m-d') }}" required>
+                <div class="card-header">
+                    <h3 class="card-title">Datos del Nuevo Consentimiento</h3>
+                </div>
+                <form action="{{route('consentimientos.store')}}" method="POST">
+                    @csrf
+
+                    @if(isset($agenda))
+                        <input type="hidden" name="agenda_ci_id" value="{{$agenda->id}}">
+                    @endif
+
+                    <div class="card-body">
+                        @if($errors->any())
+                            <div class="alert alert-danger">
+                                <ul class="mb-0">
+                                    @foreach($errors->all() as $error)
+                                        <li>{{ $error }}</li>
+                                    @endforeach
+                                </ul>
+                            </div>
+                        @endif
+
+                        @if(isset($agenda))
+                            <div class="alert alert-info">
+                                <i class="fas fa-info-circle"></i> <strong>Creando consentimiento desde cita agendada</strong>
+                                <br>Paciente: {{$agenda->paciente_nombre}} | Fecha: {{$agenda->fecha->format('d/m/Y H:i')}}
+                            </div>
+                        @endif
+
+                        <div class="row">
+                            <!-- Profesional -->
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="profesional_id">Profesional <span class="text-danger">*</span></label>
+                                    <select name="profesional_id" id="profesional_id" class="form-control select2" required>
+                                        <option value="">Seleccione un profesional...</option>
+                                        @foreach($profesionales as $profesional)
+                                            <option value="{{$profesional->id}}" {{ old('profesional_id', isset($agenda) ? $agenda->profesional_id : '') == $profesional->id ? 'selected' : '' }}>
+                                                {{$profesional->nombres}} {{$profesional->apellidos}} - {{$profesional->especialidad->nombre ?? 'Sin especialidad'}}
+                                            </option>
+                                        @endforeach
+                                    </select>
+                                </div>
+                            </div>
+
+                            <!-- Paciente -->
+                            <div class="col-md-6">
+                                <div class="form-group">
+                                    <label for="paciente_id">Paciente <span class="text-danger">*</span></label>
+                                    <select name="paciente_id" id="paciente_id" class="form-control select2" required>
+                                        <option value="">Seleccione un paciente...</option>
+                                        @foreach($pacientes as $paciente)
+                                            <option value="{{$paciente->id}}" {{ old('paciente_id', isset($agenda) ? $agenda->paciente_id : '') == $paciente->id ? 'selected' : '' }}>
+                                                {{$paciente->nombres}} {{$paciente->apellidos}} - {{$paciente->tipo_documento}}-{{$paciente->numero_documento}}
+                                            </option>
+                                        @endforeach
+                                    </select>
+                                </div>
+                            </div>
                         </div>
                         <div class="form-group mr-3 mb-2">
                             <label class="mr-2 small">Especialista:</label>

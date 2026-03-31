@@ -113,7 +113,7 @@
                                 <strong>Profesional:</strong> {{ $consentimiento->profesional->nombres }} {{ $consentimiento->profesional->apellidos }}
                             </div>
                             <div class="info-field">
-                                <strong>Fecha de la cita:</strong> {{ \Carbon\Carbon::parse($consentimiento->fecha_cita)->format('d/m/Y H:i') }}
+                                <strong>Fecha del procedimiento:</strong> {{ \Carbon\Carbon::parse($consentimiento->fecha_procedimiento)->format('d/m/Y H:i') }}
                             </div>
 
                             <!-- Contenido del consentimiento -->
@@ -324,26 +324,73 @@
             }
 
             // Si requiere acudiente, validar su firma
-            if ($('#requiereAcudiente').is(':checked')) {
+            const requiereAcudiente = $('#requiereAcudiente').is(':checked');
+            if (requiereAcudiente) {
                 if (signaturePadAcudiente.isEmpty()) {
                     alert('Por favor, firme en el recuadro del acudiente antes de continuar.');
                     return false;
                 }
-            }
-
-            // Guardar firmas en base64
-            $('#firmaPacienteInput').val(signaturePadPaciente.toDataURL());
-
-            if ($('#requiereAcudiente').is(':checked')) {
-                $('#firmaAcudienteInput').val(signaturePadAcudiente.toDataURL());
+                // Validar campos del acudiente
+                if (!$('#acudienteNombres').val() || !$('#acudienteApellidos').val() ||
+                    !$('#acudienteTipoDoc').val() || !$('#acudienteNumDoc').val() ||
+                    !$('#acudienteParentesco').val()) {
+                    alert('Por favor, complete todos los campos del acudiente.');
+                    return false;
+                }
             }
 
             // Deshabilitar botón para evitar doble envío
             $('#btnEnviar').prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i> Enviando...');
 
-            // Enviar formulario
-            this.submit();
+            // Enviar firma del paciente primero
+            const nombrePaciente = '{{ $consentimiento->paciente_nombre }}';
+            const cedulaPaciente = '{{ $consentimiento->paciente_cedula }}';
+
+            enviarFirma('paciente', signaturePadPaciente.toDataURL(), nombrePaciente, cedulaPaciente, null)
+                .then(response => {
+                    if (!response.success) {
+                        throw new Error(response.message);
+                    }
+
+                    // Si requiere acudiente, enviar su firma también
+                    if (requiereAcudiente) {
+                        const nombreAcudiente = $('#acudienteNombres').val() + ' ' + $('#acudienteApellidos').val();
+                        const cedulaAcudiente = $('#acudienteNumDoc').val();
+                        const parentesco = $('#acudienteParentesco').val();
+
+                        return enviarFirma('acudiente', signaturePadAcudiente.toDataURL(), nombreAcudiente, cedulaAcudiente, parentesco);
+                    }
+                    return response;
+                })
+                .then(response => {
+                    if (response.success) {
+                        alert('Firmas registradas exitosamente');
+                        window.location.href = '{{ route("consentimientos.show", $consentimiento->id) }}';
+                    }
+                })
+                .catch(error => {
+                    alert('Error: ' + error.message);
+                    $('#btnEnviar').prop('disabled', false).html('<i class="fas fa-check-circle"></i> Confirmar y Enviar Firmas');
+                });
         });
+
+        // Función para enviar firma via AJAX
+        function enviarFirma(tipoFirmante, firmaBase64, nombreFirmante, cedulaFirmante, relacionFirmante) {
+            return $.ajax({
+                url: '{{ route("consentimientos.guardar-firma", $token) }}',
+                method: 'POST',
+                headers: {
+                    'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+                },
+                data: {
+                    tipo_firmante: tipoFirmante,
+                    firma_base64: firmaBase64,
+                    firmante_nombre: nombreFirmante,
+                    firmante_cedula: cedulaFirmante,
+                    firmante_relacion: relacionFirmante
+                }
+            });
+        }
     </script>
 </body>
 </html>
