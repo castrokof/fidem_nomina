@@ -178,6 +178,36 @@
                                 </div>
                                 <p><strong>DECLARO</strong> que he comprendido adecuadamente la información que contiene este documento, que firmo el consentimiento para la realización del procedimiento que se describe en el mismo, que he recibido copia del mismo y que conozco que el consentimiento puede ser revocado por escrito en cualquier momento.</p>
 
+                                <!-- Campos obligatorios de edad y género -->
+                                <div class="section-title mt-3">
+                                    <i class="fas fa-user-check"></i> Confirmación de Datos del Paciente
+                                </div>
+                                <div class="alert alert-info">
+                                    <i class="fas fa-info-circle"></i> Por favor, confirme su edad y género antes de firmar.
+                                </div>
+                                <div class="row">
+                                    <div class="col-md-6">
+                                        <div class="form-group">
+                                            <label class="font-weight-bold">Edad <span class="text-danger">*</span></label>
+                                            <input type="number" class="form-control" name="paciente_edad" id="pacienteEdad"
+                                                   min="0" max="150" required
+                                                   placeholder="Ingrese su edad">
+                                            <small class="form-text text-muted">Ingrese su edad en años</small>
+                                        </div>
+                                    </div>
+                                    <div class="col-md-6">
+                                        <div class="form-group">
+                                            <label class="font-weight-bold">Género <span class="text-danger">*</span></label>
+                                            <select class="form-control" name="paciente_genero" id="pacienteGenero" required>
+                                                <option value="">Seleccione...</option>
+                                                <option value="Masculino">Masculino</option>
+                                                <option value="Femenino">Femenino</option>
+                                                <option value="Otro">Otro</option>
+                                            </select>
+                                        </div>
+                                    </div>
+                                </div>
+
                                 <div class="form-group">
                                     <label class="font-weight-bold">Firme en el recuadro a continuación:</label>
                                     <div class="text-center">
@@ -366,6 +396,22 @@
         $('#formFirma').submit(function(e) {
             e.preventDefault();
 
+            // Validar edad y género del paciente
+            const edadPaciente = $('#pacienteEdad').val();
+            const generoPaciente = $('#pacienteGenero').val();
+
+            if (!edadPaciente || edadPaciente < 0 || edadPaciente > 150) {
+                alert('Por favor, ingrese una edad válida (entre 0 y 150 años).');
+                $('#pacienteEdad').focus();
+                return false;
+            }
+
+            if (!generoPaciente) {
+                alert('Por favor, seleccione el género.');
+                $('#pacienteGenero').focus();
+                return false;
+            }
+
             // Validar firma del paciente
             if (signaturePadPaciente.isEmpty()) {
                 alert('Por favor, firme en el recuadro del paciente antes de continuar.');
@@ -395,7 +441,7 @@
             const nombrePaciente = '{{ $consentimiento->paciente_nombre }}';
             const cedulaPaciente = '{{ $consentimiento->paciente_cedula }}';
 
-            enviarFirma('paciente', signaturePadPaciente.toDataURL(), nombrePaciente, cedulaPaciente, null)
+            enviarFirma('paciente', signaturePadPaciente.toDataURL(), nombrePaciente, cedulaPaciente, null, edadPaciente, generoPaciente)
                 .then(response => {
                     if (!response.success) {
                         throw new Error(response.message);
@@ -424,7 +470,7 @@
         });
 
         // Función para enviar firma via AJAX
-        function enviarFirma(tipoFirmante, firmaBase64, nombreFirmante, cedulaFirmante, relacionFirmante) {
+        function enviarFirma(tipoFirmante, firmaBase64, nombreFirmante, cedulaFirmante, relacionFirmante, edadFirmante, generoFirmante) {
             return $.ajax({
                 url: '{{ route("consentimientos.guardar-firma", $token) }}',
                 method: 'POST',
@@ -436,7 +482,9 @@
                     firma_base64: firmaBase64,
                     firmante_nombre: nombreFirmante,
                     firmante_cedula: cedulaFirmante,
-                    firmante_relacion: relacionFirmante
+                    firmante_relacion: relacionFirmante,
+                    firmante_edad: edadFirmante,
+                    firmante_genero: generoFirmante
                 }
             });
         }

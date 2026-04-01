@@ -14,6 +14,8 @@ class FirmaCI extends Model
         'firma_base64',
         'firmante_nombre',
         'firmante_cedula',
+        'firmante_edad',
+        'firmante_genero',
         'firmante_relacion',
         'ip_firma',
         'user_agent',

@@ -408,6 +408,8 @@ public function store(Request $request)
             'firma_base64'      => 'required|string',
             'firmante_nombre'   => 'required|string|max:200',
             'firmante_cedula'   => 'nullable|string|max:20',
+            'firmante_edad'     => 'required_if:tipo_firmante,paciente|nullable|integer|min:0|max:150',
+            'firmante_genero'   => 'required_if:tipo_firmante,paciente|nullable|in:Masculino,Femenino,Otro',
             'firmante_relacion' => 'required_if:tipo_firmante,acudiente|nullable|string|max:100'
         ]);
 
@@ -418,6 +420,8 @@ public function store(Request $request)
             'firma_base64'      => $request->firma_base64,
             'firmante_nombre'   => $request->firmante_nombre,
             'firmante_cedula'   => $request->firmante_cedula,
+            'firmante_edad'     => $request->firmante_edad,
+            'firmante_genero'   => $request->firmante_genero,
             'firmante_relacion' => $request->firmante_relacion,
             'ip_firma'          => $request->ip(),
             'user_agent'        => $request->userAgent(),
