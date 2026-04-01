@@ -141,28 +141,28 @@ $html = view('consentimientos.pdf', [
 protected function sanitizarFirmaBase64($firma)
 {
     if (!$firma || empty($firma->firma_base64)) return null;
-    
+
     $base64 = $firma->firma_base64;
-    
+
     // 1. Si tiene prefijo "data:", extraer solo la parte útil
     if (stripos($base64, 'data:') === 0) {
         $parts = explode(',', $base64, 2);
         if (count($parts) === 2) {
-            // DomPDF necesita: image/png;base64,BASE64
-            $base64 = 'image/png;base64,' . preg_replace('/\s+/', '', trim($parts[1]));
+            // DomPDF necesita: data:image/png;base64,BASE64
+            $base64 = 'data:image/png;base64,' . preg_replace('/\s+/', '', trim($parts[1]));
         }
     } else {
         // Si no tiene prefijo, agregarlo
-        $base64 = 'image/png;base64,' . preg_replace('/\s+/', '', trim($base64));
+        $base64 = 'data:image/png;base64,' . preg_replace('/\s+/', '', trim($base64));
     }
-    
+
     // 2. Validar que es base64 válido
     $test = @base64_decode(explode(',', $base64)[1]);
     if ($test === false) {
         \Log::error('Firma base64 inválida', ['firma_length' => strlen($base64)]);
         return null;
     }
-    
+
     return $base64;
 }
 

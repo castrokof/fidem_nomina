@@ -282,19 +282,33 @@ public function store(Request $request)
     
     // ✅ Obtener profesional por ID (el que viene del AJAX)
     $profesional = Profesional::findOrFail($request->profesional_id);
-    
+
     $paciente = Paciente::findOrFail($request->paciente_id);
+
+    // ✅ Validar que el paciente tenga edad y género
+    if (empty($paciente->edad) || empty($paciente->genero)) {
+        return response()->json([
+            'success' => false,
+            'message' => 'El paciente debe tener edad y género registrados. Por favor, actualice los datos del paciente antes de continuar.',
+            'errors' => ['El paciente no tiene edad y/o género registrados']
+        ], 422);
+    }
+
     $creados = 0;
     $errores = [];
     
     foreach ($request->input('plantillas', []) as $plantillaId) {
         try {
+            $plantilla = \App\PlantillaCI::findOrFail($plantillaId);
+
             $consentimiento = ConsentimientoInformado::create([
                 'agenda_ci_id'        => $request->agenda_ci_id,
                 'paciente_id'         => $paciente->id,
                 'paciente_nombre'     => $paciente->nombres . ' ' . $paciente->apellidos,
                 'paciente_cedula'     => $paciente->numero_documento,
                 'paciente_tipo_doc'   => $paciente->tipo_documento,
+                'paciente_edad'       => $paciente->edad,
+                'paciente_genero'     => $paciente->genero,
                 'profesional_id'      => $profesional->id,  // ← ID real del profesional
                 'profesional_nombre'  => $profesional->nombres . ' ' . $profesional->apellidos,
                 'especialidad_id'     => $profesional->especialidad_id,
@@ -303,6 +317,7 @@ public function store(Request $request)
                 'observaciones'       => $request->observaciones,
                 'fecha_procedimiento' => $request->fecha_procedimiento,
                 'estado'              => 'pendiente',
+                'requiere_acudiente'  => $plantilla->requiere_acudiente_obligatorio,
                 'token_firma'         => Str::random(64),
                 'token_expira_at'     => now()->addHours(24),
                 'ip_generacion'       => $request->ip(),

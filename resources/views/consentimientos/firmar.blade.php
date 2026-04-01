@@ -189,16 +189,33 @@
                                     <input type="hidden" name="firma_base64" id="firmaPacienteInput">
                                 </div>
 
-                                <!-- Sección de Acudiente/Familiar/Tutor (Opcional) -->
+                                <!-- Sección de Acudiente/Familiar/Tutor -->
+                                @php
+                                    $requiereAcudienteObligatorio = $consentimiento->plantilla->requiere_acudiente_obligatorio ?? false;
+                                @endphp
                                 <div class="section-title">
-                                    <i class="fas fa-user-friends"></i> Firma del Familiar/Tutor/Representante (Opcional)
+                                    <i class="fas fa-user-friends"></i> Firma del Familiar/Tutor/Representante
+                                    @if($requiereAcudienteObligatorio)
+                                        <span class="badge badge-danger">OBLIGATORIO</span>
+                                    @else
+                                        <span class="badge badge-info">Opcional</span>
+                                    @endif
                                 </div>
-                                <div class="form-check mb-3">
-                                    <input class="form-check-input" type="checkbox" id="requiereAcudiente" name="requiere_acudiente" value="1">
-                                    <label class="form-check-label" for="requiereAcudiente">
-                                        Requiere firma de familiar/tutor/representante legal
-                                    </label>
-                                </div>
+
+                                @if($requiereAcudienteObligatorio)
+                                    <div class="alert alert-warning mb-3">
+                                        <i class="fas fa-exclamation-triangle"></i>
+                                        <strong>Atención:</strong> Este consentimiento requiere obligatoriamente la firma de un familiar, tutor o representante legal.
+                                    </div>
+                                    <input type="hidden" id="requiereAcudiente" name="requiere_acudiente" value="1">
+                                @else
+                                    <div class="form-check mb-3">
+                                        <input class="form-check-input" type="checkbox" id="requiereAcudiente" name="requiere_acudiente" value="1">
+                                        <label class="form-check-label" for="requiereAcudiente">
+                                            Requiere firma de familiar/tutor/representante legal
+                                        </label>
+                                    </div>
+                                @endif
 
                                 <div id="seccionAcudiente" style="display: none;">
                                     <div class="row">
@@ -326,8 +343,9 @@
         }
 
         // Mostrar/ocultar sección de acudiente
-        $('#requiereAcudiente').change(function() {
-            if ($(this).is(':checked')) {
+        function toggleSeccionAcudiente() {
+            const requiereAcudiente = $('#requiereAcudiente').is(':checked') || $('#requiereAcudiente').val() === '1';
+            if (requiereAcudiente) {
                 $('#seccionAcudiente').slideDown();
                 $('#acudienteNombres, #acudienteApellidos, #acudienteTipoDoc, #acudienteNumDoc, #acudienteParentesco').prop('required', true);
             } else {
@@ -335,6 +353,13 @@
                 $('#acudienteNombres, #acudienteApellidos, #acudienteTipoDoc, #acudienteNumDoc, #acudienteParentesco').prop('required', false);
                 signaturePadAcudiente.clear();
             }
+        }
+
+        $('#requiereAcudiente').change(toggleSeccionAcudiente);
+
+        // Ejecutar al cargar la página por si viene obligatorio
+        $(document).ready(function() {
+            toggleSeccionAcudiente();
         });
 
         // Validar y enviar formulario
