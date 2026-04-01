@@ -41,17 +41,19 @@ class PlantillaCIController extends Controller
             'contenido_html' => 'required|string',
             'uso_general'    => 'nullable|boolean',
             'activo'         => 'nullable|boolean',
+            'requiere_acudiente_obligatorio' => 'nullable|boolean',
             'especialidades' => 'nullable|array'
         ]);
 
         $plantilla = PlantillaCI::create([
-            'nombre'                => $request->nombre,
-            'descripcion'           => $request->descripcion,
-            'cups_codigo'           => $request->cups_codigo,
-            'contenido_html'        => $request->contenido_html,
-            'variables_disponibles' => PlantillaCI::variablesDisponibles(),
-            'uso_general'           => $request->boolean('uso_general'),
-            'activo'                => $request->boolean('activo', true)
+            'nombre'                         => $request->nombre,
+            'descripcion'                    => $request->descripcion,
+            'cups_codigo'                    => $request->cups_codigo,
+            'contenido_html'                 => $request->contenido_html,
+            'variables_disponibles'          => PlantillaCI::variablesDisponibles(),
+            'uso_general'                    => $request->boolean('uso_general'),
+            'requiere_acudiente_obligatorio' => $request->boolean('requiere_acudiente_obligatorio'),
+            'activo'                         => $request->boolean('activo', true)
         ]);
 
         // Asociar especialidades
@@ -89,16 +91,18 @@ class PlantillaCIController extends Controller
             'contenido_html' => 'required|string',
             'uso_general'    => 'nullable|boolean',
             'activo'         => 'nullable|boolean',
+            'requiere_acudiente_obligatorio' => 'nullable|boolean',
             'especialidades' => 'nullable|array'
         ]);
 
         $plantilla->update([
-            'nombre'         => $request->nombre,
-            'descripcion'    => $request->descripcion,
-            'cups_codigo'    => $request->cups_codigo,
-            'contenido_html' => $request->contenido_html,
-            'uso_general'    => $request->boolean('uso_general'),
-            'activo'         => $request->boolean('activo', true)
+            'nombre'                         => $request->nombre,
+            'descripcion'                    => $request->descripcion,
+            'cups_codigo'                    => $request->cups_codigo,
+            'contenido_html'                 => $request->contenido_html,
+            'uso_general'                    => $request->boolean('uso_general'),
+            'requiere_acudiente_obligatorio' => $request->boolean('requiere_acudiente_obligatorio'),
+            'activo'                         => $request->boolean('activo', true)
         ]);
 
         // Sincronizar especialidades

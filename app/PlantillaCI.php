@@ -15,13 +15,15 @@ class PlantillaCI extends Model
         'contenido_html',
         'variables_disponibles',
         'activo',
-        'uso_general'
+        'uso_general',
+        'requiere_acudiente_obligatorio'
     ];
 
     protected $casts = [
         'variables_disponibles' => 'array',
         'activo' => 'boolean',
-        'uso_general' => 'boolean'
+        'uso_general' => 'boolean',
+        'requiere_acudiente_obligatorio' => 'boolean'
     ];
 
     /**

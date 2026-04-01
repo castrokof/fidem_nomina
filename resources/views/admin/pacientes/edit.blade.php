@@ -100,19 +100,21 @@
                             </div>
                             <div class="col-md-4">
                                 <div class="form-group">
-                                    <label for="edad">Edad</label>
-                                    <input type="number" name="edad" id="edad" class="form-control" value="{{old('edad', $paciente->edad)}}">
+                                    <label for="edad">Edad <span class="text-danger">*</span></label>
+                                    <input type="number" name="edad" id="edad" class="form-control" value="{{old('edad', $paciente->edad)}}" required min="0" max="120">
+                                    <small class="form-text text-muted">Campo obligatorio para crear consentimientos</small>
                                 </div>
                             </div>
                             <div class="col-md-4">
                                 <div class="form-group">
-                                    <label for="genero">Género</label>
-                                    <select name="genero" id="genero" class="form-control">
+                                    <label for="genero">Género <span class="text-danger">*</span></label>
+                                    <select name="genero" id="genero" class="form-control" required>
                                         <option value="">Seleccione...</option>
-                                        <option value="Masculino" {{old('genero', $paciente->genero) == 'Masculino' ? 'selected' : ''}}>Masculino</option>
-                                        <option value="Femenino" {{old('genero', $paciente->genero) == 'Femenino' ? 'selected' : ''}}>Femenino</option>
-                                        <option value="Otro" {{old('genero', $paciente->genero) == 'Otro' ? 'selected' : ''}}>Otro</option>
+                                        <option value="M" {{old('genero', $paciente->genero) == 'M' ? 'selected' : ''}}>Masculino</option>
+                                        <option value="F" {{old('genero', $paciente->genero) == 'F' ? 'selected' : ''}}>Femenino</option>
+                                        <option value="O" {{old('genero', $paciente->genero) == 'O' ? 'selected' : ''}}>Otro</option>
                                     </select>
+                                    <small class="form-text text-muted">Campo obligatorio para crear consentimientos</small>
                                 </div>
                             </div>
                         </div>

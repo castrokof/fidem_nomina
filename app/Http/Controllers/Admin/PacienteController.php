@@ -62,8 +62,8 @@ class PacienteController extends Controller
             'telefono'         => 'nullable|string|max:20',
             'email'            => 'nullable|email|max:150',
             'fecha_nacimiento' => 'nullable|date',
-            'edad'             => 'nullable|integer|min:0|max:120',
-            'genero'           => 'nullable|in:M,F,O'
+            'edad'             => 'required|integer|min:0|max:120',
+            'genero'           => 'required|in:M,F,O'
         ]);
 
         $paciente->update($request->all());

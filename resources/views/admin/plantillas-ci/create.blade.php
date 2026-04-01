@@ -114,7 +114,7 @@
                         </div>
 
                         <div class="row">
-                            <div class="col-md-6">
+                            <div class="col-md-4">
                                 <div class="form-check">
                                     <input type="checkbox" name="activo" id="activo" class="form-check-input" value="1" {{old('activo', true) ? 'checked' : ''}}>
                                     <label class="form-check-label" for="activo">
@@ -122,11 +122,19 @@
                                     </label>
                                 </div>
                             </div>
-                            <div class="col-md-6">
+                            <div class="col-md-4">
                                 <div class="form-check">
                                     <input type="checkbox" name="uso_general" id="uso_general" class="form-check-input" value="1" {{old('uso_general') ? 'checked' : ''}}>
                                     <label class="form-check-label" for="uso_general">
                                         Uso General (aplica para todas las especialidades)
+                                    </label>
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="form-check">
+                                    <input type="checkbox" name="requiere_acudiente_obligatorio" id="requiere_acudiente_obligatorio" class="form-check-input" value="1" {{old('requiere_acudiente_obligatorio') ? 'checked' : ''}}>
+                                    <label class="form-check-label" for="requiere_acudiente_obligatorio">
+                                        Requiere Firma de Acudiente Obligatorio
                                     </label>
                                 </div>
                             </div>
