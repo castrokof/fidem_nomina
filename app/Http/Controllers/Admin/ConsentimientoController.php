@@ -285,15 +285,6 @@ public function store(Request $request)
 
     $paciente = Paciente::findOrFail($request->paciente_id);
 
-    // ✅ Validar que el paciente tenga edad y género
-    if (empty($paciente->edad) || empty($paciente->genero)) {
-        return response()->json([
-            'success' => false,
-            'message' => 'El paciente debe tener edad y género registrados. Por favor, actualice los datos del paciente antes de continuar.',
-            'errors' => ['El paciente no tiene edad y/o género registrados']
-        ], 422);
-    }
-
     $creados = 0;
     $errores = [];
     
@@ -307,8 +298,8 @@ public function store(Request $request)
                 'paciente_nombre'     => $paciente->nombres . ' ' . $paciente->apellidos,
                 'paciente_cedula'     => $paciente->numero_documento,
                 'paciente_tipo_doc'   => $paciente->tipo_documento,
-                'paciente_edad'       => $paciente->edad,
-                'paciente_genero'     => $paciente->genero,
+                'paciente_edad'       => $paciente->edad ?? null,
+                'paciente_genero'     => $paciente->genero ?? null,
                 'profesional_id'      => $profesional->id,  // ← ID real del profesional
                 'profesional_nombre'  => $profesional->nombres . ' ' . $profesional->apellidos,
                 'especialidad_id'     => $profesional->especialidad_id,
