@@ -21,6 +21,7 @@ class Profesional extends Model
         'telefono',
         'email',
         'firma_base64',
+        'firma_imagen_path',
         'firma_actualizada_at',
         'activo'
     ];
@@ -67,7 +68,28 @@ class Profesional extends Model
      */
     public function tieneFirmaRegistrada()
     {
-        return !empty($this->firma_base64);
+        return !empty($this->firma_base64) || !empty($this->firma_imagen_path);
+    }
+
+    /**
+     * Obtiene la firma del profesional (prioriza imagen digital)
+     * @return string|null Ruta de imagen o base64
+     */
+    public function obtenerFirma()
+    {
+        if (!empty($this->firma_imagen_path) && file_exists(public_path($this->firma_imagen_path))) {
+            return $this->firma_imagen_path;
+        }
+        return $this->firma_base64;
+    }
+
+    /**
+     * Verifica si la firma es una imagen (archivo)
+     * @return bool
+     */
+    public function firmaEsImagen()
+    {
+        return !empty($this->firma_imagen_path) && file_exists(public_path($this->firma_imagen_path));
     }
 
     /**

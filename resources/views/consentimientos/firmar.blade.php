@@ -157,17 +157,17 @@
                                     <i class="fas fa-question-circle"></i> Voluntad de Información
                                 </div>
                                 <div class="form-group">
-                                    <label class="font-weight-bold">¿Desea ser informado sobre su enfermedad?</label>
+                                    <label class="font-weight-bold">*¿DESEO SER INFORMADO sobre mi enfermedad y la intervención que me van a realizar?</label>
                                     <div class="form-check">
                                         <input class="form-check-input" type="radio" name="desea_ser_informado" id="desea_si" value="1" required checked>
                                         <label class="form-check-label" for="desea_si">
-                                            Sí, deseo ser informado directamente
+                                            Sí
                                         </label>
                                     </div>
                                     <div class="form-check">
-                                        <input class="form-check-input" type="radio" name="desea_ser_informado" id="desea_familiar" value="0">
-                                        <label class="form-check-label" for="desea_familiar">
-                                            Deseo que la información sea proporcionada a mi familiar/tutor/representante
+                                        <input class="form-check-input" type="radio" name="desea_ser_informado" id="desea_no" value="0">
+                                        <label class="form-check-label" for="desea_no">
+                                            No
                                         </label>
                                     </div>
                                 </div>
@@ -176,7 +176,10 @@
                                 <div class="section-title">
                                     <i class="fas fa-signature"></i> Firma del Paciente
                                 </div>
-                                <p><strong>DECLARO</strong> que he comprendido adecuadamente la información que contiene este documento, que firmo el consentimiento para la realización del procedimiento que se describe en el mismo, que he recibido copia del mismo y que conozco que el consentimiento puede ser revocado por escrito en cualquier momento.</p>
+                                <div id="declaracionPaciente">
+                                    <p id="textoDeclaracionSi"><strong>DECLARO</strong> que he comprendido adecuadamente la información que contiene este documento, que firmo el consentimiento para la realización del procedimiento que se describe en el mismo, que he recibido copia del mismo y que conozco que el consentimiento puede ser revocado por escrito en cualquier momento.</p>
+                                    <p id="textoDeclaracionNo" style="display:none;"><strong>MANIFIESTO MI DESEO DE NO SER INFORMADO Y PRESTO MI CONSENTIMIENTO</strong> para que se lleve a cabo el procedimiento descrito en este documento.</p>
+                                </div>
 
                                 <!-- Campos obligatorios de edad y género -->
                                 <div class="section-title mt-3">
@@ -387,9 +390,24 @@
 
         $('#requiereAcudiente').change(toggleSeccionAcudiente);
 
+        // Cambiar texto de declaración según la opción seleccionada
+        function toggleDeclaracionPaciente() {
+            const deseaSerInformado = $('input[name="desea_ser_informado"]:checked').val() === '1';
+            if (deseaSerInformado) {
+                $('#textoDeclaracionSi').show();
+                $('#textoDeclaracionNo').hide();
+            } else {
+                $('#textoDeclaracionSi').hide();
+                $('#textoDeclaracionNo').show();
+            }
+        }
+
+        $('input[name="desea_ser_informado"]').change(toggleDeclaracionPaciente);
+
         // Ejecutar al cargar la página por si viene obligatorio
         $(document).ready(function() {
             toggleSeccionAcudiente();
+            toggleDeclaracionPaciente();
         });
 
         // Validar y enviar formulario
@@ -437,11 +455,14 @@
             // Deshabilitar botón para evitar doble envío
             $('#btnEnviar').prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i> Enviando...');
 
+            // Obtener valor de desea_ser_informado
+            const deseaSerInformado = $('input[name="desea_ser_informado"]:checked').val() === '1' ? 1 : 0;
+
             // Enviar firma del paciente primero
             const nombrePaciente = '{{ $consentimiento->paciente_nombre }}';
             const cedulaPaciente = '{{ $consentimiento->paciente_cedula }}';
 
-            enviarFirma('paciente', signaturePadPaciente.toDataURL(), nombrePaciente, cedulaPaciente, null, edadPaciente, generoPaciente)
+            enviarFirma('paciente', signaturePadPaciente.toDataURL(), nombrePaciente, cedulaPaciente, null, edadPaciente, generoPaciente, deseaSerInformado)
                 .then(response => {
                     if (!response.success) {
                         throw new Error(response.message);
@@ -470,7 +491,7 @@
         });
 
         // Función para enviar firma via AJAX
-        function enviarFirma(tipoFirmante, firmaBase64, nombreFirmante, cedulaFirmante, relacionFirmante, edadFirmante, generoFirmante) {
+        function enviarFirma(tipoFirmante, firmaBase64, nombreFirmante, cedulaFirmante, relacionFirmante, edadFirmante, generoFirmante, deseaSerInformado) {
             return $.ajax({
                 url: '{{ route("consentimientos.guardar-firma", $token) }}',
                 method: 'POST',
@@ -484,7 +505,8 @@
                     firmante_cedula: cedulaFirmante,
                     firmante_relacion: relacionFirmante,
                     firmante_edad: edadFirmante,
-                    firmante_genero: generoFirmante
+                    firmante_genero: generoFirmante,
+                    desea_ser_informado: deseaSerInformado
                 }
             });
         }

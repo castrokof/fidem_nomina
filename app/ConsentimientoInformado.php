@@ -17,6 +17,7 @@ class ConsentimientoInformado extends Model
         'paciente_edad',
         'paciente_genero',
         'paciente_fecha_nacimiento',
+        'desea_ser_informado',
         'profesional_id',
         'profesional_nombre',
         'especialidad_id',
@@ -36,7 +37,8 @@ class ConsentimientoInformado extends Model
         'fecha_procedimiento' => 'date',
         'paciente_fecha_nacimiento' => 'date',
         'token_expira_at' => 'datetime',
-        'requiere_acudiente' => 'boolean'
+        'requiere_acudiente' => 'boolean',
+        'desea_ser_informado' => 'boolean'
     ];
 
     /**

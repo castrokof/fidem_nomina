@@ -19,6 +19,17 @@ class PdfConsentimientoService
     public function generar(ConsentimientoInformado $consentimiento)
     {
         try {
+            // ✅ Asegurar que las relaciones estén cargadas
+            $consentimiento->load([
+                'profesional',
+                'paciente',
+                'plantilla',
+                'firmaPaciente',
+                'firmaAcudiente',
+                'firmaProfesional',
+                'acudiente'
+            ]);
+
             $profesional = $consentimiento->profesional;
 
             // ✅ Preparar variables para renderizar en la plantilla
@@ -46,16 +57,38 @@ class PdfConsentimientoService
             // ✅ Sanitizar contenido para fuente base (helvetica)
             $contenidoLimpio = $this->sanitizarParaFuenteBase($contenidoRenderizado);
 
-           // En el método generar()
-$firmaPacienteBase64 = $this->sanitizarFirmaBase64($consentimiento->firmaPaciente);
-$firmaAcudienteBase64 = $this->sanitizarFirmaBase64($consentimiento->firmaAcudiente);
-$firmaProfesionalBase64 = null;
+            // ✅ Procesar firmas con logs para debug
+            Log::info('Procesando firmas del consentimiento', [
+                'consentimiento_id' => $consentimiento->id,
+                'tiene_firma_paciente' => $consentimiento->firmaPaciente ? true : false,
+                'tiene_firma_acudiente' => $consentimiento->firmaAcudiente ? true : false,
+                'tiene_firma_profesional' => $consentimiento->firmaProfesional ? true : false,
+            ]);
 
-if ($consentimiento->firmaProfesional && !empty($consentimiento->firmaProfesional->firma_base64)) {
-    $firmaProfesionalBase64 = $this->sanitizarFirmaBase64($consentimiento->firmaProfesional);
-} elseif ($profesional && !empty($profesional->firma_base64)) {
-    $firmaProfesionalBase64 = $this->sanitizarFirmaBase64((object)['firma_base64' => $profesional->firma_base64]);
-}
+            $firmaPacienteBase64 = $this->sanitizarFirmaBase64($consentimiento->firmaPaciente);
+            $firmaAcudienteBase64 = $this->sanitizarFirmaBase64($consentimiento->firmaAcudiente);
+            $firmaProfesionalBase64 = null;
+
+            // Priorizar firma digital (imagen) del profesional sobre base64
+            if ($profesional) {
+                if (!empty($profesional->firma_imagen_path) && file_exists(public_path($profesional->firma_imagen_path))) {
+                    // Convertir imagen a base64
+                    $firmaProfesionalBase64 = $this->convertirImagenABase64(public_path($profesional->firma_imagen_path));
+                } elseif ($consentimiento->firmaProfesional && !empty($consentimiento->firmaProfesional->firma_base64)) {
+                    $firmaProfesionalBase64 = $this->sanitizarFirmaBase64($consentimiento->firmaProfesional);
+                } elseif (!empty($profesional->firma_base64)) {
+                    $firmaProfesionalBase64 = $this->sanitizarFirmaBase64((object)['firma_base64' => $profesional->firma_base64]);
+                }
+            }
+
+            // Obtener logo de FIDEM (si está configurado)
+            $logoFidemBase64 = $this->obtenerLogoFidem();
+
+            Log::info('Firmas procesadas', [
+                'firma_paciente_ok' => $firmaPacienteBase64 ? true : false,
+                'firma_acudiente_ok' => $firmaAcudienteBase64 ? true : false,
+                'firma_profesional_ok' => $firmaProfesionalBase64 ? true : false,
+            ]);
 
 $html = view('consentimientos.pdf', [
     'consentimiento'            => $consentimiento,
@@ -63,6 +96,7 @@ $html = view('consentimientos.pdf', [
     'firmaPacienteBase64'       => $firmaPacienteBase64,
     'firmaAcudienteBase64'      => $firmaAcudienteBase64,
     'firmaProfesionalBase64'    => $firmaProfesionalBase64,
+    'logoFidemBase64'           => $logoFidemBase64,
     'variables'                 => $variables,
 ])->render();
 
@@ -140,9 +174,17 @@ $html = view('consentimientos.pdf', [
  */
 protected function sanitizarFirmaBase64($firma)
 {
-    if (!$firma || empty($firma->firma_base64)) return null;
+    if (!$firma || empty($firma->firma_base64)) {
+        Log::warning('Firma vacía o nula recibida en sanitizarFirmaBase64');
+        return null;
+    }
 
     $base64 = $firma->firma_base64;
+    Log::info('Procesando firma base64', [
+        'tiene_prefijo_data' => stripos($base64, 'data:') === 0,
+        'longitud' => strlen($base64),
+        'primeros_50_chars' => substr($base64, 0, 50)
+    ]);
 
     // 1. Si tiene prefijo "data:", extraer solo la parte útil
     if (stripos($base64, 'data:') === 0) {
@@ -157,11 +199,25 @@ protected function sanitizarFirmaBase64($firma)
     }
 
     // 2. Validar que es base64 válido
-    $test = @base64_decode(explode(',', $base64)[1]);
-    if ($test === false) {
-        \Log::error('Firma base64 inválida', ['firma_length' => strlen($base64)]);
+    $partes = explode(',', $base64);
+    if (count($partes) < 2) {
+        Log::error('Firma base64 mal formateada - no tiene coma separadora');
         return null;
     }
+
+    $test = @base64_decode($partes[1]);
+    if ($test === false || strlen($test) < 100) {
+        Log::error('Firma base64 inválida o muy pequeña', [
+            'firma_length' => strlen($base64),
+            'decoded_length' => $test ? strlen($test) : 0
+        ]);
+        return null;
+    }
+
+    Log::info('Firma base64 procesada exitosamente', [
+        'longitud_final' => strlen($base64),
+        'longitud_decodificada' => strlen($test)
+    ]);
 
     return $base64;
 }
@@ -200,6 +256,17 @@ protected function sanitizarFirmaBase64($firma)
      */
     public function descargar(ConsentimientoInformado $consentimiento)
     {
+        // ✅ Asegurar que las relaciones estén cargadas antes de descargar
+        $consentimiento->load([
+            'profesional',
+            'paciente',
+            'plantilla',
+            'firmaPaciente',
+            'firmaAcudiente',
+            'firmaProfesional',
+            'acudiente'
+        ]);
+
         if (!$consentimiento->pdf_path || !file_exists(storage_path('app/' . $consentimiento->pdf_path))) {
             // Si no existe, generarlo primero
             $this->generar($consentimiento);
@@ -209,5 +276,69 @@ protected function sanitizarFirmaBase64($firma)
         $nombreArchivo = 'consentimiento_' . $consentimiento->id . '_' . $consentimiento->paciente_cedula . '.pdf';
 
         return response()->download($rutaCompleta, $nombreArchivo);
+    }
+
+    /**
+     * Convierte una imagen a base64 para incluir en el PDF
+     *
+     * @param string $rutaImagen
+     * @return string|null
+     */
+    protected function convertirImagenABase64($rutaImagen)
+    {
+        try {
+            if (!file_exists($rutaImagen)) {
+                Log::warning('Imagen no encontrada', ['ruta' => $rutaImagen]);
+                return null;
+            }
+
+            $imageData = file_get_contents($rutaImagen);
+            if ($imageData === false) {
+                Log::error('No se pudo leer la imagen', ['ruta' => $rutaImagen]);
+                return null;
+            }
+
+            // Detectar tipo de imagen
+            $finfo = finfo_open(FILEINFO_MIME_TYPE);
+            $mimeType = finfo_file($finfo, $rutaImagen);
+            finfo_close($finfo);
+
+            $base64 = base64_encode($imageData);
+            return "data:{$mimeType};base64,{$base64}";
+        } catch (\Exception $e) {
+            Log::error('Error al convertir imagen a base64', [
+                'ruta' => $rutaImagen,
+                'error' => $e->getMessage()
+            ]);
+            return null;
+        }
+    }
+
+    /**
+     * Obtiene el logo de FIDEM desde la configuración
+     *
+     * @return string|null
+     */
+    protected function obtenerLogoFidem()
+    {
+        try {
+            $configuracion = \App\Configuracion::where('clave', 'logo_fidem_path')->first();
+
+            if (!$configuracion || !$configuracion->valor) {
+                return null;
+            }
+
+            $rutaLogo = public_path($configuracion->valor);
+
+            if (!file_exists($rutaLogo)) {
+                Log::warning('Logo FIDEM no encontrado', ['ruta' => $rutaLogo]);
+                return null;
+            }
+
+            return $this->convertirImagenABase64($rutaLogo);
+        } catch (\Exception $e) {
+            Log::error('Error al obtener logo FIDEM', ['error' => $e->getMessage()]);
+            return null;
+        }
     }
 }
