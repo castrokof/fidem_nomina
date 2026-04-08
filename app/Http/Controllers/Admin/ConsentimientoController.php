@@ -395,13 +395,14 @@ public function store(Request $request)
         }
 
         $request->validate([
-            'tipo_firmante'     => 'required|in:paciente,acudiente',
-            'firma_base64'      => 'required|string',
-            'firmante_nombre'   => 'required|string|max:200',
-            'firmante_cedula'   => 'nullable|string|max:20',
-            'firmante_edad'     => 'required_if:tipo_firmante,paciente|nullable|integer|min:0|max:150',
-            'firmante_genero'   => 'required_if:tipo_firmante,paciente|nullable|in:Masculino,Femenino,Otro',
-            'firmante_relacion' => 'required_if:tipo_firmante,acudiente|nullable|string|max:100'
+            'tipo_firmante'        => 'required|in:paciente,acudiente',
+            'firma_base64'         => 'required|string',
+            'firmante_nombre'      => 'required|string|max:200',
+            'firmante_cedula'      => 'nullable|string|max:20',
+            'firmante_edad'        => 'required_if:tipo_firmante,paciente|nullable|integer|min:0|max:150',
+            'firmante_genero'      => 'required_if:tipo_firmante,paciente|nullable|in:Masculino,Femenino,Otro',
+            'firmante_relacion'    => 'required_if:tipo_firmante,acudiente|nullable|string|max:100',
+            'desea_ser_informado'  => 'required_if:tipo_firmante,paciente|nullable|boolean'
         ]);
 
         // Crear la firma
@@ -418,6 +419,15 @@ public function store(Request $request)
             'user_agent'        => $request->userAgent(),
             'firmado_at'        => now(),
         ]);
+
+        // Si es firma del paciente, actualizar datos en el consentimiento
+        if ($request->tipo_firmante === 'paciente') {
+            $consentimiento->update([
+                'paciente_edad'        => $request->firmante_edad,
+                'paciente_genero'      => $request->firmante_genero,
+                'desea_ser_informado'  => $request->desea_ser_informado ?? true,
+            ]);
+        }
 
         // Si es acudiente, también crear el registro de acudiente
         if ($request->tipo_firmante === 'acudiente') {

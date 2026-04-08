@@ -437,11 +437,14 @@
             // Deshabilitar botón para evitar doble envío
             $('#btnEnviar').prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i> Enviando...');
 
+            // Obtener valor de desea_ser_informado
+            const deseaSerInformado = $('input[name="desea_ser_informado"]:checked').val() === '1' ? 1 : 0;
+
             // Enviar firma del paciente primero
             const nombrePaciente = '{{ $consentimiento->paciente_nombre }}';
             const cedulaPaciente = '{{ $consentimiento->paciente_cedula }}';
 
-            enviarFirma('paciente', signaturePadPaciente.toDataURL(), nombrePaciente, cedulaPaciente, null, edadPaciente, generoPaciente)
+            enviarFirma('paciente', signaturePadPaciente.toDataURL(), nombrePaciente, cedulaPaciente, null, edadPaciente, generoPaciente, deseaSerInformado)
                 .then(response => {
                     if (!response.success) {
                         throw new Error(response.message);
@@ -470,7 +473,7 @@
         });
 
         // Función para enviar firma via AJAX
-        function enviarFirma(tipoFirmante, firmaBase64, nombreFirmante, cedulaFirmante, relacionFirmante, edadFirmante, generoFirmante) {
+        function enviarFirma(tipoFirmante, firmaBase64, nombreFirmante, cedulaFirmante, relacionFirmante, edadFirmante, generoFirmante, deseaSerInformado) {
             return $.ajax({
                 url: '{{ route("consentimientos.guardar-firma", $token) }}',
                 method: 'POST',
@@ -484,7 +487,8 @@
                     firmante_cedula: cedulaFirmante,
                     firmante_relacion: relacionFirmante,
                     firmante_edad: edadFirmante,
-                    firmante_genero: generoFirmante
+                    firmante_genero: generoFirmante,
+                    desea_ser_informado: deseaSerInformado
                 }
             });
         }

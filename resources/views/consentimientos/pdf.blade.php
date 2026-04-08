@@ -112,7 +112,7 @@
 <table class="header-table">
     <tr>
         <td class="header-logo">
-            <div style="font-size:24pt;">🏥</div>
+            <div style="font-size:11pt;font-weight:bold;line-height:1.2;">FIDEM</div>
         </td>
         <td>
             <div class="header-title">CLÍNICA FIDEM</div>
