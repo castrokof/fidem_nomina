@@ -137,4 +137,71 @@ class ProfesionalController extends Controller
             'message' => 'Firma registrada exitosamente'
         ]);
     }
+
+    /**
+     * Cargar imagen de firma digital
+     */
+    public function cargarImagenFirma(Request $request, $id)
+    {
+        $profesional = Profesional::findOrFail($id);
+
+        $request->validate([
+            'firma_imagen' => 'required|image|mimes:jpeg,png,jpg,gif|max:2048'
+        ]);
+
+        if ($request->hasFile('firma_imagen')) {
+            // Eliminar firma anterior si existe
+            if ($profesional->firma_imagen_path && file_exists(public_path($profesional->firma_imagen_path))) {
+                unlink(public_path($profesional->firma_imagen_path));
+            }
+
+            $file = $request->file('firma_imagen');
+            $fileName = 'firma_profesional_' . $id . '_' . time() . '.' . $file->getClientOriginalExtension();
+            $destinationPath = public_path('uploads/firmas');
+
+            // Crear directorio si no existe
+            if (!file_exists($destinationPath)) {
+                mkdir($destinationPath, 0755, true);
+            }
+
+            $file->move($destinationPath, $fileName);
+
+            $profesional->update([
+                'firma_imagen_path' => 'uploads/firmas/' . $fileName,
+                'firma_actualizada_at' => now()
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Imagen de firma cargada exitosamente',
+                'path' => 'uploads/firmas/' . $fileName
+            ]);
+        }
+
+        return response()->json([
+            'success' => false,
+            'message' => 'No se recibió ninguna imagen'
+        ], 400);
+    }
+
+    /**
+     * Eliminar imagen de firma digital
+     */
+    public function eliminarImagenFirma($id)
+    {
+        $profesional = Profesional::findOrFail($id);
+
+        if ($profesional->firma_imagen_path && file_exists(public_path($profesional->firma_imagen_path))) {
+            unlink(public_path($profesional->firma_imagen_path));
+        }
+
+        $profesional->update([
+            'firma_imagen_path' => null
+        ]);
+
+        return response()->json([
+            'success' => true,
+            'message' => 'Imagen de firma eliminada exitosamente'
+        ]);
+    }
 }

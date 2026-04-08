@@ -451,6 +451,8 @@ Route::group(['prefix' => 'admin', 'namespace' => 'Admin', 'middleware' => ['far
     Route::delete('profesionales/{id}', 'ProfesionalController@destroy')->name('profesionales.destroy');
     Route::get('profesionales/{id}/firma', 'ProfesionalController@mostrarFirma')->name('profesionales.firma');
     Route::post('profesionales/{id}/firma', 'ProfesionalController@guardarFirma')->name('profesionales.guardar-firma');
+    Route::post('profesionales/{id}/firma-imagen', 'ProfesionalController@cargarImagenFirma')->name('profesionales.cargar-imagen-firma');
+    Route::delete('profesionales/{id}/firma-imagen', 'ProfesionalController@eliminarImagenFirma')->name('profesionales.eliminar-imagen-firma');
 
     // Pacientes
     Route::get('pacientes', 'PacienteController@index')->name('pacientes.index');
@@ -483,6 +485,11 @@ Route::group(['prefix' => 'admin', 'namespace' => 'Admin', 'middleware' => ['far
 
     // Ruta para crear consentimiento desde una agenda específica
 Route::get('consentimientos/crear-desde-agenda/{agenda_id}','ConsentimientoController@createFromAgenda')->name('consentimientos.create-from-agenda');
+
+    // Configuraciones del sistema
+    Route::get('configuraciones', 'ConfiguracionController@index')->name('configuraciones.index');
+    Route::post('configuraciones/logo', 'ConfiguracionController@cargarLogo')->name('configuraciones.cargar-logo');
+    Route::delete('configuraciones/logo', 'ConfiguracionController@eliminarLogo')->name('configuraciones.eliminar-logo');
 
 // ✅ RUTAS AJAX
     Route::get('admin/ajax/pacientes-por-filtros', 'ConsentimientoController@ajaxPacientesPorFiltros')

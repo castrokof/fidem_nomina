@@ -38,6 +38,81 @@
 <script src="https://cdn.jsdelivr.net/npm/signature_pad@4.0.0/dist/signature_pad.umd.min.js"></script>
 <script>
     $(document).ready(function() {
+        // ========== IMAGEN DE FIRMA DIGITAL ==========
+        // Vista previa de imagen
+        $('#firmaImagen').change(function() {
+            const file = this.files[0];
+            if (file) {
+                const reader = new FileReader();
+                reader.onload = function(e) {
+                    $('#previewImg').attr('src', e.target.result);
+                    $('#imagenPreview').show();
+                };
+                reader.readAsDataURL(file);
+
+                // Actualizar label del custom-file
+                const fileName = file.name;
+                $(this).next('.custom-file-label').html(fileName);
+            }
+        });
+
+        // Cargar imagen de firma
+        $('#formImagenFirma').submit(function(e) {
+            e.preventDefault();
+
+            const formData = new FormData(this);
+            const btnCargar = $('#btnCargarImagen');
+
+            btnCargar.prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i> Cargando...');
+
+            $.ajax({
+                url: '{{ route("profesionales.cargar-imagen-firma", $profesional->id) }}',
+                method: 'POST',
+                data: formData,
+                processData: false,
+                contentType: false,
+                success: function(response) {
+                    if (response.success) {
+                        alert('Imagen de firma cargada exitosamente');
+                        location.reload();
+                    }
+                },
+                error: function(xhr) {
+                    alert('Error al cargar la imagen: ' + (xhr.responseJSON?.message || 'Error desconocido'));
+                    btnCargar.prop('disabled', false).html('<i class="fas fa-upload"></i> Cargar Imagen de Firma');
+                }
+            });
+        });
+
+        // Eliminar imagen de firma
+        $('#btnEliminarImagen').click(function() {
+            if (!confirm('¿Está seguro de eliminar la imagen de firma digital?')) {
+                return;
+            }
+
+            const btn = $(this);
+            btn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i> Eliminando...');
+
+            $.ajax({
+                url: '{{ route("profesionales.eliminar-imagen-firma", $profesional->id) }}',
+                method: 'DELETE',
+                headers: {
+                    'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
+                },
+                success: function(response) {
+                    if (response.success) {
+                        alert('Imagen de firma eliminada exitosamente');
+                        location.reload();
+                    }
+                },
+                error: function(xhr) {
+                    alert('Error al eliminar la imagen: ' + (xhr.responseJSON?.message || 'Error desconocido'));
+                    btn.prop('disabled', false).html('<i class="fas fa-trash"></i> Eliminar Imagen Actual');
+                }
+            });
+        });
+
+        // ========== FIRMA A MANO ALZADA ==========
         const canvas = document.getElementById('signaturePad');
         const signaturePad = new SignaturePad(canvas, {
             backgroundColor: 'rgb(255, 255, 255)',
@@ -121,30 +196,81 @@
             </div>
 
             <!-- Firma Actual (si existe) -->
-            @if($profesional->firma_base64)
+            @if($profesional->firma_base64 || $profesional->firma_imagen_path)
                 <div class="card">
                     <div class="card-header bg-success">
                         <h3 class="card-title"><i class="fas fa-check-circle"></i> Firma Actual Registrada</h3>
                     </div>
                     <div class="card-body text-center">
-                        <img src="{{$profesional->firma_base64}}" alt="Firma Actual" class="firma-preview">
+                        @if($profesional->firma_imagen_path && file_exists(public_path($profesional->firma_imagen_path)))
+                            <div class="mb-3">
+                                <span class="badge badge-primary">Firma Digital (Imagen)</span>
+                                <img src="{{ asset($profesional->firma_imagen_path) }}" alt="Firma Digital" class="firma-preview">
+                            </div>
+                        @endif
+                        @if($profesional->firma_base64)
+                            <div class="mb-3">
+                                <span class="badge badge-info">Firma a Mano Alzada</span>
+                                <img src="{{$profesional->firma_base64}}" alt="Firma Actual" class="firma-preview">
+                            </div>
+                        @endif
                         <p class="mt-3 text-muted">
                             <i class="fas fa-info-circle"></i> Esta firma se estampará automáticamente en todos los consentimientos informados
                         </p>
+                        @if($profesional->firma_imagen_path)
+                            <p class="text-muted"><small>La firma digital tiene prioridad sobre la firma a mano alzada</small></p>
+                        @endif
                     </div>
                 </div>
             @endif
 
-            <!-- Formulario para Nueva Firma -->
+            <!-- Opción 1: Cargar Imagen de Firma Digital -->
             <div class="card">
-                <div class="card-header {{$profesional->firma_base64 ? 'bg-warning' : 'bg-primary'}}">
+                <div class="card-header bg-info">
                     <h3 class="card-title">
-                        <i class="fas fa-pen"></i>
-                        @if($profesional->firma_base64)
-                            Actualizar Firma
-                        @else
-                            Registrar Nueva Firma
-                        @endif
+                        <i class="fas fa-upload"></i> Opción 1: Cargar Imagen de Firma Digital
+                    </h3>
+                </div>
+                <div class="card-body">
+                    <div class="alert alert-info">
+                        <i class="fas fa-info-circle"></i> <strong>Recomendado:</strong> Cargue una imagen escaneada o digital de su firma (PNG, JPG, GIF). Máximo 2MB.
+                    </div>
+
+                    <form id="formImagenFirma" enctype="multipart/form-data">
+                        @csrf
+                        <div class="form-group">
+                            <label for="firmaImagen">Seleccione la imagen de su firma:</label>
+                            <div class="custom-file">
+                                <input type="file" class="custom-file-input" id="firmaImagen" name="firma_imagen" accept="image/*">
+                                <label class="custom-file-label" for="firmaImagen">Elegir archivo...</label>
+                            </div>
+                            <small class="form-text text-muted">Formatos: JPG, PNG, GIF. Tamaño máximo: 2MB</small>
+                        </div>
+
+                        <div id="imagenPreview" class="text-center mb-3" style="display:none;">
+                            <p class="font-weight-bold">Vista Previa:</p>
+                            <img id="previewImg" src="" alt="Preview" style="max-width: 400px; border: 2px solid #007bff; border-radius: 10px; padding: 10px;">
+                        </div>
+
+                        <div class="text-center">
+                            <button type="submit" class="btn btn-primary" id="btnCargarImagen">
+                                <i class="fas fa-upload"></i> Cargar Imagen de Firma
+                            </button>
+                            @if($profesional->firma_imagen_path)
+                                <button type="button" class="btn btn-danger" id="btnEliminarImagen">
+                                    <i class="fas fa-trash"></i> Eliminar Imagen Actual
+                                </button>
+                            @endif
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Opción 2: Dibujar Firma -->
+            <div class="card">
+                <div class="card-header bg-secondary">
+                    <h3 class="card-title">
+                        <i class="fas fa-pen"></i> Opción 2: Dibujar Firma a Mano Alzada
                     </h3>
                 </div>
                 <form id="formFirma" action="{{route('profesionales.guardar-firma', $profesional->id)}}" method="POST">
