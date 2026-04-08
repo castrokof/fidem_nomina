@@ -92,11 +92,12 @@
             vertical-align: top;
         }
         .firma-img {
-            max-width: 180px;
-            max-height: 70px;
+            width: 180px;
+            height: 70px;
             border: 1px solid #ccc;
             display: block;
             margin: 5px 0;
+            object-fit: contain;
         }
         
         .checkbox { margin: 3px 0; }

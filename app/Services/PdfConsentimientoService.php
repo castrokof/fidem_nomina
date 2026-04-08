@@ -19,6 +19,17 @@ class PdfConsentimientoService
     public function generar(ConsentimientoInformado $consentimiento)
     {
         try {
+            // ✅ Asegurar que las relaciones estén cargadas
+            $consentimiento->load([
+                'profesional',
+                'paciente',
+                'plantilla',
+                'firmaPaciente',
+                'firmaAcudiente',
+                'firmaProfesional',
+                'acudiente'
+            ]);
+
             $profesional = $consentimiento->profesional;
 
             // ✅ Preparar variables para renderizar en la plantilla
@@ -46,16 +57,29 @@ class PdfConsentimientoService
             // ✅ Sanitizar contenido para fuente base (helvetica)
             $contenidoLimpio = $this->sanitizarParaFuenteBase($contenidoRenderizado);
 
-           // En el método generar()
-$firmaPacienteBase64 = $this->sanitizarFirmaBase64($consentimiento->firmaPaciente);
-$firmaAcudienteBase64 = $this->sanitizarFirmaBase64($consentimiento->firmaAcudiente);
-$firmaProfesionalBase64 = null;
+            // ✅ Procesar firmas con logs para debug
+            Log::info('Procesando firmas del consentimiento', [
+                'consentimiento_id' => $consentimiento->id,
+                'tiene_firma_paciente' => $consentimiento->firmaPaciente ? true : false,
+                'tiene_firma_acudiente' => $consentimiento->firmaAcudiente ? true : false,
+                'tiene_firma_profesional' => $consentimiento->firmaProfesional ? true : false,
+            ]);
 
-if ($consentimiento->firmaProfesional && !empty($consentimiento->firmaProfesional->firma_base64)) {
-    $firmaProfesionalBase64 = $this->sanitizarFirmaBase64($consentimiento->firmaProfesional);
-} elseif ($profesional && !empty($profesional->firma_base64)) {
-    $firmaProfesionalBase64 = $this->sanitizarFirmaBase64((object)['firma_base64' => $profesional->firma_base64]);
-}
+            $firmaPacienteBase64 = $this->sanitizarFirmaBase64($consentimiento->firmaPaciente);
+            $firmaAcudienteBase64 = $this->sanitizarFirmaBase64($consentimiento->firmaAcudiente);
+            $firmaProfesionalBase64 = null;
+
+            if ($consentimiento->firmaProfesional && !empty($consentimiento->firmaProfesional->firma_base64)) {
+                $firmaProfesionalBase64 = $this->sanitizarFirmaBase64($consentimiento->firmaProfesional);
+            } elseif ($profesional && !empty($profesional->firma_base64)) {
+                $firmaProfesionalBase64 = $this->sanitizarFirmaBase64((object)['firma_base64' => $profesional->firma_base64]);
+            }
+
+            Log::info('Firmas procesadas', [
+                'firma_paciente_ok' => $firmaPacienteBase64 ? true : false,
+                'firma_acudiente_ok' => $firmaAcudienteBase64 ? true : false,
+                'firma_profesional_ok' => $firmaProfesionalBase64 ? true : false,
+            ]);
 
 $html = view('consentimientos.pdf', [
     'consentimiento'            => $consentimiento,
@@ -140,9 +164,17 @@ $html = view('consentimientos.pdf', [
  */
 protected function sanitizarFirmaBase64($firma)
 {
-    if (!$firma || empty($firma->firma_base64)) return null;
+    if (!$firma || empty($firma->firma_base64)) {
+        Log::warning('Firma vacía o nula recibida en sanitizarFirmaBase64');
+        return null;
+    }
 
     $base64 = $firma->firma_base64;
+    Log::info('Procesando firma base64', [
+        'tiene_prefijo_data' => stripos($base64, 'data:') === 0,
+        'longitud' => strlen($base64),
+        'primeros_50_chars' => substr($base64, 0, 50)
+    ]);
 
     // 1. Si tiene prefijo "data:", extraer solo la parte útil
     if (stripos($base64, 'data:') === 0) {
@@ -157,11 +189,25 @@ protected function sanitizarFirmaBase64($firma)
     }
 
     // 2. Validar que es base64 válido
-    $test = @base64_decode(explode(',', $base64)[1]);
-    if ($test === false) {
-        \Log::error('Firma base64 inválida', ['firma_length' => strlen($base64)]);
+    $partes = explode(',', $base64);
+    if (count($partes) < 2) {
+        Log::error('Firma base64 mal formateada - no tiene coma separadora');
         return null;
     }
+
+    $test = @base64_decode($partes[1]);
+    if ($test === false || strlen($test) < 100) {
+        Log::error('Firma base64 inválida o muy pequeña', [
+            'firma_length' => strlen($base64),
+            'decoded_length' => $test ? strlen($test) : 0
+        ]);
+        return null;
+    }
+
+    Log::info('Firma base64 procesada exitosamente', [
+        'longitud_final' => strlen($base64),
+        'longitud_decodificada' => strlen($test)
+    ]);
 
     return $base64;
 }
@@ -200,6 +246,17 @@ protected function sanitizarFirmaBase64($firma)
      */
     public function descargar(ConsentimientoInformado $consentimiento)
     {
+        // ✅ Asegurar que las relaciones estén cargadas antes de descargar
+        $consentimiento->load([
+            'profesional',
+            'paciente',
+            'plantilla',
+            'firmaPaciente',
+            'firmaAcudiente',
+            'firmaProfesional',
+            'acudiente'
+        ]);
+
         if (!$consentimiento->pdf_path || !file_exists(storage_path('app/' . $consentimiento->pdf_path))) {
             // Si no existe, generarlo primero
             $this->generar($consentimiento);

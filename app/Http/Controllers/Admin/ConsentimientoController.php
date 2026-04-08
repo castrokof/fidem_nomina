@@ -433,6 +433,17 @@ public function store(Request $request)
         if ($consentimiento->estaCompleto()) {
             $consentimiento->update(['estado' => 'firmado']);
 
+            // ✅ Recargar relaciones antes de generar PDF
+            $consentimiento->load([
+                'profesional',
+                'paciente',
+                'plantilla',
+                'firmaPaciente',
+                'firmaAcudiente',
+                'firmaProfesional',
+                'acudiente'
+            ]);
+
             // Generar PDF
             try {
                 $this->pdfService->generar($consentimiento);
@@ -462,6 +473,9 @@ public function store(Request $request)
             'especialidad',
             'plantilla',
             'firmas',
+            'firmaPaciente',
+            'firmaAcudiente',
+            'firmaProfesional',
             'acudiente'
         ])->findOrFail($id);
 
