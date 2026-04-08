@@ -42,7 +42,10 @@ class PlantillaCIController extends Controller
             'uso_general'    => 'nullable|boolean',
             'activo'         => 'nullable|boolean',
             'requiere_acudiente_obligatorio' => 'nullable|boolean',
-            'especialidades' => 'nullable|array'
+            'especialidades' => 'nullable|array',
+            'codigo_calidad'    => 'nullable|string',
+            'version_calidad'    => 'nullable|string',
+            'fecha_calidad'    => 'nullable|date'
         ]);
 
         $plantilla = PlantillaCI::create([
@@ -53,7 +56,10 @@ class PlantillaCIController extends Controller
             'variables_disponibles'          => PlantillaCI::variablesDisponibles(),
             'uso_general'                    => $request->boolean('uso_general'),
             'requiere_acudiente_obligatorio' => $request->boolean('requiere_acudiente_obligatorio'),
-            'activo'                         => $request->boolean('activo', true)
+            'codigo_calidad'    => $request->codigo_calidad,
+            'version_calidad'     => $request->version_calidad,
+            'fecha_calidad'    => $request->fecha_calidad,
+            'activo'    => $request->boolean('activo', true)
         ]);
 
         // Asociar especialidades
@@ -92,6 +98,9 @@ class PlantillaCIController extends Controller
             'uso_general'    => 'nullable|boolean',
             'activo'         => 'nullable|boolean',
             'requiere_acudiente_obligatorio' => 'nullable|boolean',
+            'codigo_calidad'    => 'nullable|string',
+            'version_calidad'    => 'nullable|string',
+            'fecha_calidad'    => 'nullable|date',
             'especialidades' => 'nullable|array'
         ]);
 
@@ -102,6 +111,9 @@ class PlantillaCIController extends Controller
             'contenido_html'                 => $request->contenido_html,
             'uso_general'                    => $request->boolean('uso_general'),
             'requiere_acudiente_obligatorio' => $request->boolean('requiere_acudiente_obligatorio'),
+            'codigo_calidad'    => $request->codigo_calidad,
+            'version_calidad'     => $request->version_calidad,
+            'fecha_calidad'    => $request->fecha_calidad,
             'activo'                         => $request->boolean('activo', true)
         ]);
 

@@ -16,6 +16,9 @@ class PlantillaCI extends Model
         'variables_disponibles',
         'activo',
         'uso_general',
+        'codigo_calidad',
+        'version_calidad',
+        'fecha_calidad',
         'requiere_acudiente_obligatorio'
     ];
 

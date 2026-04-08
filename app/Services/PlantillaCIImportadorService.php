@@ -73,6 +73,9 @@ class PlantillaCIImportadorService
                 'variables_disponibles' => PlantillaCI::variablesDisponibles(),
                 'activo'                => true,
                 'uso_general'           => $importacion->uso_general,
+                'codigo_calidad'        => $importacion->codigo_calidad,
+                'version_calidad'      => $importacion->version_calidad,
+                'fecha_calidad'         => $importacion->fecha_calidad
             ]);
 
             // Asociar especialidades si las hay
@@ -180,137 +183,11 @@ class PlantillaCIImportadorService
   </tr>
 </table>
 
-<!-- VOLUNTAD DE INFORMACIÓN -->
-<div class="voluntad">
-  <p>*¿DESEO SER INFORMADO sobre mi enfermedad y la intervención que me van a realizar?</p>
-</div>
 
-<table class="firma-tabla">
-  <tr>
-    <td colspan="4" class="bloque-consentimiento">
-      <strong>DESEO QUE LA INFORMACIÓN</strong> de mi enfermedad y la intervención que me van
-      a realizar le sea proporcionada a mi familiar / tutor / representante legal:
-    </td>
-  </tr>
-  <tr>
-    <td class="firma-label">NOMBRE APELLIDOS (Paciente)</td>
-    <td class="firma-label">IDENTIFICACIÓN</td>
-    <td class="firma-label">FIRMA</td>
-    <td class="firma-label">FECHA</td>
-  </tr>
-  <tr>
-    <td class="firma-espacio">{{paciente_nombre}}</td>
-    <td class="firma-espacio">{{paciente_tipo_doc}} {{paciente_cedula}}</td>
-    <td class="firma-espacio"></td>
-    <td class="firma-espacio">{{fecha_actual}}</td>
-  </tr>
-</table>
 
-<table class="firma-tabla" style="margin-top:5px;">
-  <tr>
-    <td colspan="4" class="bloque-consentimiento">
-      <strong>"MANIFIESTO MI DESEO DE NO SER INFORMADO Y PRESTO MI CONSENTIMIENTO"</strong>
-      para que se lleve a cabo el procedimiento descrito en este documento.
-    </td>
-  </tr>
-  <tr>
-    <td class="firma-label">NOMBRE APELLIDOS (Paciente)</td>
-    <td class="firma-label">IDENTIFICACIÓN</td>
-    <td class="firma-label">FIRMA</td>
-    <td class="firma-label">FECHA</td>
-  </tr>
-  <tr>
-    <td class="firma-espacio">{{paciente_nombre}}</td>
-    <td class="firma-espacio">{{paciente_tipo_doc}} {{paciente_cedula}}</td>
-    <td class="firma-espacio"></td>
-    <td class="firma-espacio">{{fecha_actual}}</td>
-  </tr>
-</table>
 
-<!-- CONTENIDO MÉDICO — varía por procedimiento -->
-<div class="seccion">
-<!-- CONTENIDO_PROCEDIMIENTO -->
-</div>
 
-<!-- FIRMA PACIENTE -->
-<table class="firma-tabla" style="margin-top:15px;">
-  <tr>
-    <td colspan="4" class="firma-label">PACIENTE</td>
-  </tr>
-  <tr>
-    <td colspan="4" class="bloque-consentimiento">
-      <strong>DECLARO</strong> que he comprendido adecuadamente la información que contiene
-      este documento, que firmo el consentimiento para la realización del procedimiento
-      que se describe en el mismo, que he recibido copia del mismo y que conozco que el
-      consentimiento puede ser revocado por escrito en cualquier momento.
-    </td>
-  </tr>
-  <tr>
-    <td class="firma-label">NOMBRE / APELLIDOS</td>
-    <td class="firma-label">IDENTIFICACIÓN</td>
-    <td class="firma-label">FIRMA</td>
-    <td class="firma-label">FECHA</td>
-  </tr>
-  <tr>
-    <td class="firma-espacio">{{paciente_nombre}}</td>
-    <td class="firma-espacio">{{paciente_tipo_doc}} {{paciente_cedula}}</td>
-    <td class="firma-espacio" id="firma-paciente"><!-- FIRMA A MANO ALZADA --></td>
-    <td class="firma-espacio">{{fecha_actual}}</td>
-  </tr>
-</table>
 
-<!-- FIRMA FAMILIAR/TUTOR/REPRESENTANTE -->
-<table class="firma-tabla" style="margin-top:8px;">
-  <tr>
-    <td colspan="4" class="firma-label">FAMILIAR / TUTOR / REPRESENTANTE</td>
-  </tr>
-  <tr>
-    <td colspan="4" class="bloque-consentimiento">
-      <strong>DECLARO</strong> que he comprendido adecuadamente la información que contiene
-      este documento, que firmo el consentimiento para la realización del procedimiento
-      que se describe en el mismo, que he recibido copia del mismo y que conozco que el
-      consentimiento puede ser revocado por escrito en cualquier momento.
-    </td>
-  </tr>
-  <tr>
-    <td class="firma-label">TUTOR / FAMILIAR / REPRESENTANTE</td>
-    <td class="firma-label">IDENTIFICACIÓN</td>
-    <td class="firma-label">FIRMA</td>
-    <td class="firma-label">FECHA</td>
-  </tr>
-  <tr>
-    <td class="firma-espacio"></td>
-    <td class="firma-espacio"></td>
-    <td class="firma-espacio" id="firma-acudiente"><!-- FIRMA A MANO ALZADA --></td>
-    <td class="firma-espacio">{{fecha_actual}}</td>
-  </tr>
-</table>
-
-<!-- FIRMA MÉDICO RESPONSABLE (PRECARGADA) -->
-<table class="firma-tabla" style="margin-top:8px;">
-  <tr>
-    <td colspan="4" class="firma-label">MÉDICO RESPONSABLE</td>
-  </tr>
-  <tr>
-    <td colspan="4" class="bloque-consentimiento">
-      <strong>DECLARO</strong> haber informado al paciente y al familiar, tutor o
-      representante del mismo del objeto y naturaleza del procedimiento que se le va a
-      realizar, explicándole los riesgos y complicaciones posibles del mismo.
-    </td>
-  </tr>
-  <tr>
-    <td class="firma-label">MÉDICO RESPONSABLE</td>
-    <td class="firma-label">IDENTIFICACIÓN</td>
-    <td class="firma-label">FIRMA</td>
-    <td class="firma-label">FECHA</td>
-  </tr>
-  <tr>
-    <td class="firma-espacio">{{profesional_nombre}}</td>
-    <td class="firma-espacio">RM: {{registro_medico}}</td>
-    <td class="firma-espacio" id="firma-profesional"><!-- IMAGEN PRECARGADA DEL PERFIL --></td>
-    <td class="firma-espacio">{{fecha_actual}}</td>
-  </tr>
-</table>
 
 </body>
 </html>';

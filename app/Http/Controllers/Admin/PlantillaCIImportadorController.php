@@ -36,6 +36,9 @@ class PlantillaCIImportadorController extends Controller
             'especialidades'  => 'nullable|string|max:500',
             'cups_codigo'     => 'nullable|string|max:20',
             'uso_general'     => 'nullable|boolean',
+            'codigo_calidad'    => 'nullable|string',
+            'version_calidad'    => 'nullable|string',
+            'fecha_calidad'    => 'nullable|date',
             'contenido_texto' => 'required|string'
         ]);
 
@@ -45,6 +48,9 @@ class PlantillaCIImportadorController extends Controller
             'cups_codigo'     => $request->cups_codigo,
             'uso_general'     => $request->boolean('uso_general'),
             'contenido_texto' => $request->contenido_texto,
+            'codigo_calidad'    => $request->codigo_calidad,
+            'version_calidad'    => $request->version_calidad,
+            'fecha_calidad'    => $request->fecha_calidad,
             'estado'          => 'pendiente'
         ]);
 

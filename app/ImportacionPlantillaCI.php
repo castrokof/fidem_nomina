@@ -16,7 +16,10 @@ class ImportacionPlantillaCI extends Model
         'contenido_texto',
         'contenido_html',
         'estado',
-        'error_mensaje'
+        'error_mensaje',
+        'codigo_calidad',
+        'version_calidad',
+        'fecha_calidad'
     ];
 
     protected $casts = [

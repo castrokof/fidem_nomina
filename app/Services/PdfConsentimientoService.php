@@ -47,7 +47,7 @@ class PdfConsentimientoService
                 'cups_codigo'         => $consentimiento->cups_codigo ?? '',
                 'cups_descripcion'    => $consentimiento->cups_descripcion ?? '',
                 'clinica_nombre'      => config('app.clinica_nombre', 'Clínica Fidem'),
-                'clinica_direccion'   => config('app.clinica_direccion', 'Manizales, Colombia'),
+                'clinica_direccion'   => config('app.clinica_direccion', 'Cali, Colombia'),
                 'fecha_actual'        => now()->format('d/m/Y H:i'),
             ];
 
@@ -110,7 +110,7 @@ $html = view('consentimientos.pdf', [
             }
 
             // ✅ Guardar el PDF
-            $nombreArchivo = $consentimiento->id . '_consentimiento.pdf';
+            $nombreArchivo = $consentimiento->id . '_consentimiento_' . $consentimiento->paciente_cedula . '.pdf';
             $ruta = $carpeta . '/' . $nombreArchivo;
             $pdf->output();  // Renderizar primero
             file_put_contents($ruta, $pdf->output());

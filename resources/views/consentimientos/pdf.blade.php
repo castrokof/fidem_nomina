@@ -59,6 +59,16 @@
             background-color: #f0f0f0;
             width: 22%;
         }
+        .info-label1 {
+            font-weight: bold;
+            background-color: #f0f0f0;
+            width: 100%;
+        }
+        .info-label2 {
+            font-weight: bold;
+            background-color: #f0f0f0;
+            width: 10%;
+        }
 
         /* Secciones */
         .section-box {
@@ -126,9 +136,9 @@
             </div>
         </td>
         <td class="header-info">
-            <strong>CÓDIGO:</strong> GC-SP-FO-029<br>
-            <strong>VERSIÓN:</strong> 001<br>
-            <strong>FECHA:</strong> {{ $variables['fecha_actual'] }}
+            <strong>CÓDIGO:</strong>  {{$consentimiento->plantilla->codigo_calidad}} <br>
+            <strong>VERSIÓN:</strong> {{$consentimiento->plantilla->version_calidad}} <br>
+            <strong>FECHA:</strong> {{$consentimiento->plantilla->fecha_calidad}}
         </td>
     </tr>
 </table>
@@ -137,9 +147,9 @@
 <table class="info-table">
     <tr>
         <td class="info-label">PACIENTE:</td>
-        <td>{{ $variables['paciente_nombre'] }}</td>
-        <td class="info-label">ID:</td>
-        <td>{{ $variables['paciente_tipo_doc'] }}-{{ $variables['paciente_cedula'] }}</td>
+        <td class="info-label1">{{ $variables['paciente_nombre'] }}</td>
+        <td class="info-label">TIPO Y DOCUMENTO:</td>
+        <td  class="info-label2">{{ $variables['paciente_tipo_doc'] }}-{{ $variables['paciente_cedula'] }}</td>
         <td class="info-label">EDAD:</td>
         <td>{{ $variables['paciente_edad'] ?? 'N/A' }}</td>
         <td class="info-label">GÉNERO:</td>
@@ -158,7 +168,30 @@
         @if($consentimiento->desea_ser_informado)
             <p style="padding:5px;background-color:#f8f9fa;border-left:3px solid #28a745;margin:0;">
                 <strong>✓ SÍ, deseo ser informado directamente</strong>
+                <strong>DESEO QUE LA INFORMACIÓN de mi enfermedad y la intervención que me van a realizar le sea proporcionada a mi familiar / tutor / representante legal:</strong>
             </p>
+            <table class="firma-table">
+            <!-- PACIENTE -->
+           
+            <tr>
+                <td style="width:35%;"><strong>Firma:</strong><br>
+                    @if(isset($firmaPacienteBase64) && $firmaPacienteBase64)
+                        <img src="{{ $firmaPacienteBase64 }}" class="firma-img">
+                    @endif
+                </td>
+                <td style="width:25%;"><strong>Nombre:</strong><br>{{ $consentimiento->paciente->nombres }} {{ $consentimiento->paciente->apellidos }}</td>
+                <td style="width:20%;"><strong>ID:</strong><br>{{ $consentimiento->paciente->tipo_documento }}-{{ $consentimiento->paciente->numero_documento }}</td>
+                <td style="width:20%;"><strong>Fecha:</strong><br>
+                    @if($consentimiento->firmaPaciente)
+                        {{ \Carbon\Carbon::parse($consentimiento->firmaPaciente->firmado_at)->format('d/m/Y H:i') }}
+                    @else
+                        {{ $variables['fecha_actual'] }}
+                    @endif
+                </td>
+            </tr>
+
+            
+        </table>
         @else
             <p style="padding:5px;background-color:#f8f9fa;border-left:3px solid #dc3545;margin:0 0 5px 0;">
                 <strong>✗ NO, deseo ser informado directamente</strong>
@@ -166,6 +199,29 @@
             <p style="padding:5px;background-color:#fff3cd;margin:0;font-size:7pt;">
                 <strong>MANIFIESTO MI DESEO DE NO SER INFORMADO Y PRESTO MI CONSENTIMIENTO</strong> para que se lleve a cabo el procedimiento descrito en este documento.
             </p>
+            <table class="firma-table">
+          
+            <tr>
+                <td style="width:35%;"><strong>Firma:</strong><br>
+                    @if(isset($firmaPacienteBase64) && $firmaPacienteBase64)
+                        <img src="{{ $firmaPacienteBase64 }}" class="firma-img">
+                    @endif
+                </td>
+                <td style="width:25%;"><strong>Nombre:</strong><br>{{ $consentimiento->paciente->nombres }} {{ $consentimiento->paciente->apellidos }}</td>
+                <td style="width:20%;"><strong>ID:</strong><br>{{ $consentimiento->paciente->tipo_documento }}-{{ $consentimiento->paciente->numero_documento }}</td>
+                <td style="width:20%;"><strong>Fecha:</strong><br>
+                    @if($consentimiento->firmaPaciente)
+                        {{ \Carbon\Carbon::parse($consentimiento->firmaPaciente->firmado_at)->format('d/m/Y H:i') }}
+                    @else
+                        {{ $variables['fecha_actual'] }}
+                    @endif
+                </td>
+            </tr>
+
+       
+
+           
+        </table>
         @endif
     </div>
 </div>
@@ -188,7 +244,7 @@
                 <td colspan="4" style="background-color:#f0f0f0;padding:3px 5px;font-weight:bold;font-size:8pt;">
                     PACIENTE:
                     @if($consentimiento->desea_ser_informado)
-                        DECLARO que he comprendido la información, firmo el consentimiento y puedo revocarlo por escrito.
+                        DECLARO que he comprendido adecuadamente la información que contiene este documento, que firmo el consentimiento para la realización del procedimiento que se describe en el mismo, que he recibido copia del mismo y que conozco que el consentimiento puede ser revocado por escrito en cualquier momento.
                     @else
                         MANIFIESTO MI DESEO DE NO SER INFORMADO Y PRESTO MI CONSENTIMIENTO.
                     @endif
@@ -215,7 +271,7 @@
             @if($consentimiento->acudiente && $firmaAcudienteBase64)
             <tr>
                 <td colspan="4" style="background-color:#f0f0f0;padding:3px 5px;font-weight:bold;font-size:8pt;border-top:2px solid #000;">
-                    FAMILIAR/TUTOR/REPRESENTANTE: DECLARO que he comprendido la información, firmo el consentimiento y puedo revocarlo por escrito.
+                    FAMILIAR/TUTOR/REPRESENTANTE: DECLARO que he comprendido adecuadamente la información que contiene este documento, que firmo el consentimiento para la realización del procedimiento que se describe en el mismo, que he recibido copia del mismo y que conozco que el consentimiento puede ser revocado por escrito en cualquier momento.
                 </td>
             </tr>
             <tr>
@@ -233,7 +289,7 @@
             <!-- MÉDICO -->
             <tr>
                 <td colspan="4" style="background-color:#f0f0f0;padding:3px 5px;font-weight:bold;font-size:8pt;border-top:2px solid #000;">
-                    MÉDICO RESPONSABLE: DECLARO haber informado al paciente del objeto, naturaleza, riesgos y complicaciones del procedimiento.
+                    MÉDICO RESPONSABLE: DECLARO haber informado al paciente y al familiar, tutor o representante del mismo del objeto y naturaleza del procedimiento que se le va a realizar, explicándole los riesgos y complicaciones posibles del mismo.
                 </td>
             </tr>
             <tr>

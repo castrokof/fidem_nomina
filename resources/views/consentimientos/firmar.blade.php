@@ -68,7 +68,7 @@
                     <h2 class="text-white font-weight-bold">
                         <i class="fas fa-hospital"></i> Clínica Fidem
                     </h2>
-                    <p class="text-white">Manizales, Colombia</p>
+                    <p class="text-white">Cali, Colombia</p>
                 </div>
 
                 <div class="card">
@@ -163,12 +163,16 @@
                                         <label class="form-check-label" for="desea_si">
                                             Sí
                                         </label>
+                                        DESEO QUE LA INFORMACIÓN de mi enfermedad y la intervención que me van a realizar le sea proporcionada a mi familiar / tutor / representante legal:
+
                                     </div>
                                     <div class="form-check">
                                         <input class="form-check-input" type="radio" name="desea_ser_informado" id="desea_no" value="0">
                                         <label class="form-check-label" for="desea_no">
                                             No
                                         </label>
+                                         “MANIFIESTO MI DESEO DE NO SER INFORMADO Y PRESTO MI CONSENTIMIENTO" para que se lleve a cabo el procedimiento descrito en este documento
+
                                     </div>
                                 </div>
 
@@ -377,16 +381,21 @@
 
         // Mostrar/ocultar sección de acudiente
         function toggleSeccionAcudiente() {
-            const requiereAcudiente = $('#requiereAcudiente').is(':checked') || $('#requiereAcudiente').val() === '1';
-            if (requiereAcudiente) {
-                $('#seccionAcudiente').slideDown();
-                $('#acudienteNombres, #acudienteApellidos, #acudienteTipoDoc, #acudienteNumDoc, #acudienteParentesco').prop('required', true);
-            } else {
-                $('#seccionAcudiente').slideUp();
-                $('#acudienteNombres, #acudienteApellidos, #acudienteTipoDoc, #acudienteNumDoc, #acudienteParentesco').prop('required', false);
-                signaturePadAcudiente.clear();
-            }
-        }
+    // ✅ Funciona para checkbox Y hidden input
+    const requiereAcudiente = $('#requiereAcudiente').is(':checked') 
+                        || $('#requiereAcudiente').val() === '1';
+                    
+                    if (requiereAcudiente) {
+                        $('#seccionAcudiente').slideDown();
+                        $('#acudienteNombres, #acudienteApellidos, #acudienteTipoDoc, #acudienteNumDoc, #acudienteParentesco')
+                            .prop('required', true);
+                    } else {
+                        $('#seccionAcudiente').slideUp();
+                        $('#acudienteNombres, #acudienteApellidos, #acudienteTipoDoc, #acudienteNumDoc, #acudienteParentesco')
+                            .prop('required', false);
+                        signaturePadAcudiente.clear();
+                    }
+                }   
 
         $('#requiereAcudiente').change(toggleSeccionAcudiente);
 
@@ -436,21 +445,30 @@
                 return false;
             }
 
-            // Si requiere acudiente, validar su firma
-            const requiereAcudiente = $('#requiereAcudiente').is(':checked');
-            if (requiereAcudiente) {
-                if (signaturePadAcudiente.isEmpty()) {
-                    alert('Por favor, firme en el recuadro del acudiente antes de continuar.');
-                    return false;
+            // ✅ CORREGIDO: Validar acudiente para checkbox O hidden input
+                const requiereAcudiente = $('#requiereAcudiente').is(':checked') 
+                    || $('#requiereAcudiente').val() === '1';
+
+                if (requiereAcudiente) {
+                    // Validar firma del acudiente
+                    if (signaturePadAcudiente.isEmpty()) {
+                        alert('Por favor, firme en el recuadro del acudiente antes de continuar.');
+                        $('#btnEnviar').prop('disabled', false).html('<i class="fas fa-check-circle"></i> Confirmar y Enviar Firmas');
+                        return false;
+                    }
+                    
+                    // Validar campos del acudiente
+                    if (!$('#acudienteNombres').val().trim() 
+                        || !$('#acudienteApellidos').val().trim() 
+                        || !$('#acudienteTipoDoc').val() 
+                        || !$('#acudienteNumDoc').val().trim() 
+                        || !$('#acudienteParentesco').val().trim()) {
+                        
+                        alert('Por favor, complete todos los campos del acudiente.');
+                        $('#btnEnviar').prop('disabled', false).html('<i class="fas fa-check-circle"></i> Confirmar y Enviar Firmas');
+                        return false;
+                    }
                 }
-                // Validar campos del acudiente
-                if (!$('#acudienteNombres').val() || !$('#acudienteApellidos').val() ||
-                    !$('#acudienteTipoDoc').val() || !$('#acudienteNumDoc').val() ||
-                    !$('#acudienteParentesco').val()) {
-                    alert('Por favor, complete todos los campos del acudiente.');
-                    return false;
-                }
-            }
 
             // Deshabilitar botón para evitar doble envío
             $('#btnEnviar').prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i> Enviando...');
@@ -468,6 +486,9 @@
                         throw new Error(response.message);
                     }
 
+                    // ✅ CORREGIDO: Verificar acudiente para hidden o checkbox
+                    const requiereAcudiente = $('#requiereAcudiente').is(':checked') 
+                        || $('#requiereAcudiente').val() === '1';
                     // Si requiere acudiente, enviar su firma también
                     if (requiereAcudiente) {
                         const nombreAcudiente = $('#acudienteNombres').val() + ' ' + $('#acudienteApellidos').val();
