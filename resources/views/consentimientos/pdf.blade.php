@@ -160,16 +160,57 @@
 <div class="section-box">
     <div class="section-title">VOLUNTAD DE INFORMACIÓN</div>
     <div class="section-content">
-        <p class="checkbox"><strong>¿DESEO SER INFORMADO sobre mi enfermedad y la intervención que me van a realizar?</strong></p>
-        @if($consentimiento->desea_ser_informado)
-            <p class="checkbox">☑ Sí, deseo ser informado directamente</p>
-            <p class="checkbox">☐ Deseo que la información sea proporcionada a mi familiar/tutor/representante</p>
-        @else
-            <p class="checkbox">☐ Sí, deseo ser informado directamente</p>
-            <p class="checkbox">☑ Deseo que la información sea proporcionada a mi familiar/tutor/representante</p>
-        @endif
-        
-        <p style="margin-top:10px;"><strong>"MANIFIESTO MI DESEO DE NO SER INFORMADO Y PRESTO MI CONSENTIMIENTO"</strong> para que se lleve a cabo el procedimiento descrito en este documento.</p>
+        <p style="margin-bottom:15px;"><strong>*¿DESEO SER INFORMADO sobre mi enfermedad y la intervención que me van a realizar?</strong></p>
+
+        <!-- Tabla 1: DESEO QUE LA INFORMACIÓN -->
+        <table class="firma-table" style="margin-bottom:10px;">
+            <tr>
+                <td colspan="4" style="background-color:#FFFF00;padding:8px;">
+                    <strong>DESEO QUE LA INFORMACIÓN</strong> de mi enfermedad y la intervención que me van a realizar le sea proporcionada a mi familiar / tutor / representante legal:
+                </td>
+            </tr>
+            <tr>
+                <td style="background-color:#FFFF00;font-weight:bold;width:35%;">NOMBRE APELLIDOS (Paciente)</td>
+                <td style="background-color:#FFFF00;font-weight:bold;width:25%;">IDENTIFICACIÓN</td>
+                <td style="background-color:#FFFF00;font-weight:bold;width:20%;">FIRMA</td>
+                <td style="background-color:#FFFF00;font-weight:bold;width:20%;">FECHA</td>
+            </tr>
+            <tr>
+                <td style="height:40px;">{{ $variables['paciente_nombre'] }}</td>
+                <td>{{ $variables['paciente_tipo_doc'] }}-{{ $variables['paciente_cedula'] }}</td>
+                <td>
+                    @if(!$consentimiento->desea_ser_informado && isset($firmaPacienteBase64) && $firmaPacienteBase64)
+                        <img src="{{ $firmaPacienteBase64 }}" style="width:100px;height:35px;object-fit:contain;">
+                    @endif
+                </td>
+                <td>{{ $variables['fecha_actual'] }}</td>
+            </tr>
+        </table>
+
+        <!-- Tabla 2: MANIFIESTO MI DESEO DE NO SER INFORMADO -->
+        <table class="firma-table">
+            <tr>
+                <td colspan="4" style="background-color:#FFFF00;padding:8px;">
+                    <strong>"MANIFIESTO MI DESEO DE NO SER INFORMADO Y PRESTO MI CONSENTIMIENTO"</strong> para que se lleve a cabo el procedimiento descrito en este documento.
+                </td>
+            </tr>
+            <tr>
+                <td style="background-color:#FFFF00;font-weight:bold;width:35%;">NOMBRE APELLIDOS (Paciente)</td>
+                <td style="background-color:#FFFF00;font-weight:bold;width:25%;">IDENTIFICACIÓN</td>
+                <td style="background-color:#FFFF00;font-weight:bold;width:20%;">FIRMA</td>
+                <td style="background-color:#FFFF00;font-weight:bold;width:20%;">FECHA</td>
+            </tr>
+            <tr>
+                <td style="height:40px;">{{ $variables['paciente_nombre'] }}</td>
+                <td>{{ $variables['paciente_tipo_doc'] }}-{{ $variables['paciente_cedula'] }}</td>
+                <td>
+                    @if($consentimiento->desea_ser_informado && isset($firmaPacienteBase64) && $firmaPacienteBase64)
+                        <img src="{{ $firmaPacienteBase64 }}" style="width:100px;height:35px;object-fit:contain;">
+                    @endif
+                </td>
+                <td>{{ $variables['fecha_actual'] }}</td>
+            </tr>
+        </table>
     </div>
 </div>
 
