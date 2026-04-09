@@ -500,6 +500,13 @@ Route::get('consentimientos/crear-desde-agenda/{agenda_id}','ConsentimientoContr
     
     Route::get('admin/ajax/plantillas-por-especialidad/{especialidad_id}', 'ConsentimientoController@ajaxPlantillasPorEspecialidad')
         ->name('consentimientos.ajax.plantillas');
+
+    // Rutas para sincronización de Agenda CI
+    Route::get('agenda-sync', 'AgendaSyncController@index')->name('agenda.sync.index');
+    Route::post('agenda-sync/sincronizar', 'AgendaSyncController@sincronizar')->name('agenda.sync.sincronizar');
+    Route::get('agenda-sync/estado', 'AgendaSyncController@estado')->name('agenda.sync.estado');
+    Route::delete('agenda-sync/limpiar-fallidos', 'AgendaSyncController@limpiarFallidos')->name('agenda.sync.limpiar');
+    Route::post('agenda-sync/reintentar/{id}', 'AgendaSyncController@reintentarFallido')->name('agenda.sync.reintentar');
 });
 
 Route::prefix('rh/contratacion')->middleware('superadmin')->group(function () {
