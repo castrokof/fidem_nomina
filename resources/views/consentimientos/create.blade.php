@@ -232,12 +232,39 @@ html += `<thead class="thead-light"><tr>
     <th>Centro</th>
     <th>CUPS</th>
     <th>Citas</th>
+    <th>Consentimientos</th>
     <th>Acción</th>
 </tr></thead><tbody>`;
 
         response.pacientes.forEach(function(pac) {
             // Mostrar PRIMERA cita ordenada (ya viene ordenada por hora asc)
             const primeraCita = pac.citas[0];
+
+            // ✅ Generar badge de estado de consentimientos
+            let badgeConsentimiento = '';
+            if (!primeraCita.tiene_consentimientos) {
+                badgeConsentimiento = '<span class="badge badge-light" title="Sin consentimientos"><i class="fas fa-times-circle"></i> Sin CI</span>';
+            } else {
+                const total = primeraCita.total_consentimientos;
+                const firmados = primeraCita.consentimientos_firmados;
+                const enProceso = primeraCita.consentimientos_en_proceso;
+                const pendientes = primeraCita.consentimientos_pendientes;
+
+                if (primeraCita.estado_consentimientos === 'todos_firmados') {
+                    badgeConsentimiento = `<span class="badge badge-success" title="${firmados} consentimiento(s) firmado(s)">
+                        <i class="fas fa-check-circle"></i> ${total} Firmado${total > 1 ? 's' : ''}
+                    </span>`;
+                } else if (primeraCita.estado_consentimientos === 'en_proceso') {
+                    badgeConsentimiento = `<span class="badge badge-warning" title="${enProceso} en proceso, ${pendientes} pendiente(s), ${firmados} firmado(s)">
+                        <i class="fas fa-clock"></i> ${total} En proceso
+                    </span>`;
+                } else {
+                    badgeConsentimiento = `<span class="badge badge-danger" title="${pendientes} pendiente(s) de firma">
+                        <i class="fas fa-exclamation-circle"></i> ${total} Pendiente${total > 1 ? 's' : ''}
+                    </span>`;
+                }
+            }
+
             html += `
                 <tr>
                     <td class="text-center">
@@ -258,8 +285,11 @@ html += `<thead class="thead-light"><tr>
                     <td class="text-center">
                         <span class="badge badge-pill badge-success">${pac.citas_count}</span>
                     </td>
+                    <td class="text-center">
+                        ${badgeConsentimiento}
+                    </td>
                     <td>
-                        <button type="button" class="btn btn-sm btn-info" 
+                        <button type="button" class="btn btn-sm btn-info"
                             onclick="verDetallesPaciente(${pac.id}, ${JSON.stringify(pac.citas).replace(/"/g, '&quot;')})"
             data-toggle="modal" data-target="#modalDetallesPaciente">
             <i class="fas fa-eye"></i> Ver
@@ -499,13 +529,14 @@ let pacienteSeleccionadoDesdeModal = null;
 
 window.verDetallesPaciente = function(pacienteId, citas) {
     pacienteSeleccionadoDesdeModal = pacienteId;
-    
+
     let html = `<h6 class="mb-3">📋 ${citas.length} cita(s) - Ordenadas por hora</h6>`;
     html += '<div class="table-responsive"><table class="table table-sm table-striped">';
     html += `<thead><tr>
         <th>Hora Completa</th>
         <th>Centro</th>
         <th>CUPS</th>
+        <th>Consentimientos</th>
         <th>Observaciones</th>
         <th>Contrato</th>
         <th>EPS</th>
@@ -523,7 +554,32 @@ window.verDetallesPaciente = function(pacienteId, citas) {
             estadoIcon = '👤';
             estadoClass = 'badge badge-info';
         }
-        
+
+        // ✅ Badge de consentimientos para el modal
+        let badgeConsentimiento = '';
+        if (!cita.tiene_consentimientos) {
+            badgeConsentimiento = '<span class="badge badge-light"><i class="fas fa-times-circle"></i> Sin CI</span>';
+        } else {
+            const total = cita.total_consentimientos;
+            const firmados = cita.consentimientos_firmados;
+            const enProceso = cita.consentimientos_en_proceso;
+            const pendientes = cita.consentimientos_pendientes;
+
+            if (cita.estado_consentimientos === 'todos_firmados') {
+                badgeConsentimiento = `<span class="badge badge-success" title="${firmados} firmado(s)">
+                    <i class="fas fa-check-circle"></i> ${total} Firmado${total > 1 ? 's' : ''}
+                </span>`;
+            } else if (cita.estado_consentimientos === 'en_proceso') {
+                badgeConsentimiento = `<span class="badge badge-warning" title="${enProceso} en proceso">
+                    <i class="fas fa-clock"></i> ${total} En proceso
+                </span>`;
+            } else {
+                badgeConsentimiento = `<span class="badge badge-danger" title="${pendientes} pendiente(s)">
+                    <i class="fas fa-exclamation-circle"></i> ${total} Pendiente${total > 1 ? 's' : ''}
+                </span>`;
+            }
+        }
+
         html += `
             <tr>
                 <td class="text-center">
@@ -532,10 +588,11 @@ window.verDetallesPaciente = function(pacienteId, citas) {
                 </td>
                 <td><span class="badge badge-info">${cita.centroprod || '-'}</span></td>
                 <td><span class="badge badge-primary">${cita.cups_codigo || '-'}</span></td>
+                <td class="text-center">${badgeConsentimiento}</td>
                 <td>
-                    <span class="observaciones-cell" 
+                    <span class="observaciones-cell"
                         onclick="mostrarObservacionesModal('${(cita.observaciones || '').replace(/'/g, "\\'")}')"
-                        style="cursor:pointer;max-width:150px;" 
+                        style="cursor:pointer;max-width:150px;"
                         title="Click para ver completo">
                         ${(cita.observaciones || 'Sin observaciones').substring(0, 30)}...
                     </span>
