@@ -24,21 +24,7 @@ class Kernel extends ConsoleKernel
      */
     protected function schedule(Schedule $schedule)
     {
-        // Sincronizar agenda de citas cada 30 minutos
-        $schedule->command('agenda:sincronizar')
-                 ->everyThirtyMinutes()
-                 ->withoutOverlapping();
-
-        // Actualizar llegadas cada 10 minutos durante horario laboral
-        $schedule->command('agenda:actualizar-llegadas')
-                 ->everyTenMinutes()
-                 ->between('7:00', '19:00')
-                 ->withoutOverlapping();
-
-        // Sincronizar consentimientos informados cada hora (3 días adelante, 2 días atrás)
-        $schedule->command('ci:sincronizar')
-                 ->hourly()
-                 ->withoutOverlapping();
+        // (Vacío: las tareas se ejecutan directamente desde cron del servidor)
     }
 
     /**
