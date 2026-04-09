@@ -40,3 +40,16 @@ Route::middleware('auth')->prefix('chat')->group(function () {
     Route::post('/{chatId}/messages', 'Chat\ChatMessageController@store');
     Route::get('/{chatId}/messages/poll', 'Chat\ChatMessageController@poll');
 });
+
+/*
+|--------------------------------------------------------------------------
+| Paciente API Routes (Para Claude AI y búsquedas)
+|--------------------------------------------------------------------------
+*/
+Route::middleware('auth')->prefix('pacientes')->group(function () {
+    // Buscar paciente por documento con historias clínicas
+    Route::get('/buscar-documento', 'Api\PacienteApiController@buscarPorDocumento');
+
+    // Obtener contexto completo para Claude AI
+    Route::get('/contexto-claude', 'Api\PacienteApiController@obtenerContextoClaude');
+});
