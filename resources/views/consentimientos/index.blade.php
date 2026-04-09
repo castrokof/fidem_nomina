@@ -19,6 +19,33 @@
             },
             "order": [[0, "desc"]]
         });
+
+        // Función para sincronizar agenda
+        $('#btnSincronizarAgenda').click(function() {
+            if (!confirm('¿Desea sincronizar la agenda de consentimientos informados desde la API?')) return;
+
+            const btn = $(this);
+            const originalHtml = btn.html();
+            btn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i> Sincronizando...');
+
+            $.ajax({
+                url: '{{ route("agenda.sync.sincronizar") }}',
+                method: 'POST',
+                data: {
+                    _token: '{{ csrf_token() }}',
+                    dias_atras: 2,
+                    dias_adelante: 3
+                },
+                success: function(response) {
+                    alert('✓ ' + response.message + '\n\nEl job se ha agregado a la cola y se procesará automáticamente.');
+                    btn.prop('disabled', false).html(originalHtml);
+                },
+                error: function(xhr) {
+                    alert('Error: ' + (xhr.responseJSON?.message || 'No se pudo sincronizar. Verifica que el sistema de colas esté configurado.'));
+                    btn.prop('disabled', false).html(originalHtml);
+                }
+            });
+        });
     });
 </script>
 @endsection
@@ -47,6 +74,9 @@
                 <div class="card-header">
                     <h3 class="card-title">Listado de Consentimientos Informados</h3>
                     <div class="card-tools">
+                        <button type="button" id="btnSincronizarAgenda" class="btn btn-success btn-sm mr-2">
+                            <i class="fas fa-sync"></i> Sincronizar Agenda
+                        </button>
                         <a href="{{route('consentimientos.create')}}" class="btn btn-primary btn-sm">
                             <i class="fas fa-plus"></i> Nuevo Consentimiento
                         </a>
