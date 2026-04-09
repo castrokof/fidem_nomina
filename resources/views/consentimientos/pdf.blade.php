@@ -102,8 +102,8 @@
             vertical-align: top;
         }
         .firma-img {
-            width: 120px;
-            height: 45px;
+            width: 200px;
+            height: 80px;
             border: 1px solid #ccc;
             display: block;
             margin: 2px 0;
