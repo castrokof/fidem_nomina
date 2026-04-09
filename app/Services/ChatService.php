@@ -184,11 +184,28 @@ class ChatService
             $patients = [];
 
             foreach ($patientParticipants as $participant) {
-                $patient = Paciente::with('historiap')
-                    ->find($participant->participant_id);
+                // ✅ IMPORTANTE: Usar el modelo correcto con historias clínicas
+                // Primero buscar en la tabla nueva de pacientes
+                $pacienteNuevo = Paciente::find($participant->participant_id);
 
-                if ($patient) {
-                    $patients[] = $patient;
+                if ($pacienteNuevo && $pacienteNuevo->numero_documento) {
+                    // Buscar en la tabla antigua por documento para obtener historias
+                    $pacienteConHistorias = \App\Models\Admin\Paciente::with('historiap')
+                        ->where('documento', $pacienteNuevo->numero_documento)
+                        ->where('tipo_documento', $pacienteNuevo->tipo_documento)
+                        ->first();
+
+                    if ($pacienteConHistorias) {
+                        $patients[] = $pacienteConHistorias;
+                    }
+                } else {
+                    // Buscar directamente en la tabla antigua si el ID coincide
+                    $pacienteConHistorias = \App\Models\Admin\Paciente::with('historiap')
+                        ->find($participant->participant_id);
+
+                    if ($pacienteConHistorias) {
+                        $patients[] = $pacienteConHistorias;
+                    }
                 }
             }
 

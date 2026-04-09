@@ -507,17 +507,17 @@ public function ajaxPacientesPorFiltros(Request $request)
         return response()->json(['success' => false, 'pacientes' => []]);
     }
     
-    // ✅ Usar la relación personalizada profesionalPorCodigo
-    $query = AgendaCI::with(['paciente', 'profesionalPorCodigo'])
+    // ✅ Usar la relación personalizada profesionalPorCodigo y cargar consentimientos
+    $query = AgendaCI::with(['paciente', 'profesionalPorCodigo', 'consentimientos.firmas'])
         ->whereDate('fecha', $fecha)
         ->where('codigo_consultorio', $codigoUsuario);  // ← Filtro por código
-    
+
     if ($centroprod) {
         $query->where('centroprod', $centroprod);
     }
-    
+
     $agendas = $query->orderBy('fecha', 'asc')->get([
-        'id', 'fecha', 'codigo_consultorio', 'centroprod', 'cups_codigo', 
+        'id', 'fecha', 'codigo_consultorio', 'centroprod', 'cups_codigo',
         'observaciones', 'contrato', 'empresafac', 'estado', 'atendido',
         'llegada_confirmada', 'historia', 'paciente_id', 'paciente_nombre',
         'paciente_cedula', 'paciente_tipo_doc', 'paciente_telefono',
@@ -538,7 +538,29 @@ public function ajaxPacientesPorFiltros(Request $request)
                 'citas' => $agendas->map(function($a) {
                     // ✅ Obtener profesional por la relación personalizada
                     $profesional = $a->profesionalPorCodigo;
-                    
+
+                    // ✅ Obtener información de consentimientos
+                    $consentimientos = $a->consentimientos;
+                    $tieneConsentimientos = $consentimientos->count() > 0;
+
+                    // Analizar estado de consentimientos
+                    $consentimientosPendientes = $consentimientos->where('estado', 'pendiente')->count();
+                    $consentimientosEnProceso = $consentimientos->where('estado', 'en_proceso')->count();
+                    $consentimientosFirmados = $consentimientos->where('estado', 'firmado')->count();
+                    $totalConsentimientos = $consentimientos->count();
+
+                    // Determinar estado general
+                    $estadoConsentimientos = 'sin_consentimiento';
+                    if ($totalConsentimientos > 0) {
+                        if ($consentimientosFirmados === $totalConsentimientos) {
+                            $estadoConsentimientos = 'todos_firmados';
+                        } elseif ($consentimientosEnProceso > 0) {
+                            $estadoConsentimientos = 'en_proceso';
+                        } else {
+                            $estadoConsentimientos = 'pendiente';
+                        }
+                    }
+
                     return [
                         'agenda_id' => $a->id,
                         'fecha' => $a->fecha,
@@ -558,6 +580,13 @@ public function ajaxPacientesPorFiltros(Request $request)
                         'profesional_nombre' => $profesional->nombres . ' ' . $profesional->apellidos ?? '',
                         'profesional_especialidad_id' => $profesional->especialidad_id,
                         'profesional_codigo_usuario' => $a->codigo_consultorio,  // ← El código que los une
+                        // ✅ INFORMACIÓN DE CONSENTIMIENTOS
+                        'tiene_consentimientos' => $tieneConsentimientos,
+                        'total_consentimientos' => $totalConsentimientos,
+                        'consentimientos_pendientes' => $consentimientosPendientes,
+                        'consentimientos_en_proceso' => $consentimientosEnProceso,
+                        'consentimientos_firmados' => $consentimientosFirmados,
+                        'estado_consentimientos' => $estadoConsentimientos,
                     ];
                 })->values()
             ];
