@@ -218,7 +218,7 @@
             methods: {
                 async loadChats() {
                     try {
-                        const response = await axios.get('/api/chat');
+                        const response = await axios.get('api/chat');
                         if (response.data.success) {
                             this.chats = response.data.chats;
                         }
@@ -234,7 +234,7 @@
                 },
                 async loadMessages() {
                     try {
-                        const response = await axios.get('/api/chat/' + this.selectedChat.id + '/messages');
+                        const response = await axios.get('api/chat/' + this.selectedChat.id + '/messages');
                         if (response.data.success) {
                             this.messages = response.data.messages;
                             this.lastMessageDate = this.getLastMessageDate();
@@ -255,7 +255,7 @@
                     this.newMessage = '';
 
                     try {
-                        const response = await axios.post('/api/chat/' + this.selectedChat.id + '/messages', {
+                        const response = await axios.post('api/chat/' + this.selectedChat.id + '/messages', {
                             message: messageText
                         });
 
@@ -293,7 +293,7 @@
                     if (!this.selectedChat || !this.lastMessageDate) return;
 
                     try {
-                        const response = await axios.get('/api/chat/' + this.selectedChat.id + '/messages/poll', {
+                        const response = await axios.get('api/chat/' + this.selectedChat.id + '/messages/poll', {
                             params: {
                                 since: this.lastMessageDate
                             }
@@ -314,7 +314,7 @@
                     if (!this.newChatPatientId) return;
 
                     try {
-                        const response = await axios.post('/api/chat/find-or-create-patient-chat', {
+                        const response = await axios.post('api/chat/find-or-create-patient-chat', {
                             patient_id: this.newChatPatientId
                         });
 
