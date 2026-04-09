@@ -24,7 +24,7 @@ class ChatController extends Controller
     public function index(Request $request)
     {
         try {
-            $userId = Auth::user()->id_usuario;
+            $userId = Auth::user()->id;
             $chats = $this->chatService->getUserChats($userId);
 
             return response()->json([
