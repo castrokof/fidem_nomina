@@ -520,8 +520,9 @@
                 })
                 .then(response => {
                     if (response.success) {
-                        alert('Firmas registradas exitosamente');
-                        window.location.href = '{{ route("consentimientos.show", $consentimiento->id) }}';
+                        // Redirigir al mismo enlace del token; el controlador detecta
+                        // que ya está firmado y muestra la vista "ya-firmado"
+                        window.location.href = '{{ route("consentimientos.firmar", $token) }}';
                     }
                 })
                 .catch(error => {
