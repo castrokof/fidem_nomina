@@ -354,33 +354,36 @@
             penColor: 'rgb(0, 0, 0)'
         });
 
-        // Ajustar canvas para pantallas pequeñas preservando las firmas existentes
+        // Ajustar canvas para pantallas pequeñas.
+        // En móvil el evento resize se dispara al hacer scroll (la barra del navegador
+        // se oculta/muestra cambiando el alto del viewport). Para evitar limpiar el canvas
+        // innecesariamente, solo redimensionamos cuando el ANCHO cambia realmente.
+        let lastCanvasWidth = 0;
+
         function resizeCanvas() {
-            // Guardar datos de firma antes de redimensionar (cambiar width/height limpia el canvas)
-            const dataPaciente = signaturePadPaciente.isEmpty() ? null : signaturePadPaciente.toData();
+            const parent = canvasPaciente.parentElement;
+            const ratio = Math.max(window.devicePixelRatio || 1, 1);
+            const newWidth = Math.min(600, parent.offsetWidth - 20);
+
+            // Si el ancho no cambió (ej: scroll en móvil), no hacer nada
+            if (newWidth === lastCanvasWidth) return;
+            lastCanvasWidth = newWidth;
+
+            // Guardar firmas antes de redimensionar (canvas.width = x limpia el canvas)
+            const dataPaciente  = signaturePadPaciente.isEmpty()  ? null : signaturePadPaciente.toData();
             const dataAcudiente = signaturePadAcudiente.isEmpty() ? null : signaturePadAcudiente.toData();
 
-            const ratio = Math.max(window.devicePixelRatio || 1, 1);
-            const containers = document.querySelectorAll('.signature-pad');
-
-            containers.forEach((canvas) => {
-                const parent = canvas.parentElement;
-                const width = Math.min(600, parent.offsetWidth - 20);
-
-                canvas.width = width * ratio;
+            document.querySelectorAll('.signature-pad').forEach((canvas) => {
+                canvas.width  = newWidth * ratio;
                 canvas.height = 200 * ratio;
-                canvas.style.width = width + 'px';
+                canvas.style.width  = newWidth + 'px';
                 canvas.style.height = '200px';
                 canvas.getContext('2d').scale(ratio, ratio);
             });
 
             // Restaurar firmas después de redimensionar
-            if (dataPaciente) {
-                signaturePadPaciente.fromData(dataPaciente);
-            }
-            if (dataAcudiente) {
-                signaturePadAcudiente.fromData(dataAcudiente);
-            }
+            if (dataPaciente)  signaturePadPaciente.fromData(dataPaciente);
+            if (dataAcudiente) signaturePadAcudiente.fromData(dataAcudiente);
         }
 
         window.addEventListener('resize', resizeCanvas);
