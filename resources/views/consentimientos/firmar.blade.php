@@ -32,6 +32,9 @@
             border-radius: 10px;
             background-color: white;
             cursor: crosshair;
+            touch-action: none;
+            user-select: none;
+            -webkit-user-select: none;
         }
         .btn-clear {
             background-color: #dc3545;
@@ -351,8 +354,12 @@
             penColor: 'rgb(0, 0, 0)'
         });
 
-        // Ajustar canvas para pantallas pequeñas
+        // Ajustar canvas para pantallas pequeñas preservando las firmas existentes
         function resizeCanvas() {
+            // Guardar datos de firma antes de redimensionar (cambiar width/height limpia el canvas)
+            const dataPaciente = signaturePadPaciente.isEmpty() ? null : signaturePadPaciente.toData();
+            const dataAcudiente = signaturePadAcudiente.isEmpty() ? null : signaturePadAcudiente.toData();
+
             const ratio = Math.max(window.devicePixelRatio || 1, 1);
             const containers = document.querySelectorAll('.signature-pad');
 
@@ -360,11 +367,20 @@
                 const parent = canvas.parentElement;
                 const width = Math.min(600, parent.offsetWidth - 20);
 
-                canvas.width = width;
-                canvas.height = 200;
+                canvas.width = width * ratio;
+                canvas.height = 200 * ratio;
                 canvas.style.width = width + 'px';
                 canvas.style.height = '200px';
+                canvas.getContext('2d').scale(ratio, ratio);
             });
+
+            // Restaurar firmas después de redimensionar
+            if (dataPaciente) {
+                signaturePadPaciente.fromData(dataPaciente);
+            }
+            if (dataAcudiente) {
+                signaturePadAcudiente.fromData(dataAcudiente);
+            }
         }
 
         window.addEventListener('resize', resizeCanvas);
