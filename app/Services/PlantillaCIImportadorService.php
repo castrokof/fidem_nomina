@@ -57,10 +57,10 @@ class PlantillaCIImportadorService
 
             // Convertir el contenido de texto a HTML
             $contenidoHtml = $this->textoAHtml($importacion->contenido_texto);
-
+           
             // Reemplazar el marcador de contenido en la plantilla base
-            $htmlCompleto = str_replace('<!-- CONTENIDO_PROCEDIMIENTO -->', $contenidoHtml, $plantillaBase);
-
+           $htmlCompleto  = str_replace('<!-- CONTENIDO_PROCEDIMIENTO -->', $contenidoHtml, $plantillaBase);
+    
             // Guardar en importacion
             $importacion->update(['contenido_html' => $htmlCompleto]);
 
@@ -158,37 +158,14 @@ class PlantillaCIImportadorService
 </style>
 </head>
 <body>
-
-<!-- CABECERA -->
-<table class="cabecera-tabla">
-  <tr>
-    <td class="label">1. NOMBRE DEL PROCEDIMIENTO</td>
-    <td colspan="3"><strong>{{cups_descripcion}}</strong></td>
-  </tr>
-  <tr>
-    <td class="label">2. SERVICIO</td>
-    <td>PROCEDIMIENTOS</td>
-    <td class="label">Nº IDENTIFICACIÓN</td>
-    <td>{{paciente_cedula}}</td>
-  </tr>
-  <tr>
-    <td class="label">3. NOMBRE PACIENTE</td>
-    <td colspan="3">{{paciente_nombre}}</td>
-  </tr>
-  <tr>
-    <td class="label">4. EDAD</td>
-    <td>{{paciente_edad}}</td>
-    <td class="label">GÉNERO</td>
-    <td>{{paciente_genero}}</td>
-  </tr>
-</table>
+<div class="seccion">
+<!-- CONTENIDO_PROCEDIMIENTO -->
 
 
 
 
 
-
-
+</div>
 </body>
 </html>';
     }

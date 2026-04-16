@@ -23,8 +23,10 @@ class ChatController extends Controller
      */
     public function index(Request $request)
     {
+
+  
         try {
-            $userId = Auth::user()->id;
+            $userId = Auth::user()->id ?? 1;
             $chats = $this->chatService->getUserChats($userId);
 
             return response()->json([
@@ -63,7 +65,7 @@ class ChatController extends Controller
 
         try {
             $data = $request->all();
-            $data['created_by'] = Auth::user()->id_usuario;
+            $data['created_by'] = Auth::user()->id;
 
             $chat = $this->chatService->createChat($data);
 
@@ -98,7 +100,7 @@ class ChatController extends Controller
             ])->findOrFail($id);
 
             // Verificar que el usuario autenticado es participante
-            $userId = Auth::user()->id_usuario;
+            $userId = Auth::user()->id;
             $isParticipant = $chat->participants()
                 ->where('participant_id', $userId)
                 ->where('participant_type', 'user')
@@ -148,7 +150,7 @@ class ChatController extends Controller
         }
 
         try {
-            $userId = Auth::user()->id_usuario;
+            $userId = Auth::user()->id;
             $patientId = $request->input('patient_id');
 
             $chat = $this->chatService->findOrCreatePatientChat($userId, $patientId);
@@ -175,7 +177,7 @@ class ChatController extends Controller
             $chat = Chat::findOrFail($id);
 
             // Verificar que el usuario es el creador
-            $userId = Auth::user()->id_usuario;
+            $userId = Auth::user()->id;
             if ($chat->created_by !== $userId) {
                 return response()->json([
                     'success' => false,
