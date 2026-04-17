@@ -171,6 +171,28 @@
         </div>
     </div>
 </div>
+{{-- Modal: Consentimientos creados con links de firma --}}
+<div class="modal fade" id="modalConsentimientosCreados" tabindex="-1" data-backdrop="static" data-keyboard="false">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-success text-white">
+                <h5 class="modal-title"><i class="fas fa-check-circle"></i> Consentimientos creados</h5>
+            </div>
+            <div class="modal-body">
+                <div class="alert alert-success mb-3">
+                    <strong id="modalPacienteNombre"></strong> — Los siguientes consentimientos fueron creados. Comparta cada enlace con el paciente para que firme.
+                </div>
+                <div id="modalListaConsentimientos"></div>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-primary" data-dismiss="modal" onclick="resetFormCrear()">
+                    <i class="fas fa-plus"></i> Crear otro consentimiento
+                </button>
+            </div>
+        </div>
+    </div>
+</div>
+
          {{-- Modal para ver detalles completos de citas del paciente --}}
         <div class="modal fade" id="modalDetallesPaciente" tabindex="-1">
             <div class="modal-dialog modal-xl">
@@ -479,19 +501,39 @@ $('#datosPaciente').html(`
             data: $(this).serialize(),
             headers: { 'X-Requested-With': 'XMLHttpRequest' },
             success: function(response) {
+                $('#btnCrear').prop('disabled', false).html('<i class="fas fa-save"></i> Crear <span id="contadorPlantillas">0</span> Consentimiento(s)');
                 if (response.success) {
-                    Swal.fire({
-                        icon: 'success',
-                        title: '¡Éxito!',
-                        text: response.message,
-                        timer: 2000,
-                        showConfirmButton: false
-                    }).then(function() {
-                        window.location.href = response.redirect;
+                    // Construir lista de consentimientos con sus links
+                    let html = '<div class="list-group">';
+                    response.consentimientos.forEach(function(ci) {
+                        html += `
+                            <div class="list-group-item mb-2">
+                                <div class="d-flex justify-content-between align-items-start">
+                                    <div>
+                                        <strong><i class="fas fa-file-medical text-primary"></i> ${ci.plantilla}</strong>
+                                        <small class="d-block text-muted">Expira: ${ci.expira_at}</small>
+                                    </div>
+                                    <a href="${ci.link_firma}" target="_blank" class="btn btn-sm btn-outline-primary ml-2">
+                                        <i class="fas fa-external-link-alt"></i> Abrir
+                                    </a>
+                                </div>
+                                <div class="input-group input-group-sm mt-2">
+                                    <input type="text" class="form-control" value="${ci.link_firma}" readonly id="link_${ci.id}">
+                                    <div class="input-group-append">
+                                        <button class="btn btn-outline-secondary" type="button" onclick="copiarLink('link_${ci.id}')">
+                                            <i class="fas fa-copy"></i> Copiar
+                                        </button>
+                                    </div>
+                                </div>
+                            </div>`;
                     });
+                    html += '</div>';
+
+                    $('#modalPacienteNombre').text(response.paciente_nombre);
+                    $('#modalListaConsentimientos').html(html);
+                    $('#modalConsentimientosCreados').modal('show');
                 } else {
                     Swal.fire('Error', response.message, 'error');
-                    $('#btnCrear').prop('disabled', false).html('<i class="fas fa-save"></i> Crear Consentimiento(s)');
                 }
             },
             error: function(xhr) {
@@ -615,7 +657,24 @@ window.confirmarSeleccionDesdeModal = function() {
         pacienteSeleccionadoDesdeModal = null;
     }
 };
-   
+
+// Copiar link individual al portapapeles
+window.copiarLink = function(inputId) {
+    const input = document.getElementById(inputId);
+    input.select();
+    navigator.clipboard.writeText(input.value).then(function() {
+        Swal.fire({ toast: true, icon: 'success', title: 'Enlace copiado', position: 'top-end', timer: 1500, showConfirmButton: false });
+    });
+};
+
+// Volver a la lista de pacientes (conserva filtros)
+window.resetFormCrear = function() {
+    $('#seccionCrear').addClass('seccion-oculta');
+    $('#seccionPacientes').removeClass('seccion-oculta');
+    $('#listaPlantillas').html('');
+    actualizarContador();
+};
+
 });
 
 
