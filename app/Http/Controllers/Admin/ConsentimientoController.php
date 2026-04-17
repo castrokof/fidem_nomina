@@ -288,66 +288,75 @@ public function store(Request $request)
     $creados = 0;
     $errores = [];
     
-    foreach ($request->input('plantillas', []) as $plantillaId) {
-        try {
-            $plantilla = \App\PlantillaCI::findOrFail($plantillaId);
+        $consentimientosCreados = [];
 
-            $consentimiento = ConsentimientoInformado::create([
-                'agenda_ci_id'        => $request->agenda_ci_id,
-                'paciente_id'         => $paciente->id,
-                'paciente_nombre'     => $paciente->nombres . ' ' . $paciente->apellidos,
-                'paciente_cedula'     => $paciente->numero_documento,
-                'paciente_tipo_doc'   => $paciente->tipo_documento,
-                'paciente_edad'       => $paciente->edad ?? null,
-                'paciente_genero'     => $paciente->genero ?? null,
-                'profesional_id'      => $profesional->id,  // ← ID real del profesional
-                'profesional_nombre'  => $profesional->nombres . ' ' . $profesional->apellidos,
-                'especialidad_id'     => $profesional->especialidad_id,
-                'plantilla_id'        => $plantillaId,
-                'cups_codigo'         => $request->cups_codigo,
-                'observaciones'       => $request->observaciones,
-                'fecha_procedimiento' => $request->fecha_procedimiento,
-                'estado'              => 'pendiente',
-                'requiere_acudiente'  => $plantilla->requiere_acudiente_obligatorio,
-                'token_firma'         => Str::random(64),
-                'token_expira_at'     => now()->addHours(24),
-                'ip_generacion'       => $request->ip(),
-            ]);
-            
-            // Estampar firma del profesional automáticamente
-            if (!empty($profesional->firma_base64)) {
-                FirmaCI::create([
-                    'consentimiento_id' => $consentimiento->id,
-                    'tipo_firmante'     => 'profesional',
-                    'firma_base64'      => $profesional->firma_base64,
-                    'firmante_nombre'   => $profesional->nombres . ' ' . $profesional->apellidos,
-                    'firmante_cedula'   => $profesional->numero_documento,
-                    'ip_firma'          => $request->ip(),
-                    'firmado_at'        => now(),
+        foreach ($request->input('plantillas', []) as $plantillaId) {
+            try {
+                $plantilla = \App\PlantillaCI::findOrFail($plantillaId);
+
+                $consentimiento = ConsentimientoInformado::create([
+                    'agenda_ci_id'        => $request->agenda_ci_id,
+                    'paciente_id'         => $paciente->id,
+                    'paciente_nombre'     => $paciente->nombres . ' ' . $paciente->apellidos,
+                    'paciente_cedula'     => $paciente->numero_documento,
+                    'paciente_tipo_doc'   => $paciente->tipo_documento,
+                    'paciente_edad'       => $paciente->edad ?? null,
+                    'paciente_genero'     => $paciente->genero ?? null,
+                    'profesional_id'      => $profesional->id,
+                    'profesional_nombre'  => $profesional->nombres . ' ' . $profesional->apellidos,
+                    'especialidad_id'     => $profesional->especialidad_id,
+                    'plantilla_id'        => $plantillaId,
+                    'cups_codigo'         => $request->cups_codigo,
+                    'observaciones'       => $request->observaciones,
+                    'fecha_procedimiento' => $request->fecha_procedimiento,
+                    'estado'              => 'pendiente',
+                    'requiere_acudiente'  => $plantilla->requiere_acudiente_obligatorio,
+                    'token_firma'         => Str::random(64),
+                    'token_expira_at'     => now()->addHours(24),
+                    'ip_generacion'       => $request->ip(),
                 ]);
+
+                // Estampar firma del profesional automáticamente
+                if (!empty($profesional->firma_base64)) {
+                    FirmaCI::create([
+                        'consentimiento_id' => $consentimiento->id,
+                        'tipo_firmante'     => 'profesional',
+                        'firma_base64'      => $profesional->firma_base64,
+                        'firmante_nombre'   => $profesional->nombres . ' ' . $profesional->apellidos,
+                        'firmante_cedula'   => $profesional->numero_documento,
+                        'ip_firma'          => $request->ip(),
+                        'firmado_at'        => now(),
+                    ]);
+                }
+
+                $consentimientosCreados[] = [
+                    'id'           => $consentimiento->id,
+                    'plantilla'    => $plantilla->nombre,
+                    'link_firma'   => route('consentimientos.firmar', $consentimiento->token_firma),
+                    'expira_at'    => now()->addHours(24)->format('d/m/Y H:i'),
+                ];
+                $creados++;
+
+            } catch (\Exception $e) {
+                $errores[] = "Plantilla #{$plantillaId}: " . $e->getMessage();
+                \Log::error("Error: " . $e->getMessage());
             }
-            
-            $creados++;
-            
-        } catch (\Exception $e) {
-            $errores[] = "Plantilla #{$plantillaId}: " . $e->getMessage();
-            \Log::error("Error: " . $e->getMessage());
         }
-    }
-    
-    if ($creados > 0) {
+
+        if ($creados > 0) {
+            return response()->json([
+                'success'          => true,
+                'message'          => "Se crearon {$creados} consentimiento(s)",
+                'consentimientos'  => $consentimientosCreados,
+                'paciente_nombre'  => $paciente->nombres . ' ' . $paciente->apellidos,
+            ]);
+        }
+
         return response()->json([
-            'success' => true,
-            'message' => "Se crearon {$creados} consentimiento(s)",
-            'redirect' => route('consentimientos.index')
-        ]);
-    }
-    
-    return response()->json([
-        'success' => false,
-        'message' => 'Error al crear',
-        'errors' => $errores
-    ], 422);
+            'success' => false,
+            'message' => 'Error al crear',
+            'errors'  => $errores
+        ], 422);
 }
 
     /**
