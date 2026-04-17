@@ -218,7 +218,22 @@
                                     </div>
                                 </div>
 
-                                <div class="form-group">
+                                <!-- Selector: Firma o Foto -->
+                                <div class="mb-3">
+                                    <div class="btn-group w-100" role="group">
+                                        <button type="button" id="btnModoPacienteFirma" class="btn btn-primary"
+                                                onclick="setModo('paciente','firma')">
+                                            <i class="fas fa-pen-nib"></i> Puedo firmar
+                                        </button>
+                                        <button type="button" id="btnModoPacienteFoto" class="btn btn-outline-secondary"
+                                                onclick="setModo('paciente','foto')">
+                                            <i class="fas fa-camera"></i> No sabe / no puede firmar
+                                        </button>
+                                    </div>
+                                </div>
+
+                                <!-- Panel de firma -->
+                                <div id="panelFirmaPaciente" class="form-group">
                                     <label class="font-weight-bold">Firme en el recuadro a continuación:</label>
                                     <div class="text-center">
                                         <canvas id="signaturePadPaciente" class="signature-pad" width="600" height="200"></canvas>
@@ -226,8 +241,34 @@
                                     <button type="button" class="btn btn-clear btn-sm mt-2" onclick="clearSignature('signaturePadPaciente')">
                                         <i class="fas fa-eraser"></i> Limpiar Firma
                                     </button>
-                                    <input type="hidden" name="firma_base64" id="firmaPacienteInput">
                                 </div>
+
+                                <!-- Panel de cámara -->
+                                <div id="panelFotoPaciente" class="form-group" style="display:none;">
+                                    <label class="font-weight-bold">Tome una foto del paciente:</label>
+                                    <div class="text-center">
+                                        <video id="videoPaciente" autoplay playsinline
+                                               style="width:100%;max-width:400px;border-radius:8px;border:2px solid #007bff;display:none;"></video>
+                                        <canvas id="canvasFotoPaciente" style="display:none;"></canvas>
+                                        <img id="previewFotoPaciente" style="display:none;max-width:400px;width:100%;border-radius:8px;border:2px solid #28a745;" alt="Foto capturada">
+                                    </div>
+                                    <div class="text-center mt-2">
+                                        <button type="button" class="btn btn-info btn-sm" id="btnAbrirCamaraPaciente" onclick="abrirCamara('paciente')">
+                                            <i class="fas fa-camera"></i> Abrir cámara
+                                        </button>
+                                        <button type="button" class="btn btn-success btn-sm" id="btnCapturarPaciente" onclick="capturarFoto('paciente')" style="display:none;">
+                                            <i class="fas fa-circle"></i> Capturar foto
+                                        </button>
+                                        <button type="button" class="btn btn-warning btn-sm" id="btnRepetirPaciente" onclick="repetirFoto('paciente')" style="display:none;">
+                                            <i class="fas fa-redo"></i> Repetir
+                                        </button>
+                                    </div>
+                                    <div id="timestampPaciente" class="text-center mt-1 text-muted small" style="display:none;"></div>
+                                </div>
+
+                                <input type="hidden" name="firma_base64"   id="firmaPacienteInput">
+                                <input type="hidden" name="foto_base64"    id="fotoPacienteInput">
+                                <input type="hidden" name="no_sabe_firmar" id="noSabeFirePaciente" value="0">
 
                                 <!-- Sección de Acudiente/Familiar/Tutor -->
                                 @php
@@ -297,7 +338,22 @@
                                         <input type="text" class="form-control" name="acudiente_parentesco" id="acudienteParentesco" placeholder="Ej: Padre, Madre, Tutor Legal, etc.">
                                     </div>
 
-                                    <div class="form-group">
+                                    <!-- Selector: Firma o Foto acudiente -->
+                                    <div class="mb-3">
+                                        <div class="btn-group w-100" role="group">
+                                            <button type="button" id="btnModoAcudienteFirma" class="btn btn-primary"
+                                                    onclick="setModo('acudiente','firma')">
+                                                <i class="fas fa-pen-nib"></i> Puede firmar
+                                            </button>
+                                            <button type="button" id="btnModoAcudienteFoto" class="btn btn-outline-secondary"
+                                                    onclick="setModo('acudiente','foto')">
+                                                <i class="fas fa-camera"></i> No sabe / no puede firmar
+                                            </button>
+                                        </div>
+                                    </div>
+
+                                    <!-- Panel firma acudiente -->
+                                    <div id="panelFirmaAcudiente" class="form-group">
                                         <label class="font-weight-bold">Firma del Acudiente:</label>
                                         <div class="text-center">
                                             <canvas id="signaturePadAcudiente" class="signature-pad" width="600" height="200"></canvas>
@@ -305,8 +361,34 @@
                                         <button type="button" class="btn btn-clear btn-sm mt-2" onclick="clearSignature('signaturePadAcudiente')">
                                             <i class="fas fa-eraser"></i> Limpiar Firma
                                         </button>
-                                        <input type="hidden" name="firma_base64" id="firmaAcudienteInput">
                                     </div>
+
+                                    <!-- Panel cámara acudiente -->
+                                    <div id="panelFotoAcudiente" class="form-group" style="display:none;">
+                                        <label class="font-weight-bold">Tome una foto del acudiente:</label>
+                                        <div class="text-center">
+                                            <video id="videoAcudiente" autoplay playsinline
+                                                   style="width:100%;max-width:400px;border-radius:8px;border:2px solid #007bff;display:none;"></video>
+                                            <canvas id="canvasFotoAcudiente" style="display:none;"></canvas>
+                                            <img id="previewFotoAcudiente" style="display:none;max-width:400px;width:100%;border-radius:8px;border:2px solid #28a745;" alt="Foto capturada">
+                                        </div>
+                                        <div class="text-center mt-2">
+                                            <button type="button" class="btn btn-info btn-sm" id="btnAbrirCamaraAcudiente" onclick="abrirCamara('acudiente')">
+                                                <i class="fas fa-camera"></i> Abrir cámara
+                                            </button>
+                                            <button type="button" class="btn btn-success btn-sm" id="btnCapturarAcudiente" onclick="capturarFoto('acudiente')" style="display:none;">
+                                                <i class="fas fa-circle"></i> Capturar foto
+                                            </button>
+                                            <button type="button" class="btn btn-warning btn-sm" id="btnRepetirAcudiente" onclick="repetirFoto('acudiente')" style="display:none;">
+                                                <i class="fas fa-redo"></i> Repetir
+                                            </button>
+                                        </div>
+                                        <div id="timestampAcudiente" class="text-center mt-1 text-muted small" style="display:none;"></div>
+                                    </div>
+
+                                    <input type="hidden" name="firma_base64"   id="firmaAcudienteInput">
+                                    <input type="hidden" name="foto_base64"    id="fotoAcudienteInput">
+                                    <input type="hidden" name="no_sabe_firmar" id="noSabeFireAcudiente" value="0">
                                 </div>
 
                                 <!-- Botón de envío -->
@@ -438,90 +520,206 @@
             toggleDeclaracionPaciente();
         });
 
-        // Validar y enviar formulario
+        // ─── Cámara ────────────────────────────────────────────────────────────
+        const streams = {};  // guarda el MediaStream activo por persona
+
+        function setModo(persona, modo) {
+            const esFoto = modo === 'foto';
+            $(`#panelFirma${cap(persona)}`).toggle(!esFoto);
+            $(`#panelFoto${cap(persona)}`).toggle(esFoto);
+            $(`#btnModo${cap(persona)}Firma`).toggleClass('active btn-outline-primary btn-primary', !esFoto)
+                                              .toggleClass('active btn-outline-primary btn-primary', !esFoto);
+            $(`#noSabeFirem${cap(persona)},#noSabeFirePaciente,#noSabeFireAcudiente`).filter(`#noSabeFirem${cap(persona)}`);
+            document.getElementById(`noSabeFirem${cap(persona)}`) || null;
+
+            // Actualizar hidden según persona
+            if (persona === 'paciente') {
+                document.getElementById('noSabeFirePaciente').value = esFoto ? '1' : '0';
+            } else {
+                document.getElementById('noSabeFireAcudiente').value = esFoto ? '1' : '0';
+            }
+
+            // Resaltar botones
+            document.getElementById(`btnModo${cap(persona)}Firma`).className =
+                'btn ' + (esFoto ? 'btn-outline-primary' : 'btn-primary');
+            document.getElementById(`btnModo${cap(persona)}Foto`).className =
+                'btn ' + (esFoto ? 'btn-secondary' : 'btn-outline-secondary');
+
+            // Si sale del modo foto, detener cámara
+            if (!esFoto && streams[persona]) {
+                streams[persona].getTracks().forEach(t => t.stop());
+                delete streams[persona];
+                document.getElementById(`video${cap(persona)}`).style.display = 'none';
+                document.getElementById(`btnCapturar${cap(persona)}`).style.display = 'none';
+                document.getElementById(`btnRepetir${cap(persona)}`).style.display = 'none';
+                document.getElementById(`btnAbrirCamara${cap(persona)}`).style.display = '';
+                document.getElementById(`preview${cap(persona)}`).style.display = 'none';
+                document.getElementById(`timestamp${cap(persona)}`).style.display = 'none';
+            }
+        }
+
+        function cap(s) { return s.charAt(0).toUpperCase() + s.slice(1); }
+
+        async function abrirCamara(persona) {
+            const video = document.getElementById(`video${cap(persona)}`);
+            const btnAbrir    = document.getElementById(`btnAbrirCamara${cap(persona)}`);
+            const btnCapturar = document.getElementById(`btnCapturar${cap(persona)}`);
+
+            // Preferir cámara frontal, luego trasera, luego cualquiera
+            const intentos = [
+                { video: { facingMode: 'user' } },
+                { video: { facingMode: 'environment' } },
+                { video: true }
+            ];
+
+            for (const constraints of intentos) {
+                try {
+                    const stream = await navigator.mediaDevices.getUserMedia(constraints);
+                    streams[persona] = stream;
+                    video.srcObject = stream;
+                    video.style.display = 'block';
+                    btnAbrir.style.display = 'none';
+                    btnCapturar.style.display = '';
+                    return;
+                } catch (e) { /* intentar siguiente */ }
+            }
+            alert('No se pudo acceder a ninguna cámara. Verifique los permisos del navegador.');
+        }
+
+        function capturarFoto(persona) {
+            const video   = document.getElementById(`video${cap(persona)}`);
+            const canvas  = document.getElementById(`canvasFoto${cap(persona)}`);
+            const preview = document.getElementById(`preview${cap(persona)}`);
+            const btnCapturar = document.getElementById(`btnCapturar${cap(persona)}`);
+            const btnRepetir  = document.getElementById(`btnRepetir${cap(persona)}`);
+            const tsDiv   = document.getElementById(`timestamp${cap(persona)}`);
+
+            canvas.width  = video.videoWidth  || 640;
+            canvas.height = video.videoHeight || 480;
+            canvas.getContext('2d').drawImage(video, 0, 0, canvas.width, canvas.height);
+
+            const dataUrl = canvas.toDataURL('image/jpeg', 0.85);
+
+            // Guardar en el hidden input correspondiente
+            document.getElementById(persona === 'paciente' ? 'fotoPacienteInput' : 'fotoAcudienteInput').value = dataUrl;
+
+            // Mostrar preview y timestamp
+            preview.src = dataUrl;
+            preview.style.display = 'block';
+            video.style.display = 'none';
+            btnCapturar.style.display = 'none';
+            btnRepetir.style.display = '';
+
+            const ahora = new Date();
+            tsDiv.textContent = 'Foto tomada: ' + ahora.toLocaleString('es-CO');
+            tsDiv.style.display = 'block';
+
+            // Detener cámara para liberar recurso
+            if (streams[persona]) {
+                streams[persona].getTracks().forEach(t => t.stop());
+                delete streams[persona];
+            }
+        }
+
+        function repetirFoto(persona) {
+            const preview = document.getElementById(`preview${cap(persona)}`);
+            const btnRepetir  = document.getElementById(`btnRepetir${cap(persona)}`);
+            const btnAbrir    = document.getElementById(`btnAbrirCamara${cap(persona)}`);
+            const tsDiv = document.getElementById(`timestamp${cap(persona)}`);
+
+            preview.style.display = 'none';
+            btnRepetir.style.display = 'none';
+            btnAbrir.style.display = '';
+            tsDiv.style.display = 'none';
+
+            document.getElementById(persona === 'paciente' ? 'fotoPacienteInput' : 'fotoAcudienteInput').value = '';
+        }
+
+        // ─── Validar y enviar ───────────────────────────────────────────────────
         $('#formFirma').submit(function(e) {
             e.preventDefault();
 
-            // Validar edad y género del paciente
-            const edadPaciente = $('#pacienteEdad').val();
+            const edadPaciente   = $('#pacienteEdad').val();
             const generoPaciente = $('#pacienteGenero').val();
+            const noSabeFirmaPaciente = document.getElementById('noSabeFirePaciente').value === '1';
 
             if (!edadPaciente || edadPaciente < 0 || edadPaciente > 150) {
                 alert('Por favor, ingrese una edad válida (entre 0 y 150 años).');
                 $('#pacienteEdad').focus();
                 return false;
             }
-
             if (!generoPaciente) {
                 alert('Por favor, seleccione el género.');
                 $('#pacienteGenero').focus();
                 return false;
             }
 
-            // Validar firma del paciente
-            if (signaturePadPaciente.isEmpty()) {
-                alert('Por favor, firme en el recuadro del paciente antes de continuar.');
-                return false;
+            // Validar firma o foto del paciente
+            if (noSabeFirmaPaciente) {
+                if (!$('#fotoPacienteInput').val()) {
+                    alert('Por favor, tome una foto del paciente antes de continuar.');
+                    return false;
+                }
+            } else {
+                if (signaturePadPaciente.isEmpty()) {
+                    alert('Por favor, firme en el recuadro del paciente antes de continuar.');
+                    return false;
+                }
             }
 
-            // ✅ CORREGIDO: Validar acudiente para checkbox O hidden input
-                const requiereAcudiente = $('#requiereAcudiente').is(':checked') 
-                    || $('#requiereAcudiente').val() === '1';
+            const requiereAcudiente = $('#requiereAcudiente').is(':checked') || $('#requiereAcudiente').val() === '1';
 
-                if (requiereAcudiente) {
-                    // Validar firma del acudiente
-                    if (signaturePadAcudiente.isEmpty()) {
-                        alert('Por favor, firme en el recuadro del acudiente antes de continuar.');
-                        $('#btnEnviar').prop('disabled', false).html('<i class="fas fa-check-circle"></i> Confirmar y Enviar Firmas');
+            if (requiereAcudiente) {
+                const noSabeFirmaAcudiente = document.getElementById('noSabeFireAcudiente').value === '1';
+
+                if (noSabeFirmaAcudiente) {
+                    if (!$('#fotoAcudienteInput').val()) {
+                        alert('Por favor, tome una foto del acudiente antes de continuar.');
                         return false;
                     }
-                    
-                    // Validar campos del acudiente
-                    if (!$('#acudienteNombres').val().trim() 
-                        || !$('#acudienteApellidos').val().trim() 
-                        || !$('#acudienteTipoDoc').val() 
-                        || !$('#acudienteNumDoc').val().trim() 
-                        || !$('#acudienteParentesco').val().trim()) {
-                        
-                        alert('Por favor, complete todos los campos del acudiente.');
-                        $('#btnEnviar').prop('disabled', false).html('<i class="fas fa-check-circle"></i> Confirmar y Enviar Firmas');
-                        return false;
-                    }
+                } else if (signaturePadAcudiente.isEmpty()) {
+                    alert('Por favor, firme en el recuadro del acudiente antes de continuar.');
+                    return false;
                 }
 
-            // Deshabilitar botón para evitar doble envío
+                if (!$('#acudienteNombres').val().trim() || !$('#acudienteApellidos').val().trim()
+                    || !$('#acudienteTipoDoc').val() || !$('#acudienteNumDoc').val().trim()
+                    || !$('#acudienteParentesco').val().trim()) {
+                    alert('Por favor, complete todos los campos del acudiente.');
+                    return false;
+                }
+            }
+
             $('#btnEnviar').prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i> Enviando...');
 
-            // Obtener valor de desea_ser_informado
             const deseaSerInformado = $('input[name="desea_ser_informado"]:checked').val() === '1' ? 1 : 0;
+            const nombrePaciente    = '{{ $consentimiento->paciente_nombre }}';
+            const cedulaPaciente    = '{{ $consentimiento->paciente_cedula }}';
 
-            // Enviar firma del paciente primero
-            const nombrePaciente = '{{ $consentimiento->paciente_nombre }}';
-            const cedulaPaciente = '{{ $consentimiento->paciente_cedula }}';
+            const firmaDataPaciente = noSabeFirmaPaciente ? null : signaturePadPaciente.toDataURL();
+            const fotoDataPaciente  = noSabeFirmaPaciente ? $('#fotoPacienteInput').val() : null;
 
-            enviarFirma('paciente', signaturePadPaciente.toDataURL(), nombrePaciente, cedulaPaciente, null, edadPaciente, generoPaciente, deseaSerInformado)
+            enviarFirma('paciente', firmaDataPaciente, fotoDataPaciente, noSabeFirmaPaciente,
+                        nombrePaciente, cedulaPaciente, null, edadPaciente, generoPaciente, deseaSerInformado)
                 .then(response => {
-                    if (!response.success) {
-                        throw new Error(response.message);
-                    }
+                    if (!response.success) throw new Error(response.message);
 
-                    // ✅ CORREGIDO: Verificar acudiente para hidden o checkbox
-                    const requiereAcudiente = $('#requiereAcudiente').is(':checked') 
-                        || $('#requiereAcudiente').val() === '1';
-                    // Si requiere acudiente, enviar su firma también
+                    const requiereAcudiente = $('#requiereAcudiente').is(':checked') || $('#requiereAcudiente').val() === '1';
                     if (requiereAcudiente) {
+                        const noSabeFirmaAcudiente = document.getElementById('noSabeFireAcudiente').value === '1';
                         const nombreAcudiente = $('#acudienteNombres').val() + ' ' + $('#acudienteApellidos').val();
                         const cedulaAcudiente = $('#acudienteNumDoc').val();
-                        const parentesco = $('#acudienteParentesco').val();
+                        const parentesco      = $('#acudienteParentesco').val();
+                        const firmaAcudiente  = noSabeFirmaAcudiente ? null : signaturePadAcudiente.toDataURL();
+                        const fotoAcudiente   = noSabeFirmaAcudiente ? $('#fotoAcudienteInput').val() : null;
 
-                        return enviarFirma('acudiente', signaturePadAcudiente.toDataURL(), nombreAcudiente, cedulaAcudiente, parentesco);
+                        return enviarFirma('acudiente', firmaAcudiente, fotoAcudiente, noSabeFirmaAcudiente,
+                                           nombreAcudiente, cedulaAcudiente, parentesco);
                     }
                     return response;
                 })
                 .then(response => {
                     if (response.success) {
-                        // Redirigir al mismo enlace del token; el controlador detecta
-                        // que ya está firmado y muestra la vista "ya-firmado"
                         window.location.href = '{{ route("consentimientos.firmar", $token) }}';
                     }
                 })
@@ -531,22 +729,24 @@
                 });
         });
 
-        // Función para enviar firma via AJAX
-        function enviarFirma(tipoFirmante, firmaBase64, nombreFirmante, cedulaFirmante, relacionFirmante, edadFirmante, generoFirmante, deseaSerInformado) {
+        // Función para enviar firma o foto via AJAX
+        function enviarFirma(tipoFirmante, firmaBase64, fotoBase64, noSabeFirmar,
+                             nombreFirmante, cedulaFirmante, relacionFirmante,
+                             edadFirmante, generoFirmante, deseaSerInformado) {
             return $.ajax({
                 url: '{{ route("consentimientos.guardar-firma", $token) }}',
                 method: 'POST',
-                headers: {
-                    'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content')
-                },
+                headers: { 'X-CSRF-TOKEN': $('meta[name="csrf-token"]').attr('content') },
                 data: {
-                    tipo_firmante: tipoFirmante,
-                    firma_base64: firmaBase64,
-                    firmante_nombre: nombreFirmante,
-                    firmante_cedula: cedulaFirmante,
-                    firmante_relacion: relacionFirmante,
-                    firmante_edad: edadFirmante,
-                    firmante_genero: generoFirmante,
+                    tipo_firmante:       tipoFirmante,
+                    firma_base64:        firmaBase64,
+                    foto_base64:         fotoBase64,
+                    no_sabe_firmar:      noSabeFirmar ? 1 : 0,
+                    firmante_nombre:     nombreFirmante,
+                    firmante_cedula:     cedulaFirmante,
+                    firmante_relacion:   relacionFirmante,
+                    firmante_edad:       edadFirmante,
+                    firmante_genero:     generoFirmante,
                     desea_ser_informado: deseaSerInformado
                 }
             });

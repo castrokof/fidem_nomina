@@ -109,6 +109,23 @@
             margin: 2px 0;
             object-fit: contain;
         }
+        .foto-id-img {
+            width: 90px;
+            height: 110px;
+            border: 2px solid #666;
+            display: block;
+            margin: 2px 0;
+            object-fit: cover;
+        }
+        .badge-foto {
+            display: inline-block;
+            background: #ffc107;
+            color: #000;
+            font-size: 6pt;
+            padding: 1px 4px;
+            border-radius: 3px;
+            margin-bottom: 2px;
+        }
 
         .checkbox { margin: 2px 0; }
         strong { font-weight: bold; }
@@ -174,9 +191,15 @@
             <!-- PACIENTE -->
            
             <tr>
-                <td style="width:35%;"><strong>Firma:</strong><br>
-                    @if(isset($firmaPacienteBase64) && $firmaPacienteBase64)
+                <td style="width:35%;">
+                    @if(isset($fotoPacienteBase64) && $fotoPacienteBase64)
+                        <span class="badge-foto">IDENTIFICACION FOTOGRAFICA</span><br>
+                        <img src="{{ $fotoPacienteBase64 }}" class="foto-id-img">
+                    @elseif(isset($firmaPacienteBase64) && $firmaPacienteBase64)
+                        <strong>Firma:</strong><br>
                         <img src="{{ $firmaPacienteBase64 }}" class="firma-img">
+                    @else
+                        <strong>Firma:</strong><br><em style="font-size:7pt;">Sin firma</em>
                     @endif
                 </td>
                 <td style="width:25%;"><strong>Nombre:</strong><br>{{ $consentimiento->paciente->nombres }} {{ $consentimiento->paciente->apellidos }}</td>
@@ -202,9 +225,15 @@
             <table class="firma-table">
           
             <tr>
-                <td style="width:35%;"><strong>Firma:</strong><br>
-                    @if(isset($firmaPacienteBase64) && $firmaPacienteBase64)
+                <td style="width:35%;">
+                    @if(isset($fotoPacienteBase64) && $fotoPacienteBase64)
+                        <span class="badge-foto">IDENTIFICACION FOTOGRAFICA</span><br>
+                        <img src="{{ $fotoPacienteBase64 }}" class="foto-id-img">
+                    @elseif(isset($firmaPacienteBase64) && $firmaPacienteBase64)
+                        <strong>Firma:</strong><br>
                         <img src="{{ $firmaPacienteBase64 }}" class="firma-img">
+                    @else
+                        <strong>Firma:</strong><br><em style="font-size:7pt;">Sin firma</em>
                     @endif
                 </td>
                 <td style="width:25%;"><strong>Nombre:</strong><br>{{ $consentimiento->paciente->nombres }} {{ $consentimiento->paciente->apellidos }}</td>
@@ -251,9 +280,15 @@
                 </td>
             </tr>
             <tr>
-                <td style="width:35%;"><strong>Firma:</strong><br>
-                    @if(isset($firmaPacienteBase64) && $firmaPacienteBase64)
+                <td style="width:35%;">
+                    @if(isset($fotoPacienteBase64) && $fotoPacienteBase64)
+                        <span class="badge-foto">IDENTIFICACION FOTOGRAFICA</span><br>
+                        <img src="{{ $fotoPacienteBase64 }}" class="foto-id-img">
+                    @elseif(isset($firmaPacienteBase64) && $firmaPacienteBase64)
+                        <strong>Firma:</strong><br>
                         <img src="{{ $firmaPacienteBase64 }}" class="firma-img">
+                    @else
+                        <strong>Firma:</strong><br><em style="font-size:7pt;">Sin firma</em>
                     @endif
                 </td>
                 <td style="width:25%;"><strong>Nombre:</strong><br>{{ $consentimiento->paciente->nombres }} {{ $consentimiento->paciente->apellidos }}</td>
@@ -268,15 +303,19 @@
             </tr>
 
             <!-- ACUDIENTE -->
-            @if($consentimiento->acudiente && $firmaAcudienteBase64)
+            @if($consentimiento->acudiente && ($firmaAcudienteBase64 || (isset($fotoAcudienteBase64) && $fotoAcudienteBase64)))
             <tr>
                 <td colspan="4" style="background-color:#f0f0f0;padding:3px 5px;font-weight:bold;font-size:8pt;border-top:2px solid #000;">
                     FAMILIAR/TUTOR/REPRESENTANTE: DECLARO que he comprendido adecuadamente la información que contiene este documento, que firmo el consentimiento para la realización del procedimiento que se describe en el mismo, que he recibido copia del mismo y que conozco que el consentimiento puede ser revocado por escrito en cualquier momento.
                 </td>
             </tr>
             <tr>
-                <td><strong>Firma:</strong><br>
-                    @if($firmaAcudienteBase64)
+                <td>
+                    @if(isset($fotoAcudienteBase64) && $fotoAcudienteBase64)
+                        <span class="badge-foto">IDENTIFICACION FOTOGRAFICA</span><br>
+                        <img src="{{ $fotoAcudienteBase64 }}" class="foto-id-img">
+                    @elseif($firmaAcudienteBase64)
+                        <strong>Firma:</strong><br>
                         <img src="{{ $firmaAcudienteBase64 }}" class="firma-img">
                     @endif
                 </td>

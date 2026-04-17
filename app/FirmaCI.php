@@ -12,6 +12,8 @@ class FirmaCI extends Model
         'consentimiento_id',
         'tipo_firmante',
         'firma_base64',
+        'foto_base64',
+        'no_sabe_firmar',
         'firmante_nombre',
         'firmante_cedula',
         'firmante_edad',
