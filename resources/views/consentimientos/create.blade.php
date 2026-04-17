@@ -182,7 +182,19 @@
                     <input type="hidden" name="observaciones"       id="inputObservaciones">
                     <input type="hidden" name="profesional_id"      id="inputProfesionalId">
 
-                    <h6 class="mb-3 mt-3"><i class="fas fa-clipboard-list"></i> Seleccione Consentimientos</h6>
+                    <h6 class="mb-2 mt-3"><i class="fas fa-clipboard-list"></i> Seleccione Consentimientos</h6>
+                    <div class="input-group input-group-sm mb-3" id="wrapperBuscadorPlantillas" style="display:none!important;">
+                        <div class="input-group-prepend">
+                            <span class="input-group-text"><i class="fas fa-search"></i></span>
+                        </div>
+                        <input type="text" id="buscadorPlantillas" class="form-control"
+                               placeholder="Buscar consentimiento..." autocomplete="off">
+                        <div class="input-group-append">
+                            <button class="btn btn-outline-secondary" type="button" onclick="$('#buscadorPlantillas').val('').trigger('input')">
+                                <i class="fas fa-times"></i>
+                            </button>
+                        </div>
+                    </div>
                     <div id="listaPlantillas" class="mb-3"></div>
 
                     <span class="text-muted small" id="mensajeEstado"></span>
@@ -228,17 +240,18 @@
             </div>
             <div class="modal-body">
                 <div class="alert alert-success mb-3">
-                    <strong id="modalPacienteNombre"></strong> — Los siguientes consentimientos fueron creados. Comparta cada enlace con el paciente para que firme.
+                    <strong id="modalPacienteNombre"></strong> — Consentimientos creados. Comparta cada enlace con el paciente para que firme.
                 </div>
                 <div id="modalListaConsentimientos"></div>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-dismiss="modal">
-                    <i class="fas fa-times"></i> Cerrar
-                </button>
-                <button type="button" class="btn btn-primary" data-dismiss="modal" onclick="resetFormCrear()">
-                    <i class="fas fa-plus"></i> Nuevo consentimiento
-                </button>
+
+                <div class="d-flex justify-content-end mt-3 pt-3 border-top">
+                    <button type="button" class="btn btn-secondary mr-2" data-dismiss="modal">
+                        <i class="fas fa-times"></i> Cerrar
+                    </button>
+                    <button type="button" class="btn btn-primary" data-dismiss="modal" onclick="resetFormCrear()">
+                        <i class="fas fa-plus"></i> Nuevo consentimiento
+                    </button>
+                </div>
             </div>
         </div>
     </div>
@@ -464,18 +477,32 @@ html += `<thead class="thead-light"><tr>
     
     // ========== RENDERIZAR PLANTILLAS COMO CHECKBOXES ==========
     function renderPlantillas(plantillas) {
+        // Limpiar buscador
+        $('#buscadorPlantillas').val('');
+
         if (!plantillas || plantillas.length === 0) {
             $('#listaPlantillas').html('<div class="alert alert-warning">No hay plantillas disponibles para esta especialidad</div>');
+            $('#wrapperBuscadorPlantillas').hide();
             $('#btnCrear').prop('disabled', true);
             return;
         }
-        
-        let html = '<div class="row">';
+
+        // Mostrar buscador solo si hay más de 5 plantillas
+        if (plantillas.length > 5) {
+            $('#wrapperBuscadorPlantillas').css('display', 'flex');
+        } else {
+            $('#wrapperBuscadorPlantillas').hide();
+        }
+
+        // Ordenar alfabéticamente
+        plantillas.sort((a, b) => a.nombre.localeCompare(b.nombre, 'es'));
+
+        let html = '<div class="row" id="rowPlantillas">';
         plantillas.forEach(function(p) {
             html += `
-                <div class="col-md-6 mb-2">
+                <div class="col-md-6 mb-2 plantilla-item" data-nombre="${p.nombre.toLowerCase()}">
                     <div class="custom-control custom-checkbox">
-                        <input type="checkbox" class="custom-control-input plantilla-checkbox" 
+                        <input type="checkbox" class="custom-control-input plantilla-checkbox"
                             id="plantilla_${p.id}" name="plantillas[]" value="${p.id}">
                         <label class="custom-control-label" for="plantilla_${p.id}">${p.nombre}</label>
                     </div>
@@ -483,16 +510,20 @@ html += `<thead class="thead-light"><tr>
             `;
         });
         html += '</div>';
-        
+
         $('#listaPlantillas').html(html);
-        
-        // Event listeners para checkboxes
-        $('.plantilla-checkbox').change(function() {
-            actualizarContador();
-        });
-        
+
+        $('.plantilla-checkbox').change(function() { actualizarContador(); });
         actualizarContador();
     }
+
+    // Filtrar plantillas al escribir en el buscador
+    $(document).on('input', '#buscadorPlantillas', function() {
+        const q = $(this).val().toLowerCase().trim();
+        $('.plantilla-item').each(function() {
+            $(this).toggle(q === '' || $(this).data('nombre').includes(q));
+        });
+    });
     
     // ========== ACTUALIZAR CONTADOR ==========
     function actualizarContador() {
