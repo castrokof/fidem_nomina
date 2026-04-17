@@ -553,7 +553,7 @@
                 document.getElementById(`btnCapturar${cap(persona)}`).style.display = 'none';
                 document.getElementById(`btnRepetir${cap(persona)}`).style.display = 'none';
                 document.getElementById(`btnAbrirCamara${cap(persona)}`).style.display = '';
-                document.getElementById(`preview${cap(persona)}`).style.display = 'none';
+                document.getElementById(`previewFoto${cap(persona)}`).style.display = 'none';
                 document.getElementById(`timestamp${cap(persona)}`).style.display = 'none';
             }
         }
@@ -589,7 +589,7 @@
         function capturarFoto(persona) {
             const video   = document.getElementById(`video${cap(persona)}`);
             const canvas  = document.getElementById(`canvasFoto${cap(persona)}`);
-            const preview = document.getElementById(`preview${cap(persona)}`);
+            const preview = document.getElementById(`previewFoto${cap(persona)}`);
             const btnCapturar = document.getElementById(`btnCapturar${cap(persona)}`);
             const btnRepetir  = document.getElementById(`btnRepetir${cap(persona)}`);
             const tsDiv   = document.getElementById(`timestamp${cap(persona)}`);
@@ -622,7 +622,7 @@
         }
 
         function repetirFoto(persona) {
-            const preview = document.getElementById(`preview${cap(persona)}`);
+            const preview = document.getElementById(`previewFoto${cap(persona)}`);
             const btnRepetir  = document.getElementById(`btnRepetir${cap(persona)}`);
             const btnAbrir    = document.getElementById(`btnAbrirCamara${cap(persona)}`);
             const tsDiv = document.getElementById(`timestamp${cap(persona)}`);
