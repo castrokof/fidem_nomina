@@ -30,8 +30,26 @@
         flex-direction: column;
     }
     #modalCrearConsentimiento .modal-body {
-        flex: 1;
+        flex: 1 1 auto;
         overflow-y: auto;
+        min-height: 0;
+    }
+    #modalCrearConsentimiento .modal-footer {
+        flex-shrink: 0;
+    }
+    /* Modal de links: footer siempre visible */
+    #modalConsentimientosCreados .modal-content {
+        display: flex;
+        flex-direction: column;
+        max-height: 90vh;
+    }
+    #modalConsentimientosCreados .modal-body {
+        flex: 1 1 auto;
+        overflow-y: auto;
+        min-height: 0;
+    }
+    #modalConsentimientosCreados .modal-footer {
+        flex-shrink: 0;
     }
     @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
     .observaciones-cell { cursor: pointer; max-width: 180px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
@@ -168,15 +186,16 @@
                     <div id="listaPlantillas" class="mb-3"></div>
 
                     <span class="text-muted small" id="mensajeEstado"></span>
+
+                    <div class="d-flex justify-content-end mt-3 pt-3 border-top">
+                        <button type="button" class="btn btn-secondary mr-2" data-dismiss="modal">
+                            <i class="fas fa-times"></i> Cancelar
+                        </button>
+                        <button type="submit" class="btn btn-success" id="btnCrear" disabled>
+                            <i class="fas fa-save"></i> Crear <span id="contadorPlantillas">0</span> Consentimiento(s)
+                        </button>
+                    </div>
                 </form>
-            </div>
-            <div class="modal-footer">
-                <button type="button" class="btn btn-secondary" data-dismiss="modal">
-                    <i class="fas fa-times"></i> Cancelar
-                </button>
-                <button type="submit" form="formCrearConsentimientos" class="btn btn-success" id="btnCrear" disabled>
-                    <i class="fas fa-save"></i> Crear <span id="contadorPlantillas">0</span> Consentimiento(s)
-                </button>
             </div>
         </div>
     </div>
