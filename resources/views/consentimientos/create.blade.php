@@ -118,39 +118,50 @@
                         <div class="list-group" id="listaPacientes"></div>
                     </div>
 
-                    {{-- Sección: Datos del paciente seleccionado + plantillas --}}
-                    <div id="seccionCrear" class="seccion-oculta">
-                        <hr>
-                        <div id="datosPaciente"></div>
-                        
-                        <form id="formCrearConsentimientos">
-                            @csrf
-                            <input type="hidden" name="paciente_id" id="inputPacienteId">
-                            <input type="hidden" name="agenda_ci_id" id="inputAgendaId">
-                            <input type="hidden" name="fecha_procedimiento" id="inputFecha">
-                            <input type="hidden" name="cups_codigo" id="inputCups">
-                            <input type="hidden" name="observaciones" id="inputObservaciones">
-                            <input type="hidden" name="profesional_id" id="inputProfesionalId" value="{{ $profesional->id ?? '' }}">
-                            
-                            <h5 class="mb-3"><i class="fas fa-clipboard-list"></i> Seleccione Consentimientos</h5>
-                            <div id="listaPlantillas" class="mb-3"></div>
-                            
-                            <div class="card-footer">
-                                <button type="submit" class="btn btn-success" id="btnCrear" disabled>
-                                    <i class="fas fa-save"></i> Crear <span id="contadorPlantillas">0</span> Consentimiento(s)
-                                </button>
-                                <button type="button" class="btn btn-secondary ml-2" id="btnNuevo">
-                                    <i class="fas fa-plus"></i> Nuevo Paciente
-                                </button>
-                                <span class="text-muted small ml-2" id="mensajeEstado"></span>
-                            </div>
-                        </form>
-                    </div>
-
                 </div>
             </div>
         </div>
     </section>
+</div>
+
+{{-- Modal: Crear consentimiento --}}
+<div class="modal fade" id="modalCrearConsentimiento" tabindex="-1" data-backdrop="static" data-keyboard="false">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header bg-primary text-white">
+                <h5 class="modal-title"><i class="fas fa-file-signature"></i> Crear Consentimiento</h5>
+                <button type="button" class="close text-white" data-dismiss="modal" aria-label="Cerrar">
+                    <span aria-hidden="true">&times;</span>
+                </button>
+            </div>
+            <div class="modal-body">
+                <div id="datosPaciente"></div>
+
+                <form id="formCrearConsentimientos">
+                    @csrf
+                    <input type="hidden" name="paciente_id"         id="inputPacienteId">
+                    <input type="hidden" name="agenda_ci_id"        id="inputAgendaId">
+                    <input type="hidden" name="fecha_procedimiento" id="inputFecha">
+                    <input type="hidden" name="cups_codigo"         id="inputCups">
+                    <input type="hidden" name="observaciones"       id="inputObservaciones">
+                    <input type="hidden" name="profesional_id"      id="inputProfesionalId">
+
+                    <h6 class="mb-3 mt-3"><i class="fas fa-clipboard-list"></i> Seleccione Consentimientos</h6>
+                    <div id="listaPlantillas" class="mb-3"></div>
+
+                    <span class="text-muted small" id="mensajeEstado"></span>
+                </form>
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">
+                    <i class="fas fa-times"></i> Cancelar
+                </button>
+                <button type="submit" form="formCrearConsentimientos" class="btn btn-success" id="btnCrear" disabled>
+                    <i class="fas fa-save"></i> Crear <span id="contadorPlantillas">0</span> Consentimiento(s)
+                </button>
+            </div>
+        </div>
+    </div>
 </div>
 
 {{-- Modal Observaciones --}}
@@ -337,88 +348,64 @@ html += `<thead class="thead-light"><tr>
         });
     });
     
-    // ========== SELECCIONAR PACIENTE ==========
+    // ========== SELECCIONAR PACIENTE → abre modal ==========
     window.seleccionarPaciente = function(pacienteId) {
         const fecha = $('#fecha').val();
         const codigoUsuario = $('#codigo_usuario').val();
-        
-        $('#seccionCrear').addClass('loading').removeClass('seccion-oculta');
-        
+
+        // Limpiar modal antes de abrir
+        $('#datosPaciente').html('<div class="text-center py-3"><i class="fas fa-spinner fa-spin fa-2x"></i></div>');
+        $('#listaPlantillas').html('');
+        $('#btnCrear').prop('disabled', true).html('<i class="fas fa-save"></i> Crear <span id="contadorPlantillas">0</span> Consentimiento(s)');
+        $('#modalCrearConsentimiento').modal('show');
+
         $.ajax({
             url: `{{ route("consentimientos.ajax.datos", ["paciente_id" => ":id"]) }}`.replace(':id', pacienteId),
             type: 'GET',
             data: { fecha, codigo_usuario: codigoUsuario },
             success: function(response) {
-                $('#seccionCrear').removeClass('loading');
-                
                 if (!response.success) {
+                    $('#modalCrearConsentimiento').modal('hide');
                     Swal.fire('Error', response.message, 'error');
                     return;
                 }
-                
-               // Dentro de success de ajaxDatosPaciente
-$('#datosPaciente').html(`
-    <div class="alert alert-info">
-        <div class="row">
-            <div class="col-md-6">
-                <strong>👤 Paciente:</strong><br>
-                ${response.paciente.nombre}<br>
-                <small class="text-muted">
-                    ${response.paciente.documento}-${response.paciente.cedula}
-                    ${response.paciente.telefono ? ` • 📞 ${response.paciente.telefono}` : ''}
-                </small>
-            </div>
-            <div class="col-md-6">
-                <strong>📅 Cita:</strong><br>
-                <!-- ✅ HORA COMPLETA DESTACADA -->
-                <span class="badge badge-primary badge-lg mr-2">
-                    <i class="fas fa-clock"></i> ${response.cita.hora_completa}
-                </span>
-                <small class="text-muted d-block">
-                    ${response.cita.fecha ? new Date(response.cita.fecha).toLocaleDateString('es-CO') : 'N/A'}
-                </small>
-            </div>
-        </div>
-        <hr class="my-2">
-        <div class="row">
-            <div class="col-md-3">
-                <strong>🏥 Centro:</strong><br>
-                <span class="badge badge-info">${response.cita.centroprod || '-'}</span>
-            </div>
-            <div class="col-md-3">
-                <strong>💊 CUPS:</strong><br>
-                <span class="badge badge-primary">${response.cita.cups_codigo || '-'}</span>
-            </div>
-            <div class="col-md-3">
-                <strong>📄 Contrato:</strong><br>
-                <small>${response.cita.contrato || '-'}</small>
-            </div>
-            <div class="col-md-3">
-                <strong>🏢 EPS:</strong><br>
-                <small>${response.cita.empresafac || '-'}</small>
-            </div>
-        </div>
-        ${response.cita.historia ? `
-        <div class="mt-2">
-            <strong>📋 Historia Clínica:</strong>
-            <small class="d-block">${response.cita.historia}</small>
-        </div>
-        ` : ''}
-        ${response.cita.observaciones ? `
-        <div class="mt-2">
-                <strong>📝 Observaciones:</strong><br>
-                <div class="observaciones-completas" 
-                    onclick="mostrarObservacionesModal('${(response.cita.observaciones || '').replace(/'/g, "\\'")}')"
-                    style="cursor: pointer;" 
-                    title="Click para ampliar si es muy largo">
-                    ${response.cita.observaciones || 'Sin observaciones'}
-                </div>
-            </div>
-        ` : ''}
-    </div>
-`);
-                
-                // Llenar inputs ocultos
+
+                $('#datosPaciente').html(`
+                    <div class="alert alert-info mb-3">
+                        <div class="row">
+                            <div class="col-md-6">
+                                <strong><i class="fas fa-user"></i> Paciente:</strong><br>
+                                ${response.paciente.nombre}<br>
+                                <small class="text-muted">
+                                    ${response.paciente.documento}-${response.paciente.cedula}
+                                    ${response.paciente.telefono ? ` &bull; <i class="fas fa-phone"></i> ${response.paciente.telefono}` : ''}
+                                </small>
+                            </div>
+                            <div class="col-md-6">
+                                <strong><i class="fas fa-calendar"></i> Cita:</strong><br>
+                                <span class="badge badge-primary mr-1"><i class="fas fa-clock"></i> ${response.cita.hora_completa}</span>
+                                <small class="text-muted d-block">${response.cita.fecha ? new Date(response.cita.fecha).toLocaleDateString('es-CO') : 'N/A'}</small>
+                            </div>
+                        </div>
+                        <hr class="my-2">
+                        <div class="row">
+                            <div class="col-6 col-md-3"><strong>Centro:</strong><br><span class="badge badge-info">${response.cita.centroprod || '-'}</span></div>
+                            <div class="col-6 col-md-3"><strong>CUPS:</strong><br><span class="badge badge-primary">${response.cita.cups_codigo || '-'}</span></div>
+                            <div class="col-6 col-md-3"><strong>Contrato:</strong><br><small>${response.cita.contrato || '-'}</small></div>
+                            <div class="col-6 col-md-3"><strong>EPS:</strong><br><small>${response.cita.empresafac || '-'}</small></div>
+                        </div>
+                        ${response.cita.observaciones ? `
+                        <div class="mt-2">
+                            <strong>Observaciones:</strong><br>
+                            <div class="observaciones-completas"
+                                onclick="mostrarObservacionesModal('${(response.cita.observaciones || '').replace(/'/g, "\\'")}')"
+                                style="cursor:pointer;" title="Click para ampliar">
+                                ${response.cita.observaciones}
+                            </div>
+                        </div>` : ''}
+                    </div>
+                `);
+
                 $('#inputPacienteId').val(response.paciente.id);
                 $('#inputAgendaId').val(response.cita.agenda_id);
                 $('#inputProfesionalId').val(response.profesional.id);
@@ -426,19 +413,10 @@ $('#datosPaciente').html(`
                 $('#inputCups').val(response.cita.cups_codigo);
                 $('#inputObservaciones').val(response.cita.observaciones);
 
-                // Debug: verificar en consola
-    console.log('Profesional ID:', response.profesional.id);
-    console.log('Input value:', $('#inputProfesionalId').val());
-                
-                
-                // Renderizar plantillas como checkboxes
                 renderPlantillas(response.plantillas);
-                
-                // Ocultar lista de pacientes
-                $('#seccionPacientes').addClass('seccion-oculta');
             },
             error: function() {
-                $('#seccionCrear').removeClass('loading');
+                $('#modalCrearConsentimiento').modal('hide');
                 Swal.fire('Error', 'No se pudieron cargar los datos del paciente', 'error');
             }
         });
@@ -503,7 +481,6 @@ $('#datosPaciente').html(`
             success: function(response) {
                 $('#btnCrear').prop('disabled', false).html('<i class="fas fa-save"></i> Crear <span id="contadorPlantillas">0</span> Consentimiento(s)');
                 if (response.success) {
-                    // Construir lista de consentimientos con sus links
                     let html = '<div class="list-group">';
                     response.consentimientos.forEach(function(ci) {
                         html += `
@@ -531,7 +508,12 @@ $('#datosPaciente').html(`
 
                     $('#modalPacienteNombre').text(response.paciente_nombre);
                     $('#modalListaConsentimientos').html(html);
-                    $('#modalConsentimientosCreados').modal('show');
+
+                    // Cerrar modal de creación y abrir el de links
+                    $('#modalCrearConsentimiento').modal('hide');
+                    $('#modalCrearConsentimiento').one('hidden.bs.modal', function() {
+                        $('#modalConsentimientosCreados').modal('show');
+                    });
                 } else {
                     Swal.fire('Error', response.message, 'error');
                 }
@@ -539,17 +521,9 @@ $('#datosPaciente').html(`
             error: function(xhr) {
                 const errors = xhr.responseJSON?.errors || ['Error desconocido'];
                 Swal.fire('Error', errors.join('<br>'), 'error');
-                $('#btnCrear').prop('disabled', false).html('<i class="fas fa-save"></i> Crear Consentimiento(s)');
+                $('#btnCrear').prop('disabled', false).html('<i class="fas fa-save"></i> Crear <span id="contadorPlantillas">0</span> Consentimiento(s)');
             }
         });
-    });
-    
-    // ========== BOTÓN NUEVO PACIENTE ==========
-    $('#btnNuevo').click(function() {
-        $('#seccionCrear').addClass('seccion-oculta');
-        $('#seccionPacientes').removeClass('seccion-oculta');
-        $('#listaPlantillas').html('');
-        actualizarContador();
     });
     
     // ========== MODAL OBSERVACIONES ==========
@@ -652,9 +626,12 @@ window.verDetallesPaciente = function(pacienteId, citas) {
 // Confirmar selección desde el modal
 window.confirmarSeleccionDesdeModal = function() {
     if (pacienteSeleccionadoDesdeModal) {
-        $('#modalDetallesPaciente').modal('hide');
-        seleccionarPaciente(pacienteSeleccionadoDesdeModal);
+        const id = pacienteSeleccionadoDesdeModal;
         pacienteSeleccionadoDesdeModal = null;
+        $('#modalDetallesPaciente').modal('hide');
+        $('#modalDetallesPaciente').one('hidden.bs.modal', function() {
+            seleccionarPaciente(id);
+        });
     }
 };
 
@@ -667,10 +644,8 @@ window.copiarLink = function(inputId) {
     });
 };
 
-// Volver a la lista de pacientes (conserva filtros)
+// Al cerrar el modal de links, queda en la lista de pacientes con filtros intactos
 window.resetFormCrear = function() {
-    $('#seccionCrear').addClass('seccion-oculta');
-    $('#seccionPacientes').removeClass('seccion-oculta');
     $('#listaPlantillas').html('');
     actualizarContador();
 };
