@@ -221,7 +221,7 @@
                                 <!-- Selector: Firma o Foto -->
                                 <div class="mb-3">
                                     <div class="btn-group w-100" role="group">
-                                        <button type="button" id="btnModoPacienteFirma" class="btn btn-outline-primary active"
+                                        <button type="button" id="btnModoPacienteFirma" class="btn btn-primary"
                                                 onclick="setModo('paciente','firma')">
                                             <i class="fas fa-pen-nib"></i> Puedo firmar
                                         </button>
@@ -341,7 +341,7 @@
                                     <!-- Selector: Firma o Foto acudiente -->
                                     <div class="mb-3">
                                         <div class="btn-group w-100" role="group">
-                                            <button type="button" id="btnModoAcudienteFirma" class="btn btn-outline-primary active"
+                                            <button type="button" id="btnModoAcudienteFirma" class="btn btn-primary"
                                                     onclick="setModo('acudiente','firma')">
                                                 <i class="fas fa-pen-nib"></i> Puede firmar
                                             </button>
