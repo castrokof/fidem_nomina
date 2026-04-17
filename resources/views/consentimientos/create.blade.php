@@ -15,6 +15,24 @@
         border: 3px solid #f3f3f3; border-top: 3px solid #007bff;
         border-radius: 50%; animation: spin 1s linear infinite;
     }
+    /* Modal pantalla completa (Bootstrap 4) */
+    #modalCrearConsentimiento .modal-dialog {
+        max-width: 100%;
+        width: 100%;
+        height: 100%;
+        margin: 0;
+        padding: 0;
+    }
+    #modalCrearConsentimiento .modal-content {
+        height: 100%;
+        border-radius: 0;
+        display: flex;
+        flex-direction: column;
+    }
+    #modalCrearConsentimiento .modal-body {
+        flex: 1;
+        overflow-y: auto;
+    }
     @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
     .observaciones-cell { cursor: pointer; max-width: 180px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
     .observaciones-cell:hover { text-decoration: underline; }
@@ -196,8 +214,11 @@
                 <div id="modalListaConsentimientos"></div>
             </div>
             <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-dismiss="modal">
+                    <i class="fas fa-times"></i> Cerrar
+                </button>
                 <button type="button" class="btn btn-primary" data-dismiss="modal" onclick="resetFormCrear()">
-                    <i class="fas fa-plus"></i> Crear otro consentimiento
+                    <i class="fas fa-plus"></i> Nuevo consentimiento
                 </button>
             </div>
         </div>
