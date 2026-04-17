@@ -14,7 +14,7 @@ class PlantillaCIController extends Controller
      */
     public function index()
     {
-        $plantillas = PlantillaCI::with('especialidades')->orderBy('nombre')->paginate(20);
+        $plantillas = PlantillaCI::with('especialidades')->orderBy('nombre')->paginate(1000);
         return view('admin.plantillas-ci.index', compact('plantillas'));
     }
 
