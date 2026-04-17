@@ -65,8 +65,10 @@ class PdfConsentimientoService
                 'tiene_firma_profesional' => $consentimiento->firmaProfesional ? true : false,
             ]);
 
-            $firmaPacienteBase64 = $this->sanitizarFirmaBase64($consentimiento->firmaPaciente);
+            $firmaPacienteBase64  = $this->sanitizarFirmaBase64($consentimiento->firmaPaciente);
+            $fotoPacienteBase64   = $this->sanitizarFotoBase64($consentimiento->firmaPaciente);
             $firmaAcudienteBase64 = $this->sanitizarFirmaBase64($consentimiento->firmaAcudiente);
+            $fotoAcudienteBase64  = $this->sanitizarFotoBase64($consentimiento->firmaAcudiente);
             $firmaProfesionalBase64 = null;
 
             // Priorizar firma digital (imagen) del profesional sobre base64
@@ -94,7 +96,9 @@ $html = view('consentimientos.pdf', [
     'consentimiento'            => $consentimiento,
     'contenidoRenderizado'      => $contenidoLimpio,
     'firmaPacienteBase64'       => $firmaPacienteBase64,
+    'fotoPacienteBase64'        => $fotoPacienteBase64,
     'firmaAcudienteBase64'      => $firmaAcudienteBase64,
+    'fotoAcudienteBase64'       => $fotoAcudienteBase64,
     'firmaProfesionalBase64'    => $firmaProfesionalBase64,
     'logoFidemBase64'           => $logoFidemBase64,
     'variables'                 => $variables,
@@ -221,6 +225,28 @@ protected function sanitizarFirmaBase64($firma)
 
     return $base64;
 }
+
+    /**
+     * Extraer foto base64 del registro de firma (cuando no sabe firmar)
+     */
+    protected function sanitizarFotoBase64($firma)
+    {
+        if (!$firma || empty($firma->foto_base64) || !$firma->no_sabe_firmar) {
+            return null;
+        }
+
+        $base64 = $firma->foto_base64;
+
+        if (stripos($base64, 'data:') === 0) {
+            $parts = explode(',', $base64, 2);
+            if (count($parts) === 2) {
+                $mime = strpos($parts[0], 'jpeg') !== false ? 'image/jpeg' : 'image/png';
+                return "data:{$mime};base64," . preg_replace('/\s+/', '', trim($parts[1]));
+            }
+        }
+
+        return 'data:image/jpeg;base64,' . preg_replace('/\s+/', '', trim($base64));
+    }
 
     /**
      * Generar PDF con DomPDF directamente (sin Facade)

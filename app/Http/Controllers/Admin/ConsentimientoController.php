@@ -394,9 +394,13 @@ public function store(Request $request)
             ], 403);
         }
 
+        $noSabeFirmar = filter_var($request->no_sabe_firmar, FILTER_VALIDATE_BOOLEAN);
+
         $request->validate([
             'tipo_firmante'        => 'required|in:paciente,acudiente',
-            'firma_base64'         => 'required|string',
+            'firma_base64'         => $noSabeFirmar ? 'nullable|string' : 'required|string',
+            'foto_base64'          => $noSabeFirmar ? 'required|string' : 'nullable|string',
+            'no_sabe_firmar'       => 'nullable|boolean',
             'firmante_nombre'      => 'required|string|max:200',
             'firmante_cedula'      => 'nullable|string|max:20',
             'firmante_edad'        => 'required_if:tipo_firmante,paciente|nullable|integer|min:0|max:150',
@@ -409,7 +413,9 @@ public function store(Request $request)
         FirmaCI::create([
             'consentimiento_id' => $consentimiento->id,
             'tipo_firmante'     => $request->tipo_firmante,
-            'firma_base64'      => $request->firma_base64,
+            'firma_base64'      => $noSabeFirmar ? null : $request->firma_base64,
+            'foto_base64'       => $noSabeFirmar ? $request->foto_base64 : null,
+            'no_sabe_firmar'    => $noSabeFirmar,
             'firmante_nombre'   => $request->firmante_nombre,
             'firmante_cedula'   => $request->firmante_cedula,
             'firmante_edad'     => $request->firmante_edad,
