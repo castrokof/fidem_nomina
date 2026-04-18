@@ -481,22 +481,24 @@
         }
 
         // Mostrar/ocultar sección de acudiente
+        function acudienteActivo() {
+            const el = document.getElementById('requiereAcudiente');
+            if (!el) return false;
+            return el.type === 'hidden' ? el.value === '1' : el.checked;
+        }
+
         function toggleSeccionAcudiente() {
-    // ✅ Funciona para checkbox Y hidden input
-    const requiereAcudiente = $('#requiereAcudiente').is(':checked') 
-                        || $('#requiereAcudiente').val() === '1';
-                    
-                    if (requiereAcudiente) {
-                        $('#seccionAcudiente').slideDown();
-                        $('#acudienteNombres, #acudienteApellidos, #acudienteTipoDoc, #acudienteNumDoc, #acudienteParentesco')
-                            .prop('required', true);
-                    } else {
-                        $('#seccionAcudiente').slideUp();
-                        $('#acudienteNombres, #acudienteApellidos, #acudienteTipoDoc, #acudienteNumDoc, #acudienteParentesco')
-                            .prop('required', false);
-                        signaturePadAcudiente.clear();
-                    }
-                }   
+            if (acudienteActivo()) {
+                $('#seccionAcudiente').slideDown();
+                $('#acudienteNombres, #acudienteApellidos, #acudienteTipoDoc, #acudienteNumDoc, #acudienteParentesco')
+                    .prop('required', true);
+            } else {
+                $('#seccionAcudiente').slideUp();
+                $('#acudienteNombres, #acudienteApellidos, #acudienteTipoDoc, #acudienteNumDoc, #acudienteParentesco')
+                    .prop('required', false);
+                signaturePadAcudiente.clear();
+            }
+        }
 
         $('#requiereAcudiente').change(toggleSeccionAcudiente);
 
@@ -667,9 +669,7 @@
                 }
             }
 
-            const requiereAcudiente = $('#requiereAcudiente').is(':checked') || $('#requiereAcudiente').val() === '1';
-
-            if (requiereAcudiente) {
+            if (acudienteActivo()) {
                 const noSabeFirmaAcudiente = document.getElementById('noSabeFireAcudiente').value === '1';
 
                 if (noSabeFirmaAcudiente) {
@@ -704,8 +704,7 @@
                 .then(response => {
                     if (!response.success) throw new Error(response.message);
 
-                    const requiereAcudiente = $('#requiereAcudiente').is(':checked') || $('#requiereAcudiente').val() === '1';
-                    if (requiereAcudiente) {
+                    if (acudienteActivo()) {
                         const noSabeFirmaAcudiente = document.getElementById('noSabeFireAcudiente').value === '1';
                         const nombreAcudiente = $('#acudienteNombres').val() + ' ' + $('#acudienteApellidos').val();
                         const cedulaAcudiente = $('#acudienteNumDoc').val();

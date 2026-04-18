@@ -162,7 +162,20 @@
                                 <div class="col-md-4">
                                     <h6><i class="fas fa-user-md"></i> Firma del Profesional</h6>
                                     <div class="firma-container">
-                                        <img src="{{$consentimiento->firmaProfesional->firma_base64}}" alt="Firma del Profesional" class="firma-img">
+                                        @php
+                                            $prof = $consentimiento->profesional;
+                                            $srcFirmaProf = null;
+                                            if ($prof && !empty($prof->firma_imagen_path) && file_exists(public_path($prof->firma_imagen_path))) {
+                                                $srcFirmaProf = asset($prof->firma_imagen_path);
+                                            } elseif (!empty($consentimiento->firmaProfesional->firma_base64)) {
+                                                $srcFirmaProf = $consentimiento->firmaProfesional->firma_base64;
+                                            }
+                                        @endphp
+                                        @if($srcFirmaProf)
+                                            <img src="{{ $srcFirmaProf }}" alt="Firma del Profesional" class="firma-img">
+                                        @else
+                                            <p class="text-muted small">Sin firma registrada</p>
+                                        @endif
                                         <p class="mt-2 mb-0"><small>{{$consentimiento->firmaProfesional->firmante_nombre}}</small></p>
                                         @if($consentimiento->profesional)
                                             <p class="mb-0"><small>RM: {{$consentimiento->profesional->registro_medico ?? 'N/A'}}</small></p>

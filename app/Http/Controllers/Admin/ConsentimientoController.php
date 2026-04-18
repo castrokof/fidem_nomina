@@ -536,7 +536,7 @@ public function ajaxPacientesPorFiltros(Request $request)
         'observaciones', 'contrato', 'empresafac', 'estado', 'atendido',
         'llegada_confirmada', 'historia', 'paciente_id', 'paciente_nombre',
         'paciente_cedula', 'paciente_tipo_doc', 'paciente_telefono',
-        'profesional_id'  // ← Fallback si se necesita
+        'profesional_id', 'numero_factura', 'documento_factura'
     ]);
     
     // Agrupar por paciente
@@ -602,6 +602,8 @@ public function ajaxPacientesPorFiltros(Request $request)
                         'consentimientos_en_proceso' => $consentimientosEnProceso,
                         'consentimientos_firmados' => $consentimientosFirmados,
                         'estado_consentimientos' => $estadoConsentimientos,
+                        'numero_factura'  => $a->numero_factura ?? '',
+                        'documento_factura' => $a->documento_factura ?? '',
                     ];
                 })->values()
             ];
@@ -679,7 +681,9 @@ public function ajaxDatosPaciente($paciente_id, Request $request)
             'contrato' => $agenda->contrato ?? '',
             'empresafac' => $agenda->empresafac ?? '',
             'historia' => $agenda->historia ?? '',
-            'codigo_consultorio' => $agenda->codigo_consultorio,  // ← El código que une con profesional
+            'codigo_consultorio' => $agenda->codigo_consultorio,
+            'numero_factura'    => $agenda->numero_factura ?? '',
+            'documento_factura' => $agenda->documento_factura ?? '',
         ],
         // ✅ PROFESIONAL: Desde la relación por código
         'profesional' => [
