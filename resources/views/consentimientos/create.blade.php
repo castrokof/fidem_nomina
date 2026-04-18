@@ -447,6 +447,12 @@ html += `<thead class="thead-light"><tr>
                             <div class="col-6 col-md-3"><strong>Contrato:</strong><br><small>${response.cita.contrato || '-'}</small></div>
                             <div class="col-6 col-md-3"><strong>EPS:</strong><br><small>${response.cita.empresafac || '-'}</small></div>
                         </div>
+                        ${(response.cita.documento_factura || response.cita.numero_factura) ? `
+                        <div class="row mt-1">
+                            <div class="col-12"><strong>Factura:</strong>
+                                <span class="badge badge-secondary ml-1">${response.cita.documento_factura || ''}${response.cita.numero_factura ? '-' + response.cita.numero_factura : ''}</span>
+                            </div>
+                        </div>` : ''}
                         ${response.cita.observaciones ? `
                         <div class="mt-2">
                             <strong>Observaciones:</strong><br>
@@ -623,6 +629,7 @@ window.verDetallesPaciente = function(pacienteId, citas) {
         <th>Hora Completa</th>
         <th>Centro</th>
         <th>CUPS</th>
+        <th>Factura</th>
         <th>Consentimientos</th>
         <th>Observaciones</th>
         <th>Contrato</th>
@@ -675,6 +682,7 @@ window.verDetallesPaciente = function(pacienteId, citas) {
                 </td>
                 <td><span class="badge badge-info">${cita.centroprod || '-'}</span></td>
                 <td><span class="badge badge-primary">${cita.cups_codigo || '-'}</span></td>
+                <td><small>${cita.documento_factura || ''}${cita.numero_factura ? '-' + cita.numero_factura : (cita.documento_factura ? '' : '-')}</small></td>
                 <td class="text-center">${badgeConsentimiento}</td>
                 <td>
                     <span class="observaciones-cell"
