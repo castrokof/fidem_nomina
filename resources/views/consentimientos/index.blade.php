@@ -14,10 +14,9 @@
 <script>
     $(document).ready(function() {
         $('#tablaConsentimientos').DataTable({
-            "language": {
-                "url": "//cdn.datatables.net/plug-ins/1.10.21/i18n/Spanish.json"
-            },
-            "order": [[0, "desc"]]
+            "language": { "url": "//cdn.datatables.net/plug-ins/1.10.21/i18n/Spanish.json" },
+            "order": [[5, "desc"]],
+            "pageLength": 25
         });
 
         // ========== ANULAR CONSENTIMIENTO ==========
@@ -112,6 +111,75 @@
 
     <section class="content">
         <div class="container-fluid">
+
+            {{-- Panel de filtros --}}
+            <div class="card card-outline card-primary mb-3">
+                <div class="card-header">
+                    <h3 class="card-title"><i class="fas fa-filter"></i> Filtros</h3>
+                    <div class="card-tools">
+                        <button type="button" class="btn btn-tool" data-card-widget="collapse">
+                            <i class="fas fa-minus"></i>
+                        </button>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <form method="GET" action="{{ route('consentimientos.index') }}" id="formFiltros">
+                        <div class="row align-items-end">
+                            <div class="col-md-2 col-sm-6 mb-2">
+                                <label class="small font-weight-bold">Fecha desde</label>
+                                <input type="date" name="fecha_desde" class="form-control form-control-sm"
+                                       value="{{ request('fecha_desde') }}">
+                            </div>
+                            <div class="col-md-2 col-sm-6 mb-2">
+                                <label class="small font-weight-bold">Fecha hasta</label>
+                                <input type="date" name="fecha_hasta" class="form-control form-control-sm"
+                                       value="{{ request('fecha_hasta') }}">
+                            </div>
+                            <div class="col-md-2 col-sm-6 mb-2">
+                                <label class="small font-weight-bold">Documento paciente</label>
+                                <input type="text" name="documento" class="form-control form-control-sm"
+                                       placeholder="Ej: 1234567"
+                                       value="{{ request('documento') }}">
+                            </div>
+                            <div class="col-md-3 col-sm-6 mb-2">
+                                <label class="small font-weight-bold">Médico</label>
+                                <select name="medico" class="form-control form-control-sm">
+                                    <option value="">Todos</option>
+                                    @foreach($medicos as $m)
+                                        <option value="{{ $m->id }}" {{ request('medico') == $m->id ? 'selected' : '' }}>
+                                            {{ $m->apellidos }}, {{ $m->nombres }}
+                                        </option>
+                                    @endforeach
+                                </select>
+                            </div>
+                            <div class="col-md-2 col-sm-6 mb-2">
+                                <label class="small font-weight-bold">Estado</label>
+                                <select name="estado" class="form-control form-control-sm">
+                                    <option value="">Todos</option>
+                                    <option value="pendiente"  {{ request('estado') == 'pendiente'  ? 'selected' : '' }}>Pendiente</option>
+                                    <option value="en_proceso" {{ request('estado') == 'en_proceso' ? 'selected' : '' }}>En proceso</option>
+                                    <option value="firmado"    {{ request('estado') == 'firmado'    ? 'selected' : '' }}>Firmado</option>
+                                    <option value="anulado"    {{ request('estado') == 'anulado'    ? 'selected' : '' }}>Anulado</option>
+                                </select>
+                            </div>
+                            <div class="col-md-1 col-sm-12 mb-2 d-flex align-items-end">
+                                <button type="submit" class="btn btn-primary btn-sm btn-block">
+                                    <i class="fas fa-search"></i> Buscar
+                                </button>
+                            </div>
+                        </div>
+                        @if(request()->hasAny(['fecha_desde','fecha_hasta','documento','medico','estado']))
+                            <div class="mt-1">
+                                <a href="{{ route('consentimientos.index') }}" class="btn btn-link btn-sm p-0 text-secondary">
+                                    <i class="fas fa-times-circle"></i> Limpiar filtros
+                                </a>
+                                <span class="text-muted small ml-2">{{ $consentimientos->count() }} resultado(s)</span>
+                            </div>
+                        @endif
+                    </form>
+                </div>
+            </div>
+
             <div class="card">
                 <div class="card-header">
                     <h3 class="card-title">Listado de Consentimientos Informados</h3>
