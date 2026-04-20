@@ -310,17 +310,17 @@ if (!response.success || response.pacientes.length === 0) {
     $('#listaPacientes').html('<div class="alert alert-info">No hay pacientes para estos filtros</div>');
 } else {
     // Reemplazar la generación del HTML de la tabla de pacientes
-let html = '<div class="table-responsive"><table class="table table-sm table-bordered">';
+let html = '<div class="table-responsive"><table class="table table-sm table-bordered" id="tablaPacientes">';
 html += `<thead class="thead-light"><tr>
-    <th>Hora</th>
-    <th>Paciente</th>
-    <th>Documento</th>
-    <th>Centro</th>
-    <th>CUPS</th>
-    <th>Citas</th>
+    <th class="th-sort" data-col="hora" style="cursor:pointer;white-space:nowrap;">Hora <i class="fas fa-sort text-muted sort-ico"></i></th>
+    <th class="th-sort" data-col="nombre" style="cursor:pointer;white-space:nowrap;">Paciente <i class="fas fa-sort text-muted sort-ico"></i></th>
+    <th class="th-sort" data-col="documento" style="cursor:pointer;white-space:nowrap;">Documento <i class="fas fa-sort text-muted sort-ico"></i></th>
+    <th class="th-sort" data-col="centro" style="cursor:pointer;white-space:nowrap;">Centro <i class="fas fa-sort text-muted sort-ico"></i></th>
+    <th class="th-sort" data-col="cups" style="cursor:pointer;white-space:nowrap;">CUPS <i class="fas fa-sort text-muted sort-ico"></i></th>
+    <th class="th-sort" data-col="citas" style="cursor:pointer;white-space:nowrap;">Citas <i class="fas fa-sort text-muted sort-ico"></i></th>
     <th>Consentimientos</th>
     <th>Acción</th>
-</tr></thead><tbody>`;
+</tr></thead><tbody id="tbodyPacientes">`;
 
         response.pacientes.forEach(function(pac) {
             // Mostrar PRIMERA cita ordenada (ya viene ordenada por hora asc)
@@ -352,7 +352,12 @@ html += `<thead class="thead-light"><tr>
             }
 
             html += `
-                <tr>
+                <tr data-hora="${primeraCita.fecha || ''}"
+                    data-nombre="${pac.nombre_completo.toLowerCase()}"
+                    data-documento="${pac.documento}"
+                    data-centro="${primeraCita.centroprod || ''}"
+                    data-cups="${primeraCita.cups_codigo || ''}"
+                    data-citas="${pac.citas_count}">
                     <td class="text-center">
                         <strong class="text-primary">${primeraCita.hora_completa}</strong><br>
                         <small class="text-muted">${new Date(primeraCita.fecha).toLocaleDateString('es-CO')}</small>
@@ -722,6 +727,37 @@ window.copiarLink = function(inputId) {
         Swal.fire({ toast: true, icon: 'success', title: 'Enlace copiado', position: 'top-end', timer: 1500, showConfirmButton: false });
     });
 };
+
+// ========== ORDENAR TABLA PACIENTES ==========
+let sortCol = 'hora', sortDir = 'asc';
+
+$(document).on('click', '.th-sort', function() {
+    const col = $(this).data('col');
+    sortDir = (sortCol === col && sortDir === 'asc') ? 'desc' : 'asc';
+    sortCol = col;
+
+    // Íconos
+    $('.th-sort .sort-ico').removeClass('fa-sort-up fa-sort-down text-primary').addClass('fa-sort text-muted');
+    $(this).find('.sort-ico')
+        .removeClass('fa-sort text-muted')
+        .addClass((sortDir === 'asc' ? 'fa-sort-up' : 'fa-sort-down') + ' text-primary');
+
+    const tbody = document.getElementById('tbodyPacientes');
+    if (!tbody) return;
+
+    Array.from(tbody.querySelectorAll('tr'))
+        .sort((a, b) => {
+            let va = (a.dataset[col] || '').trim();
+            let vb = (b.dataset[col] || '').trim();
+            if (col === 'citas') {
+                return sortDir === 'asc' ? (parseInt(va)||0) - (parseInt(vb)||0)
+                                         : (parseInt(vb)||0) - (parseInt(va)||0);
+            }
+            const cmp = va.localeCompare(vb, 'es', { numeric: true, sensitivity: 'base' });
+            return sortDir === 'asc' ? cmp : -cmp;
+        })
+        .forEach(row => tbody.appendChild(row));
+});
 
 // Al cerrar el modal de links, queda en la lista de pacientes con filtros intactos
 window.resetFormCrear = function() {

@@ -608,7 +608,7 @@ public function ajaxPacientesPorFiltros(Request $request)
                 })->values()
             ];
         })
-        ->sortBy('fecha')
+        ->sortBy(fn($p) => $p['citas']->first()['fecha'] ?? '')
         ->values();
     
     return response()->json([
