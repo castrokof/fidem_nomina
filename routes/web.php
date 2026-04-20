@@ -482,6 +482,7 @@ Route::group(['prefix' => 'admin', 'namespace' => 'Admin', 'middleware' => ['far
     Route::post('consentimientos', 'ConsentimientoController@store')->name('consentimientos.store');
     Route::get('consentimientos/{id}', 'ConsentimientoController@show')->name('consentimientos.show');
     Route::get('consentimientos/{id}/pdf', 'ConsentimientoController@descargarPdf')->name('consentimientos.pdf');
+    Route::patch('consentimientos/{id}/anular', 'ConsentimientoController@anular')->name('consentimientos.anular');
 
     // Ruta para crear consentimiento desde una agenda específica
 Route::get('consentimientos/crear-desde-agenda/{agenda_id}','ConsentimientoController@createFromAgenda')->name('consentimientos.create-from-agenda');
