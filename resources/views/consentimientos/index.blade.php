@@ -20,6 +20,48 @@
             "order": [[0, "desc"]]
         });
 
+        // ========== ANULAR CONSENTIMIENTO ==========
+        $(document).on('click', '.btn-anular', function() {
+            const btn  = $(this);
+            const url  = btn.data('url');
+            const pac  = btn.data('paciente');
+            const plnt = btn.data('plantilla');
+
+            Swal.fire({
+                title: '¿Anular consentimiento?',
+                html: `<p>Paciente: <strong>${pac}</strong></p><p>Procedimiento: <strong>${plnt}</strong></p><p class="text-danger mt-2">Esta acción no se puede revertir.</p>`,
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: '#d33',
+                cancelButtonColor: '#6c757d',
+                confirmButtonText: '<i class="fas fa-ban"></i> Sí, anular',
+                cancelButtonText: 'Cancelar'
+            }).then(function(result) {
+                if (!result.isConfirmed) return;
+
+                $.ajax({
+                    url: url,
+                    method: 'POST',
+                    data: { _token: '{{ csrf_token() }}', _method: 'PATCH' },
+                    success: function(response) {
+                        if (response.success) {
+                            // Actualizar badge de estado en la fila
+                            const fila = btn.closest('tr');
+                            fila.find('td:nth-child(7)').html('<span class="badge badge-danger"><i class="fas fa-times"></i> Anulado</span>');
+                            // Ocultar botones que ya no aplican (link y anular)
+                            fila.find('.btn-anular, .btn-warning[title="Copiar enlace de firma"]').remove();
+
+                            Swal.fire({ toast: true, icon: 'success', title: response.message,
+                                position: 'top-end', timer: 3000, showConfirmButton: false });
+                        }
+                    },
+                    error: function(xhr) {
+                        Swal.fire('Error', xhr.responseJSON?.message || 'No se pudo anular el consentimiento.', 'error');
+                    }
+                });
+            });
+        });
+
         // Función para sincronizar agenda
         $('#btnSincronizarAgenda').click(function() {
             if (!confirm('¿Desea sincronizar la agenda de consentimientos informados desde la API?')) return;
@@ -142,6 +184,17 @@
                                         @if($consentimiento->estado == 'pendiente')
                                             <button type="button" class="btn btn-warning btn-sm" title="Copiar enlace de firma" onclick="copiarEnlaceFirma('{{ route('consentimientos.firmar', $consentimiento->token_firma) }}')">
                                                 <i class="fas fa-link"></i>
+                                            </button>
+                                        @endif
+                                        @if($consentimiento->estado != 'anulado')
+                                            <button type="button"
+                                                class="btn btn-secondary btn-sm btn-anular"
+                                                title="Anular consentimiento"
+                                                data-id="{{ $consentimiento->id }}"
+                                                data-url="{{ route('consentimientos.anular', $consentimiento->id) }}"
+                                                data-paciente="{{ $consentimiento->paciente->nombres }} {{ $consentimiento->paciente->apellidos }}"
+                                                data-plantilla="{{ $consentimiento->plantilla->nombre }}">
+                                                <i class="fas fa-ban"></i>
                                             </button>
                                         @endif
                                     </td>

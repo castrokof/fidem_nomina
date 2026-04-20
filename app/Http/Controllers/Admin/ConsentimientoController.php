@@ -510,6 +510,22 @@ public function store(Request $request)
     // Agregar al final de ConsentimientoController.php
 
 /**
+ * Anular un consentimiento informado
+ */
+public function anular($id)
+{
+    $consentimiento = ConsentimientoInformado::findOrFail($id);
+
+    if ($consentimiento->estado === 'anulado') {
+        return response()->json(['success' => false, 'message' => 'El consentimiento ya está anulado.'], 422);
+    }
+
+    $consentimiento->update(['estado' => 'anulado']);
+
+    return response()->json(['success' => true, 'message' => 'Consentimiento anulado correctamente.']);
+}
+
+/**
  * AJAX: Obtener pacientes filtrados con datos completos de sus citas
  */
 public function ajaxPacientesPorFiltros(Request $request)
@@ -608,7 +624,7 @@ public function ajaxPacientesPorFiltros(Request $request)
                 })->values()
             ];
         })
-        ->sortBy('fecha')
+        ->sortBy(fn($p) => $p['citas']->first()['fecha'] ?? '')
         ->values();
     
     return response()->json([
