@@ -95,23 +95,33 @@ class ConsentimientoController extends Controller
     {
         $query = ConsentimientoInformado::with(['paciente', 'profesional', 'plantilla']);
 
-        // Filtros
         if ($request->filled('estado')) {
             $query->where('estado', $request->estado);
         }
 
-        if ($request->filled('buscar')) {
-            $buscar = $request->buscar;
-            $query->where(function($q) use ($buscar) {
-                $q->where('paciente_nombre', 'like', "%{$buscar}%")
-                  ->orWhere('paciente_cedula', 'like', "%{$buscar}%")
-                  ->orWhere('profesional_nombre', 'like', "%{$buscar}%");
-            });
+        if ($request->filled('documento')) {
+            $query->where('paciente_cedula', 'like', '%' . $request->documento . '%');
         }
 
-        $consentimientos = $query->orderBy('created_at', 'desc')->paginate(20);
+        if ($request->filled('medico')) {
+            $query->where('profesional_id', $request->medico);
+        }
 
-        return view('consentimientos.index', compact('consentimientos'));
+        if ($request->filled('fecha_desde')) {
+            $query->whereDate('fecha_procedimiento', '>=', $request->fecha_desde);
+        }
+
+        if ($request->filled('fecha_hasta')) {
+            $query->whereDate('fecha_procedimiento', '<=', $request->fecha_hasta);
+        }
+
+        $consentimientos = $query->orderBy('fecha_procedimiento', 'desc')->get();
+
+        $medicos = Profesional::whereHas('consentimientos')
+            ->orderBy('apellidos')->orderBy('nombres')
+            ->get(['id', 'nombres', 'apellidos']);
+
+        return view('consentimientos.index', compact('consentimientos', 'medicos'));
     }
 
    /**
