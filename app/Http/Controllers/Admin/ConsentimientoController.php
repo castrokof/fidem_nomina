@@ -93,35 +93,55 @@ class ConsentimientoController extends Controller
      */
     public function index(Request $request)
     {
-        $query = ConsentimientoInformado::with(['paciente', 'profesional', 'plantilla']);
-
-        if ($request->filled('estado')) {
-            $query->where('estado', $request->estado);
-        }
-
-        if ($request->filled('documento')) {
-            $query->where('paciente_cedula', 'like', '%' . $request->documento . '%');
-        }
-
-        if ($request->filled('medico')) {
-            $query->where('profesional_id', $request->medico);
-        }
-
-        if ($request->filled('fecha_desde')) {
-            $query->whereDate('fecha_procedimiento', '>=', $request->fecha_desde);
-        }
-
-        if ($request->filled('fecha_hasta')) {
-            $query->whereDate('fecha_procedimiento', '<=', $request->fecha_hasta);
-        }
-
-        $consentimientos = $query->orderBy('fecha_procedimiento', 'desc')->get();
-
         $medicos = Profesional::whereHas('consentimientos')
             ->orderBy('apellidos')->orderBy('nombres')
             ->get(['id', 'nombres', 'apellidos']);
 
-        return view('consentimientos.index', compact('consentimientos', 'medicos'));
+        if ($request->ajax()) {
+            $query = ConsentimientoInformado::with(['paciente', 'profesional', 'plantilla']);
+
+            if ($request->filled('estado')) {
+                $query->where('estado', $request->estado);
+            }
+            if ($request->filled('documento')) {
+                $query->where('paciente_cedula', 'like', '%' . $request->documento . '%');
+            }
+            if ($request->filled('medico')) {
+                $query->where('profesional_id', $request->medico);
+            }
+            if ($request->filled('fecha_desde')) {
+                $query->whereDate('fecha_procedimiento', '>=', $request->fecha_desde);
+            }
+            if ($request->filled('fecha_hasta')) {
+                $query->whereDate('fecha_procedimiento', '<=', $request->fecha_hasta);
+            }
+
+            $consentimientos = $query->orderBy('fecha_procedimiento', 'desc')->get();
+
+            return response()->json([
+                'success' => true,
+                'total'   => $consentimientos->count(),
+                'consentimientos' => $consentimientos->map(function ($c) {
+                    return [
+                        'id'                 => $c->id,
+                        'paciente'           => $c->paciente->nombres . ' ' . $c->paciente->apellidos,
+                        'documento'          => $c->paciente->tipo_documento . '-' . $c->paciente->numero_documento,
+                        'plantilla'          => $c->plantilla->nombre,
+                        'profesional'        => $c->profesional->nombres . ' ' . $c->profesional->apellidos,
+                        'fecha_procedimiento'=> \Carbon\Carbon::parse($c->fecha_procedimiento)->format('d/m/Y H:i'),
+                        'fecha_sort'         => $c->fecha_procedimiento,
+                        'estado'             => $c->estado,
+                        'token_firma'        => $c->token_firma,
+                        'url_show'           => route('consentimientos.show', $c->id),
+                        'url_pdf'            => route('consentimientos.pdf', $c->id),
+                        'url_firma'          => route('consentimientos.firmar', $c->token_firma),
+                        'url_anular'         => route('consentimientos.anular', $c->id),
+                    ];
+                }),
+            ]);
+        }
+
+        return view('consentimientos.index', compact('medicos'));
     }
 
    /**

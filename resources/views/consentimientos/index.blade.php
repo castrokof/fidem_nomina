@@ -12,82 +12,187 @@
 <script src="{{asset("assets/$theme/plugins/datatables/jquery.dataTables.js")}}"></script>
 <script src="{{asset("assets/$theme/plugins/datatables-bs4/js/dataTables.bootstrap4.js")}}"></script>
 <script>
-    $(document).ready(function() {
-        $('#tablaConsentimientos').DataTable({
-            "language": { "url": "//cdn.datatables.net/plug-ins/1.10.21/i18n/Spanish.json" },
-            "order": [[5, "desc"]],
-            "pageLength": 25
+$(document).ready(function() {
+
+    let dtInstance = null;
+
+    // ── Inicializar DataTable vacío ──────────────────────────────────────────
+    function initDT() {
+        if (dtInstance) { dtInstance.destroy(); dtInstance = null; }
+        dtInstance = $('#tablaConsentimientos').DataTable({
+            language: { url: '//cdn.datatables.net/plug-ins/1.10.21/i18n/Spanish.json' },
+            order: [[5, 'desc']],
+            pageLength: 25
         });
+    }
+    initDT();
 
-        // ========== ANULAR CONSENTIMIENTO ==========
-        $(document).on('click', '.btn-anular', function() {
-            const btn  = $(this);
-            const url  = btn.data('url');
-            const pac  = btn.data('paciente');
-            const plnt = btn.data('plantilla');
+    // ── Renderizar filas desde JSON ──────────────────────────────────────────
+    function renderTabla(data) {
+        if (dtInstance) { dtInstance.destroy(); dtInstance = null; }
 
-            Swal.fire({
-                title: '¿Anular consentimiento?',
-                html: `<p>Paciente: <strong>${pac}</strong></p><p>Procedimiento: <strong>${plnt}</strong></p><p class="text-danger mt-2">Esta acción no se puede revertir.</p>`,
-                icon: 'warning',
-                showCancelButton: true,
-                confirmButtonColor: '#d33',
-                cancelButtonColor: '#6c757d',
-                confirmButtonText: '<i class="fas fa-ban"></i> Sí, anular',
-                cancelButtonText: 'Cancelar'
-            }).then(function(result) {
-                if (!result.isConfirmed) return;
+        const tbody = document.querySelector('#tablaConsentimientos tbody');
 
-                $.ajax({
-                    url: url,
-                    method: 'POST',
-                    data: { _token: '{{ csrf_token() }}', _method: 'PATCH' },
-                    success: function(response) {
-                        if (response.success) {
-                            // Actualizar badge de estado en la fila
-                            const fila = btn.closest('tr');
-                            fila.find('td:nth-child(7)').html('<span class="badge badge-danger"><i class="fas fa-times"></i> Anulado</span>');
-                            // Ocultar botones que ya no aplican (link y anular)
-                            fila.find('.btn-anular, .btn-warning[title="Copiar enlace de firma"]').remove();
+        if (!data.length) {
+            tbody.innerHTML = '<tr><td colspan="8" class="text-center text-muted py-4">'
+                + '<i class="fas fa-search mr-2"></i>No se encontraron resultados con los filtros aplicados.</td></tr>';
+            initDT();
+            return;
+        }
 
-                            Swal.fire({ toast: true, icon: 'success', title: response.message,
-                                position: 'top-end', timer: 3000, showConfirmButton: false });
-                        }
-                    },
-                    error: function(xhr) {
-                        Swal.fire('Error', xhr.responseJSON?.message || 'No se pudo anular el consentimiento.', 'error');
-                    }
-                });
-            });
+        tbody.innerHTML = data.map(function(c) {
+            let badge = '';
+            if      (c.estado === 'pendiente')  badge = '<span class="badge badge-warning"><i class="fas fa-clock"></i> Pendiente</span>';
+            else if (c.estado === 'en_proceso')  badge = '<span class="badge badge-info"><i class="fas fa-spinner"></i> En proceso</span>';
+            else if (c.estado === 'firmado')     badge = '<span class="badge badge-success"><i class="fas fa-check"></i> Firmado</span>';
+            else if (c.estado === 'anulado')     badge = '<span class="badge badge-danger"><i class="fas fa-times"></i> Anulado</span>';
+            else                                 badge = '<span class="badge badge-secondary">' + c.estado + '</span>';
+
+            const pac  = (c.paciente  || '').replace(/"/g, '&quot;');
+            const plnt = (c.plantilla || '').replace(/"/g, '&quot;');
+
+            let acc = `<a href="${c.url_show}" class="btn btn-info btn-sm" title="Ver Detalle"><i class="fas fa-eye"></i></a> `;
+            if (c.estado === 'firmado')
+                acc += `<a href="${c.url_pdf}" class="btn btn-danger btn-sm" title="Descargar PDF" target="_blank"><i class="fas fa-file-pdf"></i></a> `;
+            if (c.estado === 'pendiente')
+                acc += `<button type="button" class="btn btn-warning btn-sm" title="Copiar enlace de firma"
+                            onclick="copiarEnlaceFirma('${c.url_firma}')"><i class="fas fa-link"></i></button> `;
+            if (c.estado !== 'anulado')
+                acc += `<button type="button" class="btn btn-secondary btn-sm btn-anular" title="Anular consentimiento"
+                            data-url="${c.url_anular}" data-paciente="${pac}" data-plantilla="${plnt}">
+                            <i class="fas fa-ban"></i></button>`;
+
+            return `<tr>
+                <td>${c.id}</td>
+                <td>${c.paciente}</td>
+                <td>${c.documento}</td>
+                <td>${c.plantilla}</td>
+                <td>${c.profesional}</td>
+                <td data-order="${c.fecha_sort}">${c.fecha_procedimiento}</td>
+                <td>${badge}</td>
+                <td class="text-center">${acc}</td>
+            </tr>`;
+        }).join('');
+
+        initDT();
+    }
+
+    // ── Buscar vía AJAX ──────────────────────────────────────────────────────
+    $('#formFiltros').submit(function(e) {
+        e.preventDefault();
+
+        const $btn = $('#btnBuscar');
+        $btn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i> Buscando...');
+        $('#contadorResultados').text('');
+
+        $.ajax({
+            url:  '{{ route("consentimientos.index") }}',
+            type: 'GET',
+            data: $(this).serialize(),
+            headers: { 'X-Requested-With': 'XMLHttpRequest' },
+            success: function(res) {
+                renderTabla(res.consentimientos || []);
+                const n = res.total || 0;
+                $('#contadorResultados').html(
+                    `<span class="text-muted small ml-2"><i class="fas fa-list mr-1"></i>${n} resultado(s)</span>`
+                );
+            },
+            error: function() {
+                Swal.fire('Error', 'No se pudieron cargar los datos.', 'error');
+            },
+            complete: function() {
+                $btn.prop('disabled', false).html('<i class="fas fa-search"></i> Buscar');
+            }
         });
+    });
 
-        // Función para sincronizar agenda
-        $('#btnSincronizarAgenda').click(function() {
-            if (!confirm('¿Desea sincronizar la agenda de consentimientos informados desde la API?')) return;
+    // ── Limpiar filtros ──────────────────────────────────────────────────────
+    $('#btnLimpiar').click(function() {
+        $('#formFiltros')[0].reset();
+        $('#contadorResultados').text('');
+        if (dtInstance) { dtInstance.destroy(); dtInstance = null; }
+        document.querySelector('#tablaConsentimientos tbody').innerHTML =
+            '<tr><td colspan="8" class="text-center text-muted py-4">'
+            + '<i class="fas fa-filter mr-2"></i>Use los filtros para buscar consentimientos.</td></tr>';
+        initDT();
+    });
 
-            const btn = $(this);
-            const originalHtml = btn.html();
-            btn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i> Sincronizando...');
+    // ── Anular consentimiento ────────────────────────────────────────────────
+    $(document).on('click', '.btn-anular', function() {
+        const btn  = $(this);
+        const url  = btn.data('url');
+        const pac  = btn.data('paciente');
+        const plnt = btn.data('plantilla');
+
+        Swal.fire({
+            title: '¿Anular consentimiento?',
+            html: `<p>Paciente: <strong>${pac}</strong></p><p>Procedimiento: <strong>${plnt}</strong></p>
+                   <p class="text-danger mt-2">Esta acción no se puede revertir.</p>`,
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#d33',
+            cancelButtonColor: '#6c757d',
+            confirmButtonText: '<i class="fas fa-ban"></i> Sí, anular',
+            cancelButtonText: 'Cancelar'
+        }).then(function(result) {
+            if (!result.isConfirmed) return;
 
             $.ajax({
-                url: '{{ route("agenda.sync.sincronizar") }}',
+                url: url,
                 method: 'POST',
-                data: {
-                    _token: '{{ csrf_token() }}',
-                    dias_atras: 2,
-                    dias_adelante: 3
-                },
+                data: { _token: '{{ csrf_token() }}', _method: 'PATCH' },
                 success: function(response) {
-                    alert('✓ ' + response.message + '\n\nEl job se ha agregado a la cola y se procesará automáticamente.');
-                    btn.prop('disabled', false).html(originalHtml);
+                    if (response.success) {
+                        const fila = btn.closest('tr');
+                        fila.find('td:nth-child(7)').html(
+                            '<span class="badge badge-danger"><i class="fas fa-times"></i> Anulado</span>'
+                        );
+                        fila.find('.btn-anular, .btn-warning[title="Copiar enlace de firma"]').remove();
+                        Swal.fire({ toast: true, icon: 'success', title: response.message,
+                            position: 'top-end', timer: 3000, showConfirmButton: false });
+                    }
                 },
                 error: function(xhr) {
-                    alert('Error: ' + (xhr.responseJSON?.message || 'No se pudo sincronizar. Verifica que el sistema de colas esté configurado.'));
-                    btn.prop('disabled', false).html(originalHtml);
+                    Swal.fire('Error', xhr.responseJSON?.message || 'No se pudo anular.', 'error');
                 }
             });
         });
     });
+
+    // ── Sincronizar agenda ───────────────────────────────────────────────────
+    $('#btnSincronizarAgenda').click(function() {
+        if (!confirm('¿Desea sincronizar la agenda desde la API?')) return;
+        const btn = $(this), orig = btn.html();
+        btn.prop('disabled', true).html('<i class="fas fa-spinner fa-spin"></i> Sincronizando...');
+        $.ajax({
+            url: '{{ route("agenda.sync.sincronizar") }}',
+            method: 'POST',
+            data: { _token: '{{ csrf_token() }}', dias_atras: 2, dias_adelante: 3 },
+            success: function(r) {
+                alert('✓ ' + r.message + '\n\nEl job se procesará automáticamente.');
+            },
+            error: function(xhr) {
+                alert('Error: ' + (xhr.responseJSON?.message || 'No se pudo sincronizar.'));
+            },
+            complete: function() { btn.prop('disabled', false).html(orig); }
+        });
+    });
+
+});
+
+function copiarEnlaceFirma(url) {
+    navigator.clipboard.writeText(url).then(function() {
+        Swal.fire({ toast: true, icon: 'success', title: 'Enlace copiado',
+            position: 'top-end', timer: 2000, showConfirmButton: false });
+    }).catch(function() {
+        const inp = document.createElement('input');
+        inp.value = url;
+        document.body.appendChild(inp);
+        inp.select(); document.execCommand('copy');
+        document.body.removeChild(inp);
+        alert('Enlace copiado:\n' + url);
+    });
+}
 </script>
 @endsection
 
@@ -112,43 +217,37 @@
     <section class="content">
         <div class="container-fluid">
 
-            {{-- Panel de filtros --}}
-            <div class="card card-outline card-primary mb-3">
+            {{-- Panel de filtros (colapsado por defecto) --}}
+            <div class="card card-outline card-primary collapsed-card mb-3">
                 <div class="card-header">
-                    <h3 class="card-title"><i class="fas fa-filter"></i> Filtros</h3>
+                    <h3 class="card-title"><i class="fas fa-filter"></i> Filtros de búsqueda</h3>
                     <div class="card-tools">
                         <button type="button" class="btn btn-tool" data-card-widget="collapse">
-                            <i class="fas fa-minus"></i>
+                            <i class="fas fa-plus"></i>
                         </button>
                     </div>
                 </div>
-                <div class="card-body">
-                    <form method="GET" action="{{ route('consentimientos.index') }}" id="formFiltros">
+                <div class="card-body" style="display:none;">
+                    <form id="formFiltros">
                         <div class="row align-items-end">
                             <div class="col-md-2 col-sm-6 mb-2">
                                 <label class="small font-weight-bold">Fecha desde</label>
-                                <input type="date" name="fecha_desde" class="form-control form-control-sm"
-                                       value="{{ request('fecha_desde') }}">
+                                <input type="date" name="fecha_desde" class="form-control form-control-sm">
                             </div>
                             <div class="col-md-2 col-sm-6 mb-2">
                                 <label class="small font-weight-bold">Fecha hasta</label>
-                                <input type="date" name="fecha_hasta" class="form-control form-control-sm"
-                                       value="{{ request('fecha_hasta') }}">
+                                <input type="date" name="fecha_hasta" class="form-control form-control-sm">
                             </div>
                             <div class="col-md-2 col-sm-6 mb-2">
                                 <label class="small font-weight-bold">Documento paciente</label>
-                                <input type="text" name="documento" class="form-control form-control-sm"
-                                       placeholder="Ej: 1234567"
-                                       value="{{ request('documento') }}">
+                                <input type="text" name="documento" class="form-control form-control-sm" placeholder="Ej: 1234567">
                             </div>
                             <div class="col-md-3 col-sm-6 mb-2">
                                 <label class="small font-weight-bold">Médico</label>
                                 <select name="medico" class="form-control form-control-sm">
                                     <option value="">Todos</option>
                                     @foreach($medicos as $m)
-                                        <option value="{{ $m->id }}" {{ request('medico') == $m->id ? 'selected' : '' }}>
-                                            {{ $m->apellidos }}, {{ $m->nombres }}
-                                        </option>
+                                        <option value="{{ $m->id }}">{{ $m->apellidos }}, {{ $m->nombres }}</option>
                                     @endforeach
                                 </select>
                             </div>
@@ -156,26 +255,24 @@
                                 <label class="small font-weight-bold">Estado</label>
                                 <select name="estado" class="form-control form-control-sm">
                                     <option value="">Todos</option>
-                                    <option value="pendiente"  {{ request('estado') == 'pendiente'  ? 'selected' : '' }}>Pendiente</option>
-                                    <option value="en_proceso" {{ request('estado') == 'en_proceso' ? 'selected' : '' }}>En proceso</option>
-                                    <option value="firmado"    {{ request('estado') == 'firmado'    ? 'selected' : '' }}>Firmado</option>
-                                    <option value="anulado"    {{ request('estado') == 'anulado'    ? 'selected' : '' }}>Anulado</option>
+                                    <option value="pendiente">Pendiente</option>
+                                    <option value="en_proceso">En proceso</option>
+                                    <option value="firmado">Firmado</option>
+                                    <option value="anulado">Anulado</option>
                                 </select>
                             </div>
                             <div class="col-md-1 col-sm-12 mb-2 d-flex align-items-end">
-                                <button type="submit" class="btn btn-primary btn-sm btn-block">
+                                <button type="submit" class="btn btn-primary btn-sm btn-block" id="btnBuscar">
                                     <i class="fas fa-search"></i> Buscar
                                 </button>
                             </div>
                         </div>
-                        @if(request()->hasAny(['fecha_desde','fecha_hasta','documento','medico','estado']))
-                            <div class="mt-1">
-                                <a href="{{ route('consentimientos.index') }}" class="btn btn-link btn-sm p-0 text-secondary">
-                                    <i class="fas fa-times-circle"></i> Limpiar filtros
-                                </a>
-                                <span class="text-muted small ml-2">{{ $consentimientos->count() }} resultado(s)</span>
-                            </div>
-                        @endif
+                        <div class="d-flex align-items-center mt-1">
+                            <button type="button" id="btnLimpiar" class="btn btn-link btn-sm p-0 text-secondary">
+                                <i class="fas fa-times-circle"></i> Limpiar filtros
+                            </button>
+                            <span id="contadorResultados"></span>
+                        </div>
                     </form>
                 </div>
             </div>
@@ -193,15 +290,6 @@
                     </div>
                 </div>
                 <div class="card-body">
-                    @if(session('success'))
-                        <div class="alert alert-success alert-dismissible fade show" role="alert">
-                            <i class="fas fa-check-circle"></i> {{ session('success') }}
-                            <button type="button" class="close" data-dismiss="alert" aria-label="Close">
-                                <span aria-hidden="true">&times;</span>
-                            </button>
-                        </div>
-                    @endif
-
                     <div class="table-responsive">
                         <table id="tablaConsentimientos" class="table table-bordered table-striped table-hover">
                             <thead class="thead-dark">
@@ -217,76 +305,18 @@
                                 </tr>
                             </thead>
                             <tbody>
-                                @foreach($consentimientos as $consentimiento)
                                 <tr>
-                                    <td>{{ $consentimiento->id }}</td>
-                                    <td>{{ $consentimiento->paciente->nombres }} {{ $consentimiento->paciente->apellidos }}</td>
-                                    <td>{{ $consentimiento->paciente->tipo_documento }}-{{ $consentimiento->paciente->numero_documento }}</td>
-                                    <td>{{ $consentimiento->plantilla->nombre }}</td>
-                                    <td>{{ $consentimiento->profesional->nombres }} {{ $consentimiento->profesional->apellidos }}</td>
-                                    <td>{{ \Carbon\Carbon::parse($consentimiento->fecha_procedimiento)->format('d/m/Y H:i') }}</td>
-                                    <td>
-                                        @if($consentimiento->estado == 'pendiente')
-                                            <span class="badge badge-warning">
-                                                <i class="fas fa-clock"></i> Pendiente
-                                            </span>
-                                        @elseif($consentimiento->estado == 'firmado')
-                                            <span class="badge badge-success">
-                                                <i class="fas fa-check"></i> Firmado
-                                            </span>
-                                        @elseif($consentimiento->estado == 'anulado')
-                                            <span class="badge badge-danger">
-                                                <i class="fas fa-times"></i> Anulado
-                                            </span>
-                                        @endif
-                                    </td>
-                                    <td class="text-center">
-                                        <a href="{{route('consentimientos.show', $consentimiento->id)}}" class="btn btn-info btn-sm" title="Ver Detalle">
-                                            <i class="fas fa-eye"></i>
-                                        </a>
-                                        @if($consentimiento->estado == 'firmado')
-                                            <a href="{{route('consentimientos.pdf', $consentimiento->id)}}" class="btn btn-danger btn-sm" title="Descargar PDF" target="_blank">
-                                                <i class="fas fa-file-pdf"></i>
-                                            </a>
-                                        @endif
-                                        @if($consentimiento->estado == 'pendiente')
-                                            <button type="button" class="btn btn-warning btn-sm" title="Copiar enlace de firma" onclick="copiarEnlaceFirma('{{ route('consentimientos.firmar', $consentimiento->token_firma) }}')">
-                                                <i class="fas fa-link"></i>
-                                            </button>
-                                        @endif
-                                        @if($consentimiento->estado != 'anulado')
-                                            <button type="button"
-                                                class="btn btn-secondary btn-sm btn-anular"
-                                                title="Anular consentimiento"
-                                                data-id="{{ $consentimiento->id }}"
-                                                data-url="{{ route('consentimientos.anular', $consentimiento->id) }}"
-                                                data-paciente="{{ $consentimiento->paciente->nombres }} {{ $consentimiento->paciente->apellidos }}"
-                                                data-plantilla="{{ $consentimiento->plantilla->nombre }}">
-                                                <i class="fas fa-ban"></i>
-                                            </button>
-                                        @endif
+                                    <td colspan="8" class="text-center text-muted py-4">
+                                        <i class="fas fa-filter mr-2"></i>Use los filtros para buscar consentimientos.
                                     </td>
                                 </tr>
-                                @endforeach
                             </tbody>
                         </table>
                     </div>
                 </div>
             </div>
+
         </div>
     </section>
 </div>
-
-<script>
-    function copiarEnlaceFirma(url) {
-        const input = document.createElement('input');
-        input.value = url;
-        document.body.appendChild(input);
-        input.select();
-        document.execCommand('copy');
-        document.body.removeChild(input);
-
-        alert('Enlace copiado al portapapeles:\n' + url);
-    }
-</script>
 @endsection
