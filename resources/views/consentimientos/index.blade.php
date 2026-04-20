@@ -16,11 +16,14 @@ $(document).ready(function() {
 
     let dtInstance = null;
 
-    // ── Inicializar DataTable vacío ──────────────────────────────────────────
+    // ── Inicializar DataTable ────────────────────────────────────────────────
     function initDT() {
         if (dtInstance) { dtInstance.destroy(); dtInstance = null; }
         dtInstance = $('#tablaConsentimientos').DataTable({
-            language: { url: '//cdn.datatables.net/plug-ins/1.10.21/i18n/Spanish.json' },
+            language: {
+                url: '//cdn.datatables.net/plug-ins/1.10.21/i18n/Spanish.json',
+                emptyTable: '<i class="fas fa-filter mr-1"></i> Use los filtros para buscar consentimientos.'
+            },
             order: [[5, 'desc']],
             pageLength: 25
         });
@@ -31,16 +34,15 @@ $(document).ready(function() {
     function renderTabla(data) {
         if (dtInstance) { dtInstance.destroy(); dtInstance = null; }
 
-        const tbody = document.querySelector('#tablaConsentimientos tbody');
+        const tbody = $('#tablaConsentimientos tbody');
+        tbody.empty();
 
         if (!data.length) {
-            tbody.innerHTML = '<tr><td colspan="8" class="text-center text-muted py-4">'
-                + '<i class="fas fa-search mr-2"></i>No se encontraron resultados con los filtros aplicados.</td></tr>';
-            initDT();
+            initDT(); // DataTables mostrará el mensaje emptyTable
             return;
         }
 
-        tbody.innerHTML = data.map(function(c) {
+        tbody.html(data.map(function(c) {
             let badge = '';
             if      (c.estado === 'pendiente')  badge = '<span class="badge badge-warning"><i class="fas fa-clock"></i> Pendiente</span>';
             else if (c.estado === 'en_proceso')  badge = '<span class="badge badge-info"><i class="fas fa-spinner"></i> En proceso</span>';
@@ -72,7 +74,7 @@ $(document).ready(function() {
                 <td>${badge}</td>
                 <td class="text-center">${acc}</td>
             </tr>`;
-        }).join('');
+        }).join(''));
 
         initDT();
     }
@@ -111,9 +113,7 @@ $(document).ready(function() {
         $('#formFiltros')[0].reset();
         $('#contadorResultados').text('');
         if (dtInstance) { dtInstance.destroy(); dtInstance = null; }
-        document.querySelector('#tablaConsentimientos tbody').innerHTML =
-            '<tr><td colspan="8" class="text-center text-muted py-4">'
-            + '<i class="fas fa-filter mr-2"></i>Use los filtros para buscar consentimientos.</td></tr>';
+        $('#tablaConsentimientos tbody').empty();
         initDT();
     });
 
@@ -304,13 +304,7 @@ function copiarEnlaceFirma(url) {
                                     <th>Acciones</th>
                                 </tr>
                             </thead>
-                            <tbody>
-                                <tr>
-                                    <td colspan="8" class="text-center text-muted py-4">
-                                        <i class="fas fa-filter mr-2"></i>Use los filtros para buscar consentimientos.
-                                    </td>
-                                </tr>
-                            </tbody>
+                            <tbody></tbody>
                         </table>
                     </div>
                 </div>
