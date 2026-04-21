@@ -456,6 +456,8 @@ Route::group(['prefix' => 'admin', 'namespace' => 'Admin', 'middleware' => ['far
 
     // Pacientes
     Route::get('pacientes', 'PacienteController@index')->name('pacientes.index');
+    Route::get('pacientes/ajax/buscar', 'PacienteController@ajaxBuscar')->name('pacientes.ajax.buscar');
+    Route::get('pacientes/ajax/{id}/detalle', 'PacienteController@ajaxDetalle')->name('pacientes.ajax.detalle');
     Route::get('pacientes/{id}', 'PacienteController@show')->name('pacientes.show');
     Route::get('pacientes/{id}/editar', 'PacienteController@edit')->name('pacientes.edit');
     Route::put('pacientes/{id}', 'PacienteController@update')->name('pacientes.update');
