@@ -286,6 +286,22 @@
 $(document).ready(function() {
     $('.select2').select2({ theme: 'bootstrap4', width: '100%' });
     
+    // ========== HELPER: ESTADO CITA ==========
+    const ESTADOS_CITA = {
+        0: { label: 'Asignada',            color: 'secondary', icon: 'calendar',       rowClass: '',             cancelada: false },
+        1: { label: 'Atendido',            color: 'success',   icon: 'check-circle',   rowClass: 'table-success', cancelada: false },
+        2: { label: 'Incumplido',          color: 'warning',   icon: 'user-times',     rowClass: 'table-warning', cancelada: true  },
+        3: { label: 'Cancelada',           color: 'danger',    icon: 'ban',            rowClass: 'table-danger',  cancelada: true  },
+        4: { label: 'Cancelada-Prestador', color: 'danger',    icon: 'times-circle',   rowClass: 'table-danger',  cancelada: true  },
+    };
+    function infoCita(estado) {
+        return ESTADOS_CITA[parseInt(estado)] || { label: 'Desconocido', color: 'light', icon: 'question', rowClass: '', cancelada: false };
+    }
+    function badgeEstadoCita(estado) {
+        const i = infoCita(estado);
+        return `<span class="badge badge-${i.color}"><i class="fas fa-${i.icon}"></i> ${i.label}</span>`;
+    }
+
     // ========== FILTRAR PACIENTES ==========
     $('#btnFiltrar').click(function() {
         const fecha = $('#fecha').val();
@@ -318,6 +334,7 @@ html += `<thead class="thead-light"><tr>
     <th class="th-sort" data-col="centro" style="cursor:pointer;white-space:nowrap;">Centro <i class="fas fa-sort text-muted sort-ico"></i></th>
     <th class="th-sort" data-col="cups" style="cursor:pointer;white-space:nowrap;">CUPS <i class="fas fa-sort text-muted sort-ico"></i></th>
     <th class="th-sort" data-col="citas" style="cursor:pointer;white-space:nowrap;">Citas <i class="fas fa-sort text-muted sort-ico"></i></th>
+    <th>Estado Cita</th>
     <th>Consentimientos</th>
     <th>Acción</th>
 </tr></thead><tbody id="tbodyPacientes">`;
@@ -351,8 +368,12 @@ html += `<thead class="thead-light"><tr>
                 }
             }
 
+            const eci = infoCita(primeraCita.estado);
+            const tachado = eci.cancelada ? 'style="text-decoration:line-through;opacity:.7;"' : '';
+
             html += `
-                <tr data-hora="${primeraCita.fecha || ''}"
+                <tr class="${eci.rowClass}"
+                    data-hora="${primeraCita.fecha || ''}"
                     data-nombre="${pac.nombre_completo.toLowerCase()}"
                     data-documento="${pac.documento}"
                     data-centro="${primeraCita.centroprod || ''}"
@@ -362,10 +383,10 @@ html += `<thead class="thead-light"><tr>
                         <strong class="text-primary">${primeraCita.hora_completa}</strong><br>
                         <small class="text-muted">${new Date(primeraCita.fecha).toLocaleDateString('es-CO')}</small>
                     </td>
-                    <td><strong>${pac.nombre_completo}</strong></td>
+                    <td ${tachado}><strong>${pac.nombre_completo}</strong></td>
                     <td>
                         <span class="badge badge-secondary">${pac.documento.split('-')[0]}</span><br>
-                        <small>${pac.documento.split('-')[1]}</small>
+                        <small ${tachado}>${pac.documento.split('-')[1]}</small>
                     </td>
                     <td class="text-center">
                         <span class="badge badge-info">${primeraCita.centroprod || '-'}</span>
@@ -374,24 +395,22 @@ html += `<thead class="thead-light"><tr>
                         <span class="badge badge-primary">${primeraCita.cups_codigo || '-'}</span>
                     </td>
                     <td class="text-center">
-                        <span class="badge badge-pill badge-success">${pac.citas_count}</span>
+                        <span class="badge badge-pill badge-secondary">${pac.citas_count}</span>
                     </td>
-                    <td class="text-center">
-                        ${badgeConsentimiento}
-                    </td>
+                    <td class="text-center">${badgeEstadoCita(primeraCita.estado)}</td>
+                    <td class="text-center">${badgeConsentimiento}</td>
                     <td>
                         <button type="button" class="btn btn-sm btn-info"
                             onclick="verDetallesPaciente(${pac.id}, ${JSON.stringify(pac.citas).replace(/"/g, '&quot;')})"
-            data-toggle="modal" data-target="#modalDetallesPaciente">
-            <i class="fas fa-eye"></i> Ver
-        </button>
-        <button type="button" class="btn btn-sm btn-success mt-1"
-            onclick="seleccionarPaciente(${pac.id})">
-            <i class="fas fa-check"></i> Seleccionar
-        </button>
-        </td>
-        </tr>
-        `;
+                            data-toggle="modal" data-target="#modalDetallesPaciente">
+                            <i class="fas fa-eye"></i> Ver
+                        </button>
+                        <button type="button" class="btn btn-sm ${eci.cancelada ? 'btn-outline-secondary' : 'btn-success'} mt-1"
+                            onclick="seleccionarPaciente(${pac.id}, ${primeraCita.estado})">
+                            <i class="fas fa-check"></i> Seleccionar
+                        </button>
+                    </td>
+                </tr>`;
         });
         html += '</tbody></table></div>';
         $('#listaPacientes').html(html);
@@ -407,7 +426,27 @@ html += `<thead class="thead-light"><tr>
     });
     
     // ========== SELECCIONAR PACIENTE → abre modal ==========
-    window.seleccionarPaciente = function(pacienteId) {
+    window.seleccionarPaciente = function(pacienteId, estadoCita) {
+        const eci = infoCita(estadoCita);
+        if (eci.cancelada) {
+            Swal.fire({
+                title: 'Cita con estado especial',
+                html: `<p>Esta cita tiene estado: <strong class="text-danger">${eci.label}</strong></p>
+                       <p class="text-muted small">¿Desea crear el consentimiento de todas formas?</p>`,
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonText: 'Sí, continuar',
+                cancelButtonText: 'Cancelar',
+                confirmButtonColor: '#f39c12',
+            }).then(function(r) {
+                if (r.isConfirmed) _abrirModalCrear(pacienteId);
+            });
+            return;
+        }
+        _abrirModalCrear(pacienteId);
+    };
+
+    function _abrirModalCrear(pacienteId) {
         const fecha = $('#fecha').val();
         const codigoUsuario = $('#codigo_usuario').val();
 
@@ -644,15 +683,6 @@ window.verDetallesPaciente = function(pacienteId, citas) {
     
     // ✅ Las citas ya vienen ordenadas por fecha asc desde el controller
     citas.forEach(function(cita) {
-        let estadoIcon = '🕐';
-        let estadoClass = 'badge badge-warning';
-        if (cita.llegada_confirmada) {
-            estadoIcon = '✅';
-            estadoClass = 'badge badge-success';
-        } else if (cita.atendido == '1') {
-            estadoIcon = '👤';
-            estadoClass = 'badge badge-info';
-        }
 
         // ✅ Badge de consentimientos para el modal
         let badgeConsentimiento = '';
@@ -699,7 +729,7 @@ window.verDetallesPaciente = function(pacienteId, citas) {
                 </td>
                 <td><small>${cita.contrato ? cita.contrato.substring(0,10) : '-'}</small></td>
                 <td><small>${cita.empresafac || '-'}</small></td>
-                <td class="text-center"><span class="${estadoClass}">${estadoIcon}</span></td>
+                <td class="text-center">${badgeEstadoCita(cita.estado)}</td>
             </tr>
         `;
     });

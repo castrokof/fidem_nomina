@@ -280,11 +280,11 @@ function copiarEnlaceFirma(url) {
                         <div class="row align-items-end">
                             <div class="col-md-2 col-sm-6 mb-2">
                                 <label class="small font-weight-bold">Fecha desde</label>
-                                <input type="date" name="fecha_desde" class="form-control form-control-sm">
+                                <input type="date" name="fecha_desde" class="form-control form-control-sm" value="{{ date('Y-m-d') }}">
                             </div>
                             <div class="col-md-2 col-sm-6 mb-2">
                                 <label class="small font-weight-bold">Fecha hasta</label>
-                                <input type="date" name="fecha_hasta" class="form-control form-control-sm">
+                                <input type="date" name="fecha_hasta" class="form-control form-control-sm" value="{{ date('Y-m-d') }}">
                             </div>
                             <div class="col-md-2 col-sm-6 mb-2">
                                 <label class="small font-weight-bold">Documento paciente</label>
