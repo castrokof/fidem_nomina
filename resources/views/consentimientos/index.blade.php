@@ -19,40 +19,59 @@ $(document).ready(function() {
     // ── Inicializar DataTable ────────────────────────────────────────────────
     function initDT() {
         if (dtInstance) { dtInstance.destroy(); dtInstance = null; }
+        
         dtInstance = $('#tablaConsentimientos').DataTable({
             language: {
                 url: '//cdn.datatables.net/plug-ins/1.10.21/i18n/Spanish.json',
                 emptyTable: '<i class="fas fa-filter mr-1"></i> Use los filtros para buscar consentimientos.'
             },
-            order: [[5, 'desc']],
-            pageLength: 25
+            order: [[0, 'desc']],  // Ordenar por id (columna 0) descendente
+            pageLength: 25,
+            columnDefs: [
+            {
+                targets: 5, // Columna de fecha (índice 5)
+                type: 'num', // Ordenar como número (timestamp)
+                render: function(data, type, row, meta) {
+                    // ✅ Si es para mostrar o filtrar: usa el texto formateado
+                    if (type === 'display' || type === 'filter') {
+                        return data.display;
+                    }
+                    // ✅ Si es para ordenar: usa el timestamp numérico
+                    return data.sort;
+                }
+            }
+        ]
         });
     }
     initDT();
 
-    // ── Renderizar filas desde JSON ──────────────────────────────────────────
+    // ── Renderizar filas desde JSON (SIN destruir DataTable) ─────────────────
     function renderTabla(data) {
-        if (dtInstance) { dtInstance.destroy(); dtInstance = null; }
+        // Si no existe la instancia, inicializar
+        if (!dtInstance) { initDT(); }
 
-        const tbody = $('#tablaConsentimientos tbody');
-        tbody.empty();
-
-        if (!data.length) {
-            initDT(); // DataTables mostrará el mensaje emptyTable
+        // Limpiar datos actuales y agregar nuevos
+        dtInstance.clear();
+        
+        if (!data || !data.length) {
+            dtInstance.draw();
             return;
         }
 
-        tbody.html(data.map(function(c) {
+        data.forEach(function(c) {
+            // Badges de estado
             let badge = '';
             if      (c.estado === 'pendiente')  badge = '<span class="badge badge-warning"><i class="fas fa-clock"></i> Pendiente</span>';
-            else if (c.estado === 'en_proceso')  badge = '<span class="badge badge-info"><i class="fas fa-spinner"></i> En proceso</span>';
-            else if (c.estado === 'firmado')     badge = '<span class="badge badge-success"><i class="fas fa-check"></i> Firmado</span>';
-            else if (c.estado === 'anulado')     badge = '<span class="badge badge-danger"><i class="fas fa-times"></i> Anulado</span>';
-            else                                 badge = '<span class="badge badge-secondary">' + c.estado + '</span>';
+            else if (c.estado === 'en_proceso') badge = '<span class="badge badge-info"><i class="fas fa-spinner"></i> En proceso</span>';
+            else if (c.estado === 'firmado')    badge = '<span class="badge badge-success"><i class="fas fa-check"></i> Firmado</span>';
+            else if (c.estado === 'anulado')    badge = '<span class="badge badge-danger"><i class="fas fa-times"></i> Anulado</span>';
+            else                                badge = '<span class="badge badge-secondary">' + c.estado + '</span>';
 
-            const pac  = (c.paciente  || '').replace(/"/g, '&quot;');
-            const plnt = (c.plantilla || '').replace(/"/g, '&quot;');
+            // Escape seguro para datos en atributos HTML
+            const pac  = escapeHtml(c.paciente  || '');
+            const plnt = escapeHtml(c.plantilla || '');
 
+            // Botones de acción
             let acc = `<a href="${c.url_show}" class="btn btn-info btn-sm" title="Ver Detalle"><i class="fas fa-eye"></i></a> `;
             if (c.estado === 'firmado')
                 acc += `<a href="${c.url_pdf}" class="btn btn-danger btn-sm" title="Descargar PDF" target="_blank"><i class="fas fa-file-pdf"></i></a> `;
@@ -64,19 +83,26 @@ $(document).ready(function() {
                             data-url="${c.url_anular}" data-paciente="${pac}" data-plantilla="${plnt}">
                             <i class="fas fa-ban"></i></button>`;
 
-            return `<tr>
-                <td>${c.id}</td>
-                <td>${c.paciente}</td>
-                <td>${c.documento}</td>
-                <td>${c.plantilla}</td>
-                <td>${c.profesional}</td>
-                <td data-order="${c.fecha_sort}">${c.fecha_procedimiento}</td>
-                <td>${badge}</td>
-                <td class="text-center">${acc}</td>
-            </tr>`;
-        }).join(''));
+            // Agregar fila: [id, paciente, documento, plantilla, profesional, fecha, estado, acciones]
+            dtInstance.row.add([
+                c.id,
+                c.paciente,
+                c.documento,
+                c.plantilla,
+                c.profesional,
+                { display: c.fecha_procedimiento, sort: c.fecha_sort }, // ✅ display/show vs sort/order
+                badge,
+                acc
+            ]);
+        });
+        
+        dtInstance.draw(); // Redibujar tabla con nuevos datos
+    }
 
-        initDT();
+    // ── Helper: Escape HTML para prevenir XSS ────────────────────────────────
+    function escapeHtml(text) {
+        const map = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' };
+        return text?.toString().replace(/[&<>"']/g, m => map[m]) || '';
     }
 
     // ── Buscar vía AJAX ──────────────────────────────────────────────────────
@@ -94,13 +120,29 @@ $(document).ready(function() {
             headers: { 'X-Requested-With': 'XMLHttpRequest' },
             success: function(res) {
                 renderTabla(res.consentimientos || []);
+                
+                // Actualizar contador y mensaje de contexto
                 const n = res.total || 0;
+                const fDesde = $('#fecha_desde').val();
+                const fHasta = $('#fecha_hasta').val();
+                
+                let contexto = '';
+                if (!fDesde && !fHasta) {
+                    contexto = '<i class="fas fa-calendar-day mr-1"></i>Mostrando consentimientos de <strong>hoy</strong>';
+                } else if (fDesde && fHasta) {
+                    contexto = `<i class="fas fa-calendar-range mr-1"></i>Del ${fDesde} al ${fHasta}`;
+                } else if (fDesde) {
+                    contexto = `<i class="fas fa-calendar-alt mr-1"></i>Desde ${fDesde}`;
+                } else if (fHasta) {
+                    contexto = `<i class="fas fa-calendar-alt mr-1"></i>Hasta ${fHasta}`;
+                }
+                
                 $('#contadorResultados').html(
-                    `<span class="text-muted small ml-2"><i class="fas fa-list mr-1"></i>${n} resultado(s)</span>`
+                    `<span class="text-muted small ml-2">${contexto} • ${n} resultado(s)</span>`
                 );
             },
-            error: function() {
-                Swal.fire('Error', 'No se pudieron cargar los datos.', 'error');
+            error: function(xhr) {
+                Swal.fire('Error', xhr.responseJSON?.message || 'No se pudieron cargar los datos.', 'error');
             },
             complete: function() {
                 $btn.prop('disabled', false).html('<i class="fas fa-search"></i> Buscar');
@@ -111,13 +153,17 @@ $(document).ready(function() {
     // ── Limpiar filtros ──────────────────────────────────────────────────────
     $('#btnLimpiar').click(function() {
         $('#formFiltros')[0].reset();
-        $('#contadorResultados').text('');
-        if (dtInstance) { dtInstance.destroy(); dtInstance = null; }
-        $('#tablaConsentimientos tbody').empty();
-        initDT();
+        // Al limpiar, recargar con el default (hoy)
+        $('#formFiltros').submit();
     });
 
-    // ── Anular consentimiento ────────────────────────────────────────────────
+    // ── 🎯 CARGA INICIAL: Disparar búsqueda automática al cargar la página ───
+    // Esto hace que se muestren los consentimientos de HOY por defecto
+    setTimeout(function() {
+        $('#formFiltros').submit();
+    }, 300); // Pequeño delay para asegurar que DOM está listo
+
+    // ── Anular consentimiento (manteniendo tu lógica original) ───────────────
     $(document).on('click', '.btn-anular', function() {
         const btn  = $(this);
         const url  = btn.data('url');
@@ -143,11 +189,13 @@ $(document).ready(function() {
                 data: { _token: '{{ csrf_token() }}', _method: 'PATCH' },
                 success: function(response) {
                     if (response.success) {
+                        // Actualizar solo la fila afectada sin recargar todo
                         const fila = btn.closest('tr');
                         fila.find('td:nth-child(7)').html(
                             '<span class="badge badge-danger"><i class="fas fa-times"></i> Anulado</span>'
                         );
                         fila.find('.btn-anular, .btn-warning[title="Copiar enlace de firma"]').remove();
+                        
                         Swal.fire({ toast: true, icon: 'success', title: response.message,
                             position: 'top-end', timer: 3000, showConfirmButton: false });
                     }

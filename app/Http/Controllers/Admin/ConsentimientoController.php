@@ -97,7 +97,17 @@ class ConsentimientoController extends Controller
             ->orderBy('apellidos')->orderBy('nombres')
             ->get(['id', 'nombres', 'apellidos']);
 
-        if ($request->ajax()) {
+        if ($request->ajax() || $request->expectsJson() ) {
+
+              // ✅ Validación básica (recomendado)
+        $validated = $request->validate([
+            'estado'       => 'nullable|string',
+            'documento'    => 'nullable|string|max:50',
+            'medico'       => 'nullable|exists:profesionales,id',
+            'fecha_desde'  => 'nullable|date',
+            'fecha_hasta'  => 'nullable|date',
+        ]);
+
             $query = ConsentimientoInformado::with(['paciente', 'profesional', 'plantilla']);
 
             if ($request->filled('estado')) {
@@ -109,12 +119,22 @@ class ConsentimientoController extends Controller
             if ($request->filled('medico')) {
                 $query->where('profesional_id', $request->medico);
             }
-            if ($request->filled('fecha_desde')) {
-                $query->whereDate('fecha_procedimiento', '>=', $request->fecha_desde);
+
+             // ── 🎯 Lógica para fecha por defecto (HOY) ───────────────
+             $hoy = now()->startOfDay(); // Hoy a las 00:00:00
+
+            if (empty($validated['fecha_desde']) && empty($validated['fecha_hasta'])) {
+            // Si NO hay filtros de fecha → mostrar solo los de hoy
+            $query->whereDate('fecha_procedimiento', '=', $hoy);
+             } else {
+            // Si hay filtros → aplicarlos individualmente
+            if (!empty($validated['fecha_desde'])) {
+                $query->whereDate('fecha_procedimiento', '>=', $validated['fecha_desde']);
             }
-            if ($request->filled('fecha_hasta')) {
-                $query->whereDate('fecha_procedimiento', '<=', $request->fecha_hasta);
+            if (!empty($validated['fecha_hasta'])) {
+                $query->whereDate('fecha_procedimiento', '<=', $validated['fecha_hasta']);
             }
+        }
 
             $consentimientos = $query->orderBy('fecha_procedimiento', 'desc')->get();
 
@@ -129,7 +149,7 @@ class ConsentimientoController extends Controller
                         'plantilla'          => $c->plantilla->nombre,
                         'profesional'        => $c->profesional->nombres . ' ' . $c->profesional->apellidos,
                         'fecha_procedimiento'=> \Carbon\Carbon::parse($c->fecha_procedimiento)->format('d/m/Y H:i'),
-                        'fecha_sort'         => $c->fecha_procedimiento,
+                        'fecha_sort'         => $c->fecha_procedimiento->timestamp, // Para ordenamiento en frontend
                         'estado'             => $c->estado,
                         'token_firma'        => $c->token_firma,
                         'url_show'           => route('consentimientos.show', $c->id),
