@@ -25,7 +25,7 @@ $(document).ready(function() {
                 url: '//cdn.datatables.net/plug-ins/1.10.21/i18n/Spanish.json',
                 emptyTable: '<i class="fas fa-filter mr-1"></i> Use los filtros para buscar consentimientos.'
             },
-            order: [[5, 'desc']],
+            order: [[0, 'desc']],
             pageLength: 25,
             columnDefs: [
                 { targets: '_all', defaultContent: '' },
