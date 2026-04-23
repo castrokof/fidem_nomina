@@ -489,37 +489,54 @@
         let resizeTimer     = null;
 
         function resizeOnePad(canvas, pad) {
-            const data  = pad.toData();                  // guardar trazos en coord. CSS
+            const data  = pad.toData();
+            // Capturar dimensiones CSS ANTES del resize (para escalar los puntos después)
+            const prevW = parseFloat(canvas.style.width)  || canvas.offsetWidth  || 0;
+            const prevH = parseFloat(canvas.style.height) || canvas.offsetHeight || 0;
+
             const ratio = Math.max(window.devicePixelRatio || 1, 1);
 
             let w, h;
-            const panel = canvas.closest('.forma-group, .firma-fullscreen, [id^="panelFirma"]');
             const isFullscreen = canvas.closest('.firma-fullscreen') !== null;
 
             if (isFullscreen) {
-                // Pantalla completa: canvas ocupa toda la ventana menos el header y botón limpiar
-                w = Math.floor(window.innerWidth  - 32);  // 16px padding × 2
-                h = Math.floor(window.innerHeight - 110); // espacio para header + btn limpiar
+                w = Math.floor(window.innerWidth  - 32);
+                h = Math.floor(window.innerHeight - 110);
             } else {
                 const rect = canvas.parentElement.getBoundingClientRect();
-                w = Math.floor(rect.width - 4);           // 4 = 2px borde × 2
-                h = window.innerWidth >= 768 ? 280 : 200; // más alto en PC/tablet
+                w = Math.floor(rect.width - 4);
+                h = window.innerWidth >= 768 ? 280 : 200;
             }
 
-            // Dimensiones CSS → visible
             canvas.style.width  = w + 'px';
             canvas.style.height = h + 'px';
-
-            // Dimensiones internas → píxeles físicos (para pantallas retina/HiDPI)
             canvas.width  = Math.floor(w * ratio);
             canvas.height = Math.floor(h * ratio);
-
-            // Escalar el contexto para que 1 unidad CSS = ratio píxeles del canvas
             canvas.getContext('2d').scale(ratio, ratio);
 
-            // Sincronizar estado interno del pad con el canvas limpio
             pad.clear();
-            if (data.length > 0) pad.fromData(data);   // restaurar trazos si los había
+
+            if (data.length > 0) {
+                // Si el canvas cambió de tamaño, escalar los puntos para que
+                // la firma ocupe la misma proporción en el nuevo canvas.
+                // Sin esto, al salir del fullscreen la firma queda cortada porque
+                // los puntos en x=1200 no caben en un canvas de 900px.
+                if (prevW > 0 && prevH > 0 && (w !== prevW || h !== prevH)) {
+                    const sx = w / prevW;
+                    const sy = h / prevH;
+                    const scaled = data.map(group => ({
+                        ...group,
+                        points: group.points.map(pt => ({
+                            ...pt,
+                            x: pt.x * sx,
+                            y: pt.y * sy,
+                        }))
+                    }));
+                    pad.fromData(scaled);
+                } else {
+                    pad.fromData(data);
+                }
+            }
 
             return w;
         }
