@@ -27,8 +27,8 @@ $(document).ready(function() {
             order: [[5, 'desc']],
             pageLength: 25,
             columnDefs: [
+                { targets: '_all', defaultContent: '' }, // evita warning tn/4 si falta algún dato
                 {
-                    // Columna Fecha: se pasa el ISO string para ordenar, se formatea para mostrar
                     targets: 5,
                     render: function(data, type) {
                         if (type === 'sort' || type === 'type') return data;
@@ -38,7 +38,7 @@ $(document).ready(function() {
                              + ' ' + d.toLocaleTimeString('es-CO', { hour:'2-digit', minute:'2-digit', hour12:false });
                     }
                 },
-                { targets: [6, 7, 8], orderable: false } // Estado, Creado por, Acciones
+                { targets: [6, 7, 8], orderable: false }
             ]
         });
     }
