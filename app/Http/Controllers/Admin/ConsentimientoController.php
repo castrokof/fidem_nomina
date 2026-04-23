@@ -110,6 +110,12 @@ class ConsentimientoController extends Controller
 
             $query = ConsentimientoInformado::with(['paciente', 'profesional', 'plantilla']);
 
+            // Cada usuario solo ve sus propios consentimientos.
+            // Los registros sin created_by (anteriores a esta función) se muestran a todos.
+            $query->where(function ($q) {
+                $q->where('created_by', auth()->id())->orWhereNull('created_by');
+            });
+
             if ($request->filled('estado')) {
                 $query->where('estado', $request->estado);
             }
@@ -151,6 +157,7 @@ class ConsentimientoController extends Controller
                         'fecha_procedimiento'=> \Carbon\Carbon::parse($c->fecha_procedimiento)->format('d/m/Y H:i'),
                         'fecha_sort'         => $c->fecha_procedimiento->timestamp, // Para ordenamiento en frontend
                         'estado'             => $c->estado,
+                        'creado_por'         => $c->created_by_nombre ?? '—',
                         'token_firma'        => $c->token_firma,
                         'url_show'           => route('consentimientos.show', $c->id),
                         'url_pdf'            => route('consentimientos.pdf', $c->id),
@@ -344,6 +351,13 @@ public function store(Request $request)
             try {
                 $plantilla = \App\PlantillaCI::findOrFail($plantillaId);
 
+                $usuarioActual = auth()->user();
+                $usuarioNombre = trim(
+                    ($usuarioActual->pnombre ?? '') . ' ' .
+                    ($usuarioActual->papellido ?? '') . ' ' .
+                    ($usuarioActual->sapellido ?? '')
+                ) ?: ($usuarioActual->usuario ?? $usuarioActual->name ?? 'Sistema');
+
                 $consentimiento = ConsentimientoInformado::create([
                     'agenda_ci_id'        => $request->agenda_ci_id,
                     'paciente_id'         => $paciente->id,
@@ -364,6 +378,8 @@ public function store(Request $request)
                     'token_firma'         => Str::random(64),
                     'token_expira_at'     => now()->addHours(24),
                     'ip_generacion'       => $request->ip(),
+                    'created_by'          => $usuarioActual->id,
+                    'created_by_nombre'   => $usuarioNombre,
                 ]);
 
                 // Estampar firma del profesional automáticamente

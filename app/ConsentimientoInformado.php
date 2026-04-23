@@ -30,7 +30,9 @@ class ConsentimientoInformado extends Model
         'pdf_path',
         'token_firma',
         'token_expira_at',
-        'ip_generacion'
+        'ip_generacion',
+        'created_by',
+        'created_by_nombre',
     ];
 
     protected $casts = [

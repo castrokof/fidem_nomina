@@ -401,6 +401,7 @@ function copiarEnlaceFirma(url) {
                                     <th>Profesional</th>
                                     <th>Fecha Procedimiento</th>
                                     <th>Estado</th>
+                                    <th>Creado por</th>
                                     <th>Acciones</th>
                                 </tr>
                             </thead>
