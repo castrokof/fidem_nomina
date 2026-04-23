@@ -34,7 +34,9 @@ $(document).ready(function() {
                     render: function(data, type) {
                         if (type === 'sort' || type === 'type') return data;
                         if (!data) return '-';
-                        const d = new Date(data.replace(' ', 'T'));
+                        const d = typeof data === 'number'
+                            ? new Date(data * 1000)
+                            : new Date(String(data).replace(' ', 'T'));
                         return d.toLocaleDateString('es-CO', { day:'2-digit', month:'2-digit', year:'numeric' })
                              + ' ' + d.toLocaleTimeString('es-CO', { hour:'2-digit', minute:'2-digit', hour12:false });
                     }
