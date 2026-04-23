@@ -344,19 +344,18 @@ html += `<thead class="thead-light"><tr>
 
                 let badgeConsentimiento = '';
                 if (!cita.tiene_consentimientos) {
-                    badgeConsentimiento = '<span class="badge badge-light" title="Sin CI"><i class="fas fa-times-circle"></i> Sin CI</span>';
+                    badgeConsentimiento = '<span class="badge badge-light"><i class="fas fa-times-circle"></i> Sin CI</span>';
                 } else {
-                    const total    = cita.total_consentimientos;
-                    const firmados = cita.consentimientos_firmados;
-                    const enProc   = cita.consentimientos_en_proceso;
-                    const pend     = cita.consentimientos_pendientes;
-                    if (cita.estado_consentimientos === 'todos_firmados') {
-                        badgeConsentimiento = `<span class="badge badge-success"><i class="fas fa-check-circle"></i> ${total} Firmado${total>1?'s':''}</span>`;
-                    } else if (cita.estado_consentimientos === 'en_proceso') {
-                        badgeConsentimiento = `<span class="badge badge-warning"><i class="fas fa-clock"></i> ${total} En proceso</span>`;
-                    } else {
-                        badgeConsentimiento = `<span class="badge badge-danger"><i class="fas fa-exclamation-circle"></i> ${total} Pendiente${total>1?'s':''}</span>`;
-                    }
+                    badgeConsentimiento = cita.consentimientos_detalle.map(function(ci) {
+                        const corto = ci.plantilla.length > 28 ? ci.plantilla.substring(0, 26) + '…' : ci.plantilla;
+                        let cls, ico;
+                        if      (ci.estado === 'firmado')    { cls = 'success'; ico = 'check-circle'; }
+                        else if (ci.estado === 'anulado')    { cls = 'danger';  ico = 'ban'; }
+                        else if (ci.estado === 'en_proceso') { cls = 'info';    ico = 'spinner'; }
+                        else                                  { cls = 'warning'; ico = 'clock'; }
+                        return `<span class="badge badge-${cls} d-block mb-1" title="${ci.plantilla}">
+                            <i class="fas fa-${ico}"></i> ${corto}</span>`;
+                    }).join('');
                 }
 
                 const eci    = infoCita(cita.estado);

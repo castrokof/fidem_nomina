@@ -56,10 +56,14 @@ $(document).ready(function() {
             let acc = `<a href="${c.url_show}" class="btn btn-info btn-sm" title="Ver Detalle"><i class="fas fa-eye"></i></a> `;
             if (c.estado === 'firmado')
                 acc += `<a href="${c.url_pdf}" class="btn btn-danger btn-sm" title="Descargar PDF" target="_blank"><i class="fas fa-file-pdf"></i></a> `;
-            if (c.estado === 'pendiente')
+            if (c.estado === 'pendiente' || c.estado === 'en_proceso')
                 acc += `<button type="button" class="btn btn-warning btn-sm" title="Copiar enlace de firma"
                             onclick="copiarEnlaceFirma('${c.url_firma}')"><i class="fas fa-link"></i></button> `;
-            if (c.estado !== 'anulado')
+            if (c.estado === 'firmado')
+                acc += `<button type="button" class="btn btn-danger btn-sm btn-anular-firmado" title="Anular (requiere contraseña)"
+                            data-url="${c.url_anular}" data-paciente="${pac}" data-plantilla="${plnt}">
+                            <i class="fas fa-ban"></i> <i class="fas fa-lock fa-xs"></i></button>`;
+            else if (c.estado !== 'anulado')
                 acc += `<button type="button" class="btn btn-secondary btn-sm btn-anular" title="Anular consentimiento"
                             data-url="${c.url_anular}" data-paciente="${pac}" data-plantilla="${plnt}">
                             <i class="fas fa-ban"></i></button>`;
@@ -148,6 +152,54 @@ $(document).ready(function() {
                             '<span class="badge badge-danger"><i class="fas fa-times"></i> Anulado</span>'
                         );
                         fila.find('.btn-anular, .btn-warning[title="Copiar enlace de firma"]').remove();
+                        Swal.fire({ toast: true, icon: 'success', title: response.message,
+                            position: 'top-end', timer: 3000, showConfirmButton: false });
+                    }
+                },
+                error: function(xhr) {
+                    Swal.fire('Error', xhr.responseJSON?.message || 'No se pudo anular.', 'error');
+                }
+            });
+        });
+    });
+
+    // ── Anular consentimiento FIRMADO (requiere contraseña) ─────────────────
+    $(document).on('click', '.btn-anular-firmado', function() {
+        const btn  = $(this);
+        const url  = btn.data('url');
+        const pac  = btn.data('paciente');
+        const plnt = btn.data('plantilla');
+
+        Swal.fire({
+            title: 'Anular consentimiento firmado',
+            html: `<p>Paciente: <strong>${pac}</strong><br>Procedimiento: <strong>${plnt}</strong></p>
+                   <p class="text-danger font-weight-bold">Este consentimiento ya fue FIRMADO.<br>Ingrese la contraseña para anularlo:</p>
+                   <input id="swal-pwd" type="password" class="swal2-input" placeholder="Contraseña de autorización">`,
+            icon: 'warning',
+            showCancelButton: true,
+            confirmButtonColor: '#d33',
+            cancelButtonColor: '#6c757d',
+            confirmButtonText: '<i class="fas fa-ban"></i> Anular de todas formas',
+            cancelButtonText: 'Cancelar',
+            preConfirm: () => {
+                const pwd = Swal.getPopup().querySelector('#swal-pwd').value;
+                if (!pwd) { Swal.showValidationMessage('Ingrese la contraseña'); return false; }
+                return pwd;
+            }
+        }).then(function(result) {
+            if (!result.isConfirmed) return;
+
+            $.ajax({
+                url: url,
+                method: 'POST',
+                data: { _token: '{{ csrf_token() }}', _method: 'PATCH', password: result.value },
+                success: function(response) {
+                    if (response.success) {
+                        const fila = btn.closest('tr');
+                        fila.find('td:nth-child(7)').html(
+                            '<span class="badge badge-danger"><i class="fas fa-times"></i> Anulado</span>'
+                        );
+                        fila.find('.btn-anular-firmado, .btn-warning[title="Copiar enlace de firma"]').remove();
                         Swal.fire({ toast: true, icon: 'success', title: response.message,
                             position: 'top-end', timer: 3000, showConfirmButton: false });
                     }
