@@ -75,6 +75,26 @@
                                 </div>
                             </div>
                         </div>
+                         <div class="row">
+                            <div class="col-md-4">
+                                <div class="form-group">
+                                    <label for="nombre">Codigo de calidad <span class="text-danger">*</span></label>
+                                    <input type="text" name="codigo_calidad" id="codigo_calidad" class="form-control" value="{{old('codigo_calidad', $plantilla->codigo_calidad)}}" required placeholder="Ej: Consentimiento Informado para Cirugía">
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="form-group">
+                                    <label for="cups_codigo">Version calidad</label>
+                                    <input type="text" name="version_calidad" id="version_calidad" class="form-control" value="{{old('version_calidad', $plantilla->version_calidad)}}" placeholder="Ej: 1.0">
+                                </div>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="form-group">
+                                    <label for="cups_codigo">Fecha calidad</label>
+                                    <input type="date" name="fecha_calidad" id="fecha_calidad" class="form-control" value="{{old('fecha_calidad', $plantilla->fecha_calidad)}}" placeholder="Ej: 2023-01-01">
+                                </div>
+                            </div>
+                        </div>
 
                         <div class="row">
                             <div class="col-md-12">

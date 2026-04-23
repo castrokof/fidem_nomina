@@ -88,6 +88,7 @@
                                     <th>Nombre</th>
                                     <th>Especialidades</th>
                                     <th>Estado</th>
+                                    <th>Codigo Calidad</th>
                                     <th>Fecha Creación</th>
                                     <th>Acciones</th>
                                 </tr>
@@ -113,6 +114,7 @@
                                             <span class="badge badge-danger">Inactiva</span>
                                         @endif
                                     </td>
+                                     <td>{{ $plantilla->codigo_calidad }}</td>
                                     <td>{{ $plantilla->created_at->format('d/m/Y H:i') }}</td>
                                     <td class="text-center">
                                         <a href="{{route('plantillas-ci.edit', $plantilla->id)}}" class="btn btn-info btn-sm" title="Editar">

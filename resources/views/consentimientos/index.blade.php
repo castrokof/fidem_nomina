@@ -19,6 +19,7 @@ $(document).ready(function() {
     // ── Inicializar DataTable ────────────────────────────────────────────────
     function initDT() {
         if (dtInstance) { dtInstance.destroy(); dtInstance = null; }
+        
         dtInstance = $('#tablaConsentimientos').DataTable({
             language: {
                 url: '//cdn.datatables.net/plug-ins/1.10.21/i18n/Spanish.json',
@@ -27,7 +28,7 @@ $(document).ready(function() {
             order: [[5, 'desc']],
             pageLength: 25,
             columnDefs: [
-                { targets: '_all', defaultContent: '' }, // evita warning tn/4 si falta algún dato
+                { targets: '_all', defaultContent: '' },
                 {
                     targets: 5,
                     render: function(data, type) {
@@ -48,7 +49,7 @@ $(document).ready(function() {
     function renderTabla(data) {
         dtInstance.clear();
 
-        if (data.length) {
+        if (data && data.length) {
             data.forEach(function(c) {
                 let badge = '';
                 if      (c.estado === 'pendiente')  badge = '<span class="badge badge-warning"><i class="fas fa-clock"></i> Pendiente</span>';
@@ -81,7 +82,7 @@ $(document).ready(function() {
                     c.documento,
                     c.plantilla,
                     c.profesional,
-                    c.fecha_sort,   // ISO → ordenado por columnDefs.render, mostrado formateado
+                    c.fecha_sort,
                     badge,
                     '<small class="text-muted"><i class="fas fa-user fa-xs"></i> ' + (c.creado_por || '—') + '</small>',
                     acc
@@ -107,13 +108,29 @@ $(document).ready(function() {
             headers: { 'X-Requested-With': 'XMLHttpRequest' },
             success: function(res) {
                 renderTabla(res.consentimientos || []);
+                
+                // Actualizar contador y mensaje de contexto
                 const n = res.total || 0;
+                const fDesde = $('#fecha_desde').val();
+                const fHasta = $('#fecha_hasta').val();
+                
+                let contexto = '';
+                if (!fDesde && !fHasta) {
+                    contexto = '<i class="fas fa-calendar-day mr-1"></i>Mostrando consentimientos de <strong>hoy</strong>';
+                } else if (fDesde && fHasta) {
+                    contexto = `<i class="fas fa-calendar-range mr-1"></i>Del ${fDesde} al ${fHasta}`;
+                } else if (fDesde) {
+                    contexto = `<i class="fas fa-calendar-alt mr-1"></i>Desde ${fDesde}`;
+                } else if (fHasta) {
+                    contexto = `<i class="fas fa-calendar-alt mr-1"></i>Hasta ${fHasta}`;
+                }
+                
                 $('#contadorResultados').html(
-                    `<span class="text-muted small ml-2"><i class="fas fa-list mr-1"></i>${n} resultado(s)</span>`
+                    `<span class="text-muted small ml-2">${contexto} • ${n} resultado(s)</span>`
                 );
             },
-            error: function() {
-                Swal.fire('Error', 'No se pudieron cargar los datos.', 'error');
+            error: function(xhr) {
+                Swal.fire('Error', xhr.responseJSON?.message || 'No se pudieron cargar los datos.', 'error');
             },
             complete: function() {
                 $btn.prop('disabled', false).html('<i class="fas fa-search"></i> Buscar');
@@ -124,11 +141,17 @@ $(document).ready(function() {
     // ── Limpiar filtros ──────────────────────────────────────────────────────
     $('#btnLimpiar').click(function() {
         $('#formFiltros')[0].reset();
-        $('#contadorResultados').text('');
-        dtInstance.clear().draw();
+        // Al limpiar, recargar con el default (hoy)
+        $('#formFiltros').submit();
     });
 
-    // ── Anular consentimiento ────────────────────────────────────────────────
+    // ── 🎯 CARGA INICIAL: Disparar búsqueda automática al cargar la página ───
+    // Esto hace que se muestren los consentimientos de HOY por defecto
+    setTimeout(function() {
+        $('#formFiltros').submit();
+    }, 300); // Pequeño delay para asegurar que DOM está listo
+
+    // ── Anular consentimiento (manteniendo tu lógica original) ───────────────
     $(document).on('click', '.btn-anular', function() {
         const btn  = $(this);
         const url  = btn.data('url');
@@ -154,11 +177,13 @@ $(document).ready(function() {
                 data: { _token: '{{ csrf_token() }}', _method: 'PATCH' },
                 success: function(response) {
                     if (response.success) {
+                        // Actualizar solo la fila afectada sin recargar todo
                         const fila = btn.closest('tr');
                         fila.find('td:nth-child(7)').html(
                             '<span class="badge badge-danger"><i class="fas fa-times"></i> Anulado</span>'
                         );
                         fila.find('.btn-anular, .btn-warning[title="Copiar enlace de firma"]').remove();
+                        
                         Swal.fire({ toast: true, icon: 'success', title: response.message,
                             position: 'top-end', timer: 3000, showConfirmButton: false });
                     }
