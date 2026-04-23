@@ -39,6 +39,31 @@
         }
         /* Evita scroll elástico de iOS mientras se firma */
         html, body { overscroll-behavior: none; }
+
+        /* ── Modo pantalla completa para el panel de firma ── */
+        .firma-fullscreen {
+            position: fixed !important;
+            inset: 0 !important;          /* top/right/bottom/left: 0 */
+            z-index: 9999 !important;
+            background: white !important;
+            padding: 16px !important;
+            box-sizing: border-box !important;
+            display: flex !important;
+            flex-direction: column !important;
+            overflow: hidden !important;
+        }
+        .firma-fullscreen .firma-pad-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 10px;
+        }
+        .firma-fullscreen .text-center {
+            flex: 1 1 auto;
+        }
+        .firma-fullscreen .signature-pad {
+            max-width: 100% !important;
+        }
         .btn-clear {
             background-color: #dc3545;
             color: white;
@@ -237,7 +262,13 @@
 
                                 <!-- Panel de firma -->
                                 <div id="panelFirmaPaciente" class="form-group">
-                                    <label class="font-weight-bold">Firme en el recuadro a continuación:</label>
+                                    <div class="firma-pad-header d-flex justify-content-between align-items-center mb-1">
+                                        <label class="font-weight-bold mb-0">Firme en el recuadro a continuación:</label>
+                                        <button type="button" class="btn btn-outline-primary btn-sm btn-toggle-fullscreen"
+                                                onclick="toggleFullscreenFirma('panelFirmaPaciente')">
+                                            <i class="fas fa-expand"></i> Pantalla completa
+                                        </button>
+                                    </div>
                                     <div class="text-center">
                                         <canvas id="signaturePadPaciente" class="signature-pad" width="600" height="200"></canvas>
                                     </div>
@@ -357,7 +388,13 @@
 
                                     <!-- Panel firma acudiente -->
                                     <div id="panelFirmaAcudiente" class="form-group">
-                                        <label class="font-weight-bold">Firma del Acudiente:</label>
+                                        <div class="firma-pad-header d-flex justify-content-between align-items-center mb-1">
+                                            <label class="font-weight-bold mb-0">Firma del Acudiente:</label>
+                                            <button type="button" class="btn btn-outline-primary btn-sm btn-toggle-fullscreen"
+                                                    onclick="toggleFullscreenFirma('panelFirmaAcudiente')">
+                                                <i class="fas fa-expand"></i> Pantalla completa
+                                            </button>
+                                        </div>
                                         <div class="text-center">
                                             <canvas id="signaturePadAcudiente" class="signature-pad" width="600" height="200"></canvas>
                                         </div>
@@ -454,9 +491,20 @@
         function resizeOnePad(canvas, pad) {
             const data  = pad.toData();                  // guardar trazos en coord. CSS
             const ratio = Math.max(window.devicePixelRatio || 1, 1);
-            const rect  = canvas.parentElement.getBoundingClientRect();
-            const w     = Math.floor(Math.min(600, rect.width - 4)); // 4 = 2px borde × 2
-            const h     = 200;
+
+            let w, h;
+            const panel = canvas.closest('.forma-group, .firma-fullscreen, [id^="panelFirma"]');
+            const isFullscreen = canvas.closest('.firma-fullscreen') !== null;
+
+            if (isFullscreen) {
+                // Pantalla completa: canvas ocupa toda la ventana menos el header y botón limpiar
+                w = Math.floor(window.innerWidth  - 32);  // 16px padding × 2
+                h = Math.floor(window.innerHeight - 110); // espacio para header + btn limpiar
+            } else {
+                const rect = canvas.parentElement.getBoundingClientRect();
+                w = Math.floor(rect.width - 4);           // 4 = 2px borde × 2
+                h = window.innerWidth >= 768 ? 280 : 200; // más alto en PC/tablet
+            }
 
             // Dimensiones CSS → visible
             canvas.style.width  = w + 'px';
@@ -551,6 +599,30 @@
             toggleSeccionAcudiente();
             toggleDeclaracionPaciente();
         });
+
+        // ─── Pantalla completa para firma ──────────────────────────────────────
+        window.toggleFullscreenFirma = function(panelId) {
+            const panel = document.getElementById(panelId);
+            const entering = !panel.classList.contains('firma-fullscreen');
+
+            // Cerrar cualquier otro panel que esté en fullscreen
+            document.querySelectorAll('.firma-fullscreen').forEach(p => {
+                p.classList.remove('firma-fullscreen');
+                const btn = p.querySelector('.btn-toggle-fullscreen');
+                if (btn) btn.innerHTML = '<i class="fas fa-expand"></i> Pantalla completa';
+            });
+            document.body.style.overflow = '';
+
+            if (entering) {
+                panel.classList.add('firma-fullscreen');
+                document.body.style.overflow = 'hidden'; // bloquea scroll del fondo
+                const btn = panel.querySelector('.btn-toggle-fullscreen');
+                if (btn) btn.innerHTML = '<i class="fas fa-compress"></i> Salir pantalla completa';
+            }
+
+            // Redimensionar el canvas al nuevo tamaño
+            setTimeout(resizeCanvas, 30);
+        };
 
         // ─── Cámara ────────────────────────────────────────────────────────────
         const streams = {};  // guarda el MediaStream activo por persona
