@@ -562,12 +562,19 @@ public function store(Request $request)
 /**
  * Anular un consentimiento informado
  */
-public function anular($id)
+public function anular(Request $request, $id)
 {
     $consentimiento = ConsentimientoInformado::findOrFail($id);
 
     if ($consentimiento->estado === 'anulado') {
         return response()->json(['success' => false, 'message' => 'El consentimiento ya está anulado.'], 422);
+    }
+
+    if ($consentimiento->estado === 'firmado') {
+        $correcta = env('ANULAR_FIRMADO_PASSWORD', 'fidem2024');
+        if ($request->input('password') !== $correcta) {
+            return response()->json(['success' => false, 'message' => 'Contraseña incorrecta.'], 403);
+        }
     }
 
     $consentimiento->update(['estado' => 'anulado']);
@@ -589,9 +596,9 @@ public function ajaxPacientesPorFiltros(Request $request)
     }
     
     // ✅ Usar la relación personalizada profesionalPorCodigo y cargar consentimientos
-    $query = AgendaCI::with(['paciente', 'profesionalPorCodigo', 'consentimientos.firmas'])
+    $query = AgendaCI::with(['paciente', 'profesionalPorCodigo', 'consentimientos.plantilla', 'consentimientos.firmas'])
         ->whereDate('fecha', $fecha)
-        ->where('codigo_consultorio', $codigoUsuario);  // ← Filtro por código
+        ->where('codigo_consultorio', $codigoUsuario);
 
     if ($centroprod) {
         $query->where('centroprod', $centroprod);
@@ -668,8 +675,13 @@ public function ajaxPacientesPorFiltros(Request $request)
                         'consentimientos_en_proceso' => $consentimientosEnProceso,
                         'consentimientos_firmados' => $consentimientosFirmados,
                         'estado_consentimientos' => $estadoConsentimientos,
-                        'numero_factura'  => $a->numero_factura ?? '',
-                        'documento_factura' => $a->documento_factura ?? '',
+                        'numero_factura'       => $a->numero_factura ?? '',
+                        'documento_factura'    => $a->documento_factura ?? '',
+                        'consentimientos_detalle' => $consentimientos->map(fn($ci) => [
+                            'id'       => $ci->id,
+                            'plantilla'=> $ci->plantilla->nombre ?? 'N/A',
+                            'estado'   => $ci->estado,
+                        ])->values(),
                     ];
                 })->values()
             ];
@@ -691,15 +703,19 @@ public function ajaxDatosPaciente($paciente_id, Request $request)
 {
     $fecha = $request->input('fecha');
     $codigoUsuario = $request->input('codigo_usuario');
-    
-    // ✅ Usar relación personalizada profesionalPorCodigo
-    $agenda = AgendaCI::with(['paciente', 'profesionalPorCodigo'])
-        ->where('paciente_id', $paciente_id)
-        ->whereDate('fecha', $fecha)
-        ->where('codigo_consultorio', $codigoUsuario)  // ← Filtro por código
-        ->orderBy('fecha', 'asc')
-        ->first();
-    
+    $agendaId = $request->input('agenda_id');
+
+    if ($agendaId) {
+        $agenda = AgendaCI::with(['paciente', 'profesionalPorCodigo'])->find($agendaId);
+    } else {
+        $agenda = AgendaCI::with(['paciente', 'profesionalPorCodigo'])
+            ->where('paciente_id', $paciente_id)
+            ->whereDate('fecha', $fecha)
+            ->where('codigo_consultorio', $codigoUsuario)
+            ->orderBy('fecha', 'asc')
+            ->first();
+    }
+
     if (!$agenda) {
         return response()->json(['success' => false, 'message' => 'Paciente no encontrado con estos filtros']);
     }

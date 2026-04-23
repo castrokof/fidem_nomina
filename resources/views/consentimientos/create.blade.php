@@ -333,71 +333,53 @@ html += `<thead class="thead-light"><tr>
     <th class="th-sort" data-col="documento" style="cursor:pointer;white-space:nowrap;">Documento <i class="fas fa-sort text-muted sort-ico"></i></th>
     <th class="th-sort" data-col="centro" style="cursor:pointer;white-space:nowrap;">Centro <i class="fas fa-sort text-muted sort-ico"></i></th>
     <th class="th-sort" data-col="cups" style="cursor:pointer;white-space:nowrap;">CUPS <i class="fas fa-sort text-muted sort-ico"></i></th>
-    <th class="th-sort" data-col="citas" style="cursor:pointer;white-space:nowrap;">Citas <i class="fas fa-sort text-muted sort-ico"></i></th>
     <th>Estado Cita</th>
     <th>Consentimientos</th>
     <th>Acción</th>
 </tr></thead><tbody id="tbodyPacientes">`;
 
+        // Una fila por cita (no agrupadas)
         response.pacientes.forEach(function(pac) {
-            // Mostrar PRIMERA cita ordenada (ya viene ordenada por hora asc)
-            const primeraCita = pac.citas[0];
+            pac.citas.forEach(function(cita) {
 
-            // ✅ Generar badge de estado de consentimientos
-            let badgeConsentimiento = '';
-            if (!primeraCita.tiene_consentimientos) {
-                badgeConsentimiento = '<span class="badge badge-light" title="Sin consentimientos"><i class="fas fa-times-circle"></i> Sin CI</span>';
-            } else {
-                const total = primeraCita.total_consentimientos;
-                const firmados = primeraCita.consentimientos_firmados;
-                const enProceso = primeraCita.consentimientos_en_proceso;
-                const pendientes = primeraCita.consentimientos_pendientes;
-
-                if (primeraCita.estado_consentimientos === 'todos_firmados') {
-                    badgeConsentimiento = `<span class="badge badge-success" title="${firmados} consentimiento(s) firmado(s)">
-                        <i class="fas fa-check-circle"></i> ${total} Firmado${total > 1 ? 's' : ''}
-                    </span>`;
-                } else if (primeraCita.estado_consentimientos === 'en_proceso') {
-                    badgeConsentimiento = `<span class="badge badge-warning" title="${enProceso} en proceso, ${pendientes} pendiente(s), ${firmados} firmado(s)">
-                        <i class="fas fa-clock"></i> ${total} En proceso
-                    </span>`;
+                let badgeConsentimiento = '';
+                if (!cita.tiene_consentimientos) {
+                    badgeConsentimiento = '<span class="badge badge-light"><i class="fas fa-times-circle"></i> Sin CI</span>';
                 } else {
-                    badgeConsentimiento = `<span class="badge badge-danger" title="${pendientes} pendiente(s) de firma">
-                        <i class="fas fa-exclamation-circle"></i> ${total} Pendiente${total > 1 ? 's' : ''}
-                    </span>`;
+                    badgeConsentimiento = cita.consentimientos_detalle.map(function(ci) {
+                        const corto = ci.plantilla.length > 28 ? ci.plantilla.substring(0, 26) + '…' : ci.plantilla;
+                        let cls, ico;
+                        if      (ci.estado === 'firmado')    { cls = 'success'; ico = 'check-circle'; }
+                        else if (ci.estado === 'anulado')    { cls = 'danger';  ico = 'ban'; }
+                        else if (ci.estado === 'en_proceso') { cls = 'info';    ico = 'spinner'; }
+                        else                                  { cls = 'warning'; ico = 'clock'; }
+                        return `<span class="badge badge-${cls} d-block mb-1" title="${ci.plantilla}">
+                            <i class="fas fa-${ico}"></i> ${corto}</span>`;
+                    }).join('');
                 }
-            }
 
-            const eci = infoCita(primeraCita.estado);
-            const tachado = eci.cancelada ? 'style="text-decoration:line-through;opacity:.7;"' : '';
+                const eci    = infoCita(cita.estado);
+                const tachado = eci.cancelada ? 'style="text-decoration:line-through;opacity:.7;"' : '';
 
-            html += `
+                html += `
                 <tr class="${eci.rowClass}"
-                    data-hora="${primeraCita.fecha || ''}"
+                    data-hora="${cita.fecha || ''}"
                     data-nombre="${pac.nombre_completo.toLowerCase()}"
                     data-documento="${pac.documento}"
-                    data-centro="${primeraCita.centroprod || ''}"
-                    data-cups="${primeraCita.cups_codigo || ''}"
-                    data-citas="${pac.citas_count}">
+                    data-centro="${cita.centroprod || ''}"
+                    data-cups="${cita.cups_codigo || ''}">
                     <td class="text-center">
-                        <strong class="text-primary">${primeraCita.hora_completa}</strong><br>
-                        <small class="text-muted">${new Date(primeraCita.fecha).toLocaleDateString('es-CO')}</small>
+                        <strong class="text-primary">${cita.hora_completa}</strong><br>
+                        <small class="text-muted">${new Date(cita.fecha).toLocaleDateString('es-CO')}</small>
                     </td>
                     <td ${tachado}><strong>${pac.nombre_completo}</strong></td>
                     <td>
                         <span class="badge badge-secondary">${pac.documento.split('-')[0]}</span><br>
                         <small ${tachado}>${pac.documento.split('-')[1]}</small>
                     </td>
-                    <td class="text-center">
-                        <span class="badge badge-info">${primeraCita.centroprod || '-'}</span>
-                    </td>
-                    <td class="text-center">
-                        <span class="badge badge-primary">${primeraCita.cups_codigo || '-'}</span>
-                    </td>
-                    <td class="text-center">
-                        <span class="badge badge-pill badge-secondary">${pac.citas_count}</span>
-                    </td>
-                    <td class="text-center">${badgeEstadoCita(primeraCita.estado)}</td>
+                    <td class="text-center"><span class="badge badge-info">${cita.centroprod || '-'}</span></td>
+                    <td class="text-center"><span class="badge badge-primary">${cita.cups_codigo || '-'}</span></td>
+                    <td class="text-center">${badgeEstadoCita(cita.estado)}</td>
                     <td class="text-center">${badgeConsentimiento}</td>
                     <td>
                         <button type="button" class="btn btn-sm btn-info"
@@ -406,11 +388,12 @@ html += `<thead class="thead-light"><tr>
                             <i class="fas fa-eye"></i> Ver
                         </button>
                         <button type="button" class="btn btn-sm ${eci.cancelada ? 'btn-outline-secondary' : 'btn-success'} mt-1"
-                            onclick="seleccionarPaciente(${pac.id}, ${primeraCita.estado})">
+                            onclick="seleccionarPaciente(${pac.id}, ${cita.agenda_id}, ${cita.estado})">
                             <i class="fas fa-check"></i> Seleccionar
                         </button>
                     </td>
                 </tr>`;
+            });
         });
         html += '</tbody></table></div>';
         $('#listaPacientes').html(html);
@@ -426,7 +409,7 @@ html += `<thead class="thead-light"><tr>
     });
     
     // ========== SELECCIONAR PACIENTE → abre modal ==========
-    window.seleccionarPaciente = function(pacienteId, estadoCita) {
+    window.seleccionarPaciente = function(pacienteId, agendaId, estadoCita) {
         const eci = infoCita(estadoCita);
         if (eci.cancelada) {
             Swal.fire({
@@ -439,14 +422,14 @@ html += `<thead class="thead-light"><tr>
                 cancelButtonText: 'Cancelar',
                 confirmButtonColor: '#f39c12',
             }).then(function(r) {
-                if (r.isConfirmed) _abrirModalCrear(pacienteId);
+                if (r.isConfirmed) _abrirModalCrear(pacienteId, agendaId);
             });
             return;
         }
-        _abrirModalCrear(pacienteId);
+        _abrirModalCrear(pacienteId, agendaId);
     };
 
-    function _abrirModalCrear(pacienteId) {
+    function _abrirModalCrear(pacienteId, agendaId) {
         const fecha = $('#fecha').val();
         const codigoUsuario = $('#codigo_usuario').val();
 
@@ -459,7 +442,7 @@ html += `<thead class="thead-light"><tr>
         $.ajax({
             url: `{{ route("consentimientos.ajax.datos", ["paciente_id" => ":id"]) }}`.replace(':id', pacienteId),
             type: 'GET',
-            data: { fecha, codigo_usuario: codigoUsuario },
+            data: { fecha, codigo_usuario: codigoUsuario, agenda_id: agendaId },
             success: function(response) {
                 if (!response.success) {
                     $('#modalCrearConsentimiento').modal('hide');
@@ -661,11 +644,15 @@ html += `<thead class="thead-light"><tr>
     };
 
 
-    // Variable global para almacenar paciente seleccionado desde modal
+    // Variables globales para almacenar paciente seleccionado desde modal
 let pacienteSeleccionadoDesdeModal = null;
+let agendaSeleccionadaDesdeModal = null;
 
 window.verDetallesPaciente = function(pacienteId, citas) {
     pacienteSeleccionadoDesdeModal = pacienteId;
+    // Tomar la primera cita no cancelada como default, o la primera
+    const citaDefault = citas.find(c => !([2,3,4].includes(parseInt(c.estado)))) || citas[0];
+    agendaSeleccionadaDesdeModal = citaDefault ? citaDefault.agenda_id : null;
 
     let html = `<h6 class="mb-3">📋 ${citas.length} cita(s) - Ordenadas por hora</h6>`;
     html += '<div class="table-responsive"><table class="table table-sm table-striped">';
@@ -741,10 +728,12 @@ window.verDetallesPaciente = function(pacienteId, citas) {
 window.confirmarSeleccionDesdeModal = function() {
     if (pacienteSeleccionadoDesdeModal) {
         const id = pacienteSeleccionadoDesdeModal;
+        const agendaId = agendaSeleccionadaDesdeModal;
         pacienteSeleccionadoDesdeModal = null;
+        agendaSeleccionadaDesdeModal = null;
         $('#modalDetallesPaciente').modal('hide');
         $('#modalDetallesPaciente').one('hidden.bs.modal', function() {
-            seleccionarPaciente(id);
+            seleccionarPaciente(id, agendaId, 0);
         });
     }
 };
@@ -779,10 +768,6 @@ $(document).on('click', '.th-sort', function() {
         .sort((a, b) => {
             let va = (a.dataset[col] || '').trim();
             let vb = (b.dataset[col] || '').trim();
-            if (col === 'citas') {
-                return sortDir === 'asc' ? (parseInt(va)||0) - (parseInt(vb)||0)
-                                         : (parseInt(vb)||0) - (parseInt(va)||0);
-            }
             const cmp = va.localeCompare(vb, 'es', { numeric: true, sensitivity: 'base' });
             return sortDir === 'asc' ? cmp : -cmp;
         })
