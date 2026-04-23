@@ -16,7 +16,8 @@ class PermisoFarmacia
      */
     public function handle(Request $request, Closure $next)
     {
-         if ((session()->get('rol_nombre') == ('administrador')) || (session()->get('rol_nombre') == ('farmacia'))){
+         if ((session()->get('rol_nombre') == ('administrador')) || (session()->get('rol_nombre') == ('farmacia')) || (session()->get('rol_nombre') == ('analista')))
+        {
 
         return $next($request);
 

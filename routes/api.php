@@ -27,7 +27,7 @@ Route::post('loginMovil1','Seguridad\LoginController@loginMovil');
 | Chat API Routes
 |--------------------------------------------------------------------------
 */
-Route::middleware('auth')->prefix('chat')->group(function () {
+Route::prefix('chat')->group(function () {
     // Chats
     Route::get('/', 'Chat\ChatController@index');
     Route::post('/', 'Chat\ChatController@store');
