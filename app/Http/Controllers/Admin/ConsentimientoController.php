@@ -671,15 +671,19 @@ public function ajaxDatosPaciente($paciente_id, Request $request)
 {
     $fecha = $request->input('fecha');
     $codigoUsuario = $request->input('codigo_usuario');
-    
-    // ✅ Usar relación personalizada profesionalPorCodigo
-    $agenda = AgendaCI::with(['paciente', 'profesionalPorCodigo'])
-        ->where('paciente_id', $paciente_id)
-        ->whereDate('fecha', $fecha)
-        ->where('codigo_consultorio', $codigoUsuario)  // ← Filtro por código
-        ->orderBy('fecha', 'asc')
-        ->first();
-    
+    $agendaId = $request->input('agenda_id');
+
+    if ($agendaId) {
+        $agenda = AgendaCI::with(['paciente', 'profesionalPorCodigo'])->find($agendaId);
+    } else {
+        $agenda = AgendaCI::with(['paciente', 'profesionalPorCodigo'])
+            ->where('paciente_id', $paciente_id)
+            ->whereDate('fecha', $fecha)
+            ->where('codigo_consultorio', $codigoUsuario)
+            ->orderBy('fecha', 'asc')
+            ->first();
+    }
+
     if (!$agenda) {
         return response()->json(['success' => false, 'message' => 'Paciente no encontrado con estos filtros']);
     }
