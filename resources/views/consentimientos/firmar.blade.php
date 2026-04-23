@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
     <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <meta name="csrf-token" content="{{ csrf_token() }}">
     <title>Firmar Consentimiento Informado - Clínica Fidem</title>
 
@@ -35,7 +35,10 @@
             touch-action: none;
             user-select: none;
             -webkit-user-select: none;
+            display: block; /* evita espacio extra bajo el canvas inline */
         }
+        /* Evita scroll elástico de iOS mientras se firma */
+        html, body { overscroll-behavior: none; }
         .btn-clear {
             background-color: #dc3545;
             color: white;
@@ -420,7 +423,7 @@
     <!-- Bootstrap 4 -->
     <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.bundle.min.js"></script>
     <!-- Signature Pad -->
-    <script src="https://cdn.jsdelivr.net/npm/signature_pad@4.0.0/dist/signature_pad.umd.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/signature_pad@4.1.7/dist/signature_pad.umd.min.js"></script>
 
     <script>
         // Inicializar signature pads
@@ -436,40 +439,67 @@
             penColor: 'rgb(0, 0, 0)'
         });
 
-        // Ajustar canvas para pantallas pequeñas.
-        // En móvil el evento resize se dispara al hacer scroll (la barra del navegador
-        // se oculta/muestra cambiando el alto del viewport). Para evitar limpiar el canvas
-        // innecesariamente, solo redimensionamos cuando el ANCHO cambia realmente.
+        // ─── Redimensionar canvas ────────────────────────────────────────────────
+        // El problema en tablets: si canvas.width != canvas.style.width (en píxeles CSS),
+        // las coordenadas del toque (en píxeles CSS) no coinciden con el espacio de dibujo,
+        // haciendo que el trazo aparezca más largo o desplazado.
+        //
+        // Solución: usar getBoundingClientRect() (más exacto que offsetWidth) para calcular
+        // el tamaño real del canvas, y Math.floor() para evitar dimensiones sub-píxel.
+        // Llamar pad.clear() después de cambiar dimensiones para sincronizar estado interno.
+
         let lastCanvasWidth = 0;
+        let resizeTimer     = null;
 
-        function resizeCanvas() {
-            const parent = canvasPaciente.parentElement;
+        function resizeOnePad(canvas, pad) {
+            const data  = pad.toData();                  // guardar trazos en coord. CSS
             const ratio = Math.max(window.devicePixelRatio || 1, 1);
-            const newWidth = Math.min(600, parent.offsetWidth - 20);
+            const rect  = canvas.parentElement.getBoundingClientRect();
+            const w     = Math.floor(Math.min(600, rect.width - 4)); // 4 = 2px borde × 2
+            const h     = 200;
 
-            // Si el ancho no cambió (ej: scroll en móvil), no hacer nada
-            if (newWidth === lastCanvasWidth) return;
-            lastCanvasWidth = newWidth;
+            // Dimensiones CSS → visible
+            canvas.style.width  = w + 'px';
+            canvas.style.height = h + 'px';
 
-            // Guardar firmas antes de redimensionar (canvas.width = x limpia el canvas)
-            const dataPaciente  = signaturePadPaciente.isEmpty()  ? null : signaturePadPaciente.toData();
-            const dataAcudiente = signaturePadAcudiente.isEmpty() ? null : signaturePadAcudiente.toData();
+            // Dimensiones internas → píxeles físicos (para pantallas retina/HiDPI)
+            canvas.width  = Math.floor(w * ratio);
+            canvas.height = Math.floor(h * ratio);
 
-            document.querySelectorAll('.signature-pad').forEach((canvas) => {
-                canvas.width  = newWidth * ratio;
-                canvas.height = 200 * ratio;
-                canvas.style.width  = newWidth + 'px';
-                canvas.style.height = '200px';
-                canvas.getContext('2d').scale(ratio, ratio);
-            });
+            // Escalar el contexto para que 1 unidad CSS = ratio píxeles del canvas
+            canvas.getContext('2d').scale(ratio, ratio);
 
-            // Restaurar firmas después de redimensionar
-            if (dataPaciente)  signaturePadPaciente.fromData(dataPaciente);
-            if (dataAcudiente) signaturePadAcudiente.fromData(dataAcudiente);
+            // Sincronizar estado interno del pad con el canvas limpio
+            pad.clear();
+            if (data.length > 0) pad.fromData(data);   // restaurar trazos si los había
+
+            return w;
         }
 
-        window.addEventListener('resize', resizeCanvas);
-        resizeCanvas();
+        function resizeCanvas() {
+            const w = resizeOnePad(canvasPaciente,  signaturePadPaciente);
+            resizeOnePad(canvasAcudiente, signaturePadAcudiente);
+
+            // Salir rápido en llamadas repetidas con el mismo ancho (scroll en móvil)
+            if (w === lastCanvasWidth) return;
+            lastCanvasWidth = w;
+        }
+
+        // Debounce para no redibujar en cada px del resize
+        function onResize() {
+            clearTimeout(resizeTimer);
+            resizeTimer = setTimeout(resizeCanvas, 80);
+        }
+
+        window.addEventListener('resize', onResize);
+
+        // visualViewport es más preciso en iOS/Android (detecta el teclado virtual,
+        // la barra de direcciones, etc.) sin confundirse con el scroll normal
+        if (window.visualViewport) {
+            window.visualViewport.addEventListener('resize', onResize);
+        }
+
+        resizeCanvas(); // redimensionar al cargar
 
         // Función para limpiar firma
         function clearSignature(canvasId) {
