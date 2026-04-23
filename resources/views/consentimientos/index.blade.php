@@ -25,63 +25,71 @@ $(document).ready(function() {
                 emptyTable: '<i class="fas fa-filter mr-1"></i> Use los filtros para buscar consentimientos.'
             },
             order: [[5, 'desc']],
-            pageLength: 25
+            pageLength: 25,
+            columnDefs: [
+                {
+                    // Columna Fecha: se pasa el ISO string para ordenar, se formatea para mostrar
+                    targets: 5,
+                    render: function(data, type) {
+                        if (type === 'sort' || type === 'type') return data;
+                        if (!data) return '-';
+                        const d = new Date(data.replace(' ', 'T'));
+                        return d.toLocaleDateString('es-CO', { day:'2-digit', month:'2-digit', year:'numeric' })
+                             + ' ' + d.toLocaleTimeString('es-CO', { hour:'2-digit', minute:'2-digit', hour12:false });
+                    }
+                },
+                { targets: [6, 7, 8], orderable: false } // Estado, Creado por, Acciones
+            ]
         });
     }
     initDT();
 
     // ── Renderizar filas desde JSON ──────────────────────────────────────────
     function renderTabla(data) {
-        if (dtInstance) { dtInstance.destroy(); dtInstance = null; }
+        dtInstance.clear();
 
-        const tbody = $('#tablaConsentimientos tbody');
-        tbody.empty();
+        if (data.length) {
+            data.forEach(function(c) {
+                let badge = '';
+                if      (c.estado === 'pendiente')  badge = '<span class="badge badge-warning"><i class="fas fa-clock"></i> Pendiente</span>';
+                else if (c.estado === 'en_proceso') badge = '<span class="badge badge-info"><i class="fas fa-spinner"></i> En proceso</span>';
+                else if (c.estado === 'firmado')    badge = '<span class="badge badge-success"><i class="fas fa-check"></i> Firmado</span>';
+                else if (c.estado === 'anulado')    badge = '<span class="badge badge-danger"><i class="fas fa-times"></i> Anulado</span>';
+                else                                badge = '<span class="badge badge-secondary">' + c.estado + '</span>';
 
-        if (!data.length) {
-            initDT(); // DataTables mostrará el mensaje emptyTable
-            return;
+                const pac  = (c.paciente  || '').replace(/"/g, '&quot;');
+                const plnt = (c.plantilla || '').replace(/"/g, '&quot;');
+
+                let acc = `<a href="${c.url_show}" class="btn btn-info btn-sm" title="Ver Detalle"><i class="fas fa-eye"></i></a> `;
+                if (c.estado === 'firmado')
+                    acc += `<a href="${c.url_pdf}" class="btn btn-danger btn-sm" title="Descargar PDF" target="_blank"><i class="fas fa-file-pdf"></i></a> `;
+                if (c.estado === 'pendiente' || c.estado === 'en_proceso')
+                    acc += `<button type="button" class="btn btn-warning btn-sm" title="Copiar enlace de firma"
+                                onclick="copiarEnlaceFirma('${c.url_firma}')"><i class="fas fa-link"></i></button> `;
+                if (c.estado === 'firmado')
+                    acc += `<button type="button" class="btn btn-danger btn-sm btn-anular-firmado" title="Anular (requiere contraseña)"
+                                data-url="${c.url_anular}" data-paciente="${pac}" data-plantilla="${plnt}">
+                                <i class="fas fa-ban"></i> <i class="fas fa-lock fa-xs"></i></button>`;
+                else if (c.estado !== 'anulado')
+                    acc += `<button type="button" class="btn btn-secondary btn-sm btn-anular" title="Anular consentimiento"
+                                data-url="${c.url_anular}" data-paciente="${pac}" data-plantilla="${plnt}">
+                                <i class="fas fa-ban"></i></button>`;
+
+                dtInstance.row.add([
+                    c.id,
+                    c.paciente,
+                    c.documento,
+                    c.plantilla,
+                    c.profesional,
+                    c.fecha_sort,   // ISO → ordenado por columnDefs.render, mostrado formateado
+                    badge,
+                    '<small class="text-muted"><i class="fas fa-user fa-xs"></i> ' + (c.creado_por || '—') + '</small>',
+                    acc
+                ]);
+            });
         }
 
-        tbody.html(data.map(function(c) {
-            let badge = '';
-            if      (c.estado === 'pendiente')  badge = '<span class="badge badge-warning"><i class="fas fa-clock"></i> Pendiente</span>';
-            else if (c.estado === 'en_proceso')  badge = '<span class="badge badge-info"><i class="fas fa-spinner"></i> En proceso</span>';
-            else if (c.estado === 'firmado')     badge = '<span class="badge badge-success"><i class="fas fa-check"></i> Firmado</span>';
-            else if (c.estado === 'anulado')     badge = '<span class="badge badge-danger"><i class="fas fa-times"></i> Anulado</span>';
-            else                                 badge = '<span class="badge badge-secondary">' + c.estado + '</span>';
-
-            const pac  = (c.paciente  || '').replace(/"/g, '&quot;');
-            const plnt = (c.plantilla || '').replace(/"/g, '&quot;');
-
-            let acc = `<a href="${c.url_show}" class="btn btn-info btn-sm" title="Ver Detalle"><i class="fas fa-eye"></i></a> `;
-            if (c.estado === 'firmado')
-                acc += `<a href="${c.url_pdf}" class="btn btn-danger btn-sm" title="Descargar PDF" target="_blank"><i class="fas fa-file-pdf"></i></a> `;
-            if (c.estado === 'pendiente' || c.estado === 'en_proceso')
-                acc += `<button type="button" class="btn btn-warning btn-sm" title="Copiar enlace de firma"
-                            onclick="copiarEnlaceFirma('${c.url_firma}')"><i class="fas fa-link"></i></button> `;
-            if (c.estado === 'firmado')
-                acc += `<button type="button" class="btn btn-danger btn-sm btn-anular-firmado" title="Anular (requiere contraseña)"
-                            data-url="${c.url_anular}" data-paciente="${pac}" data-plantilla="${plnt}">
-                            <i class="fas fa-ban"></i> <i class="fas fa-lock fa-xs"></i></button>`;
-            else if (c.estado !== 'anulado')
-                acc += `<button type="button" class="btn btn-secondary btn-sm btn-anular" title="Anular consentimiento"
-                            data-url="${c.url_anular}" data-paciente="${pac}" data-plantilla="${plnt}">
-                            <i class="fas fa-ban"></i></button>`;
-
-            return `<tr>
-                <td>${c.id}</td>
-                <td>${c.paciente}</td>
-                <td>${c.documento}</td>
-                <td>${c.plantilla}</td>
-                <td>${c.profesional}</td>
-                <td data-order="${c.fecha_sort}">${c.fecha_procedimiento}</td>
-                <td>${badge}</td>
-                <td><small class="text-muted"><i class="fas fa-user fa-xs"></i> ${c.creado_por}</small></td>
-                <td class="text-center">${acc}</td>
-            </tr>`;
-        }).join(''));
-
-        initDT();
+        dtInstance.draw();
     }
 
     // ── Buscar vía AJAX ──────────────────────────────────────────────────────
@@ -117,9 +125,7 @@ $(document).ready(function() {
     $('#btnLimpiar').click(function() {
         $('#formFiltros')[0].reset();
         $('#contadorResultados').text('');
-        if (dtInstance) { dtInstance.destroy(); dtInstance = null; }
-        $('#tablaConsentimientos tbody').empty();
-        initDT();
+        dtInstance.clear().draw();
     });
 
     // ── Anular consentimiento ────────────────────────────────────────────────
