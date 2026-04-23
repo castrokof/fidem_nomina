@@ -76,6 +76,7 @@ $(document).ready(function() {
                 <td>${c.profesional}</td>
                 <td data-order="${c.fecha_sort}">${c.fecha_procedimiento}</td>
                 <td>${badge}</td>
+                <td><small class="text-muted"><i class="fas fa-user fa-xs"></i> ${c.creado_por}</small></td>
                 <td class="text-center">${acc}</td>
             </tr>`;
         }).join(''));
@@ -353,6 +354,7 @@ function copiarEnlaceFirma(url) {
                                     <th>Profesional</th>
                                     <th>Fecha Procedimiento</th>
                                     <th>Estado</th>
+                                    <th>Creado por</th>
                                     <th>Acciones</th>
                                 </tr>
                             </thead>
