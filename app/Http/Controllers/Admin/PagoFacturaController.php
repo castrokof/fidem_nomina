@@ -35,7 +35,7 @@ class PagoFacturaController extends Controller
 
         // Cargar registros indexados [factura_id][mes]
         $registrosRaw = PagoRegistro::with('factura')
-            ->whereHas('factura', fn($q) => $q->where('activo', true))
+            ->whereHas('factura', function ($q) { $q->where('activo', true); })
             ->where('anio', $anio)
             ->get();
 
@@ -143,13 +143,15 @@ class PagoFacturaController extends Controller
             ->orderByDesc('created_at')
             ->take(20)
             ->get()
-            ->map(fn($n) => [
-                'id'      => $n->id,
-                'titulo'  => $n->titulo,
-                'mensaje' => $n->mensaje,
-                'tipo'    => $n->tipo,
-                'fecha'   => $n->created_at->diffForHumans(),
-            ]);
+            ->map(function ($n) {
+                return [
+                    'id'      => $n->id,
+                    'titulo'  => $n->titulo,
+                    'mensaje' => $n->mensaje,
+                    'tipo'    => $n->tipo,
+                    'fecha'   => $n->created_at->diffForHumans(),
+                ];
+            });
 
         return response()->json([
             'total' => $notifs->count(),
