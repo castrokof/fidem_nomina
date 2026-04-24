@@ -66,16 +66,19 @@ class EnviarRecordatoriosPagos extends Command
                 ]);
             }
 
-            // Enviar email si hay correo y no se envió hoy
+            // Enviar email a todos los correos configurados (separados por coma)
             if ($factura->correo_notificacion && !$registro->notificacion_enviada) {
-                try {
-                    Mail::to($factura->correo_notificacion)
-                        ->send(new RecordatorioPagoMail($registro->load('factura'), $tipo));
-                    $registro->update(['notificacion_enviada' => true]);
-                    $enviados++;
-                } catch (\Exception $e) {
-                    $this->error('Error enviando correo para ' . $factura->nombre . ': ' . $e->getMessage());
+                $correos = array_filter(array_map('trim', explode(',', $factura->correo_notificacion)));
+                foreach ($correos as $correo) {
+                    if (!filter_var($correo, FILTER_VALIDATE_EMAIL)) continue;
+                    try {
+                        Mail::to($correo)->send(new RecordatorioPagoMail($registro->load('factura'), $tipo));
+                        $enviados++;
+                    } catch (\Exception $e) {
+                        $this->error('Error enviando a ' . $correo . ' (' . $factura->nombre . '): ' . $e->getMessage());
+                    }
                 }
+                $registro->update(['notificacion_enviada' => true]);
             }
         }
 
