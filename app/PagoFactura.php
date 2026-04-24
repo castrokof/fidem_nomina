@@ -9,7 +9,7 @@ class PagoFactura extends Model
     protected $table = 'pagos_facturas';
 
     protected $fillable = [
-        'nombre', 'categoria', 'descripcion', 'referencia',
+        'nombre', 'categoria', 'descripcion', 'referencia', 'sede',
         'dia_vencimiento', 'monto_estimado',
         'correo_notificacion', 'dias_aviso',
         'activo', 'created_by',

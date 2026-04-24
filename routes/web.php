@@ -532,6 +532,7 @@ Route::prefix('pagos')->name('pagos.')->middleware(['auth'])->group(function () 
     Route::post('/registros/{id}/revertir',       [PagoFacturaController::class, 'revertirPago'])->name('registros.revertir');
     Route::get('/notificaciones',                 [PagoFacturaController::class, 'notificaciones'])->name('notificaciones');
     Route::post('/notificaciones/{id}/leer',      [PagoFacturaController::class, 'marcarNotificacionLeida'])->name('notificaciones.leer');
+    Route::post('/categorias',                    [PagoFacturaController::class, 'storeCategoria'])->name('categorias.store');
 });
 
 
