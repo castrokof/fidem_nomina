@@ -143,6 +143,7 @@ $(function() {
         $('#fnombre').val(f.nombre);
         $('#fcategoria').val(f.categoria);
         $('#fdescripcion').val(f.descripcion);
+        $('#freferencia').val(f.referencia);
         $('#fdia').val(f.dia);
         $('#fmonto').val(f.monto);
         $('#fcorreo').val(f.correo);
@@ -381,14 +382,17 @@ $(function() {
                     {{-- Nombre de factura --}}
                     <td class="col-factura">
                       <div class="font-weight-bold">{{ $factura->nombre }}</div>
-                      @if($factura->monto_estimado > 0)
-                        <small class="text-muted">
-                          $ {{ number_format($factura->monto_estimado, 0, ',', '.') }}
-                          · día {{ $factura->dia_vencimiento }}
+                      @if($factura->referencia)
+                        <small class="text-info d-block">
+                          <i class="fas fa-hashtag fa-xs"></i> {{ $factura->referencia }}
                         </small>
-                      @else
-                        <small class="text-muted">Día {{ $factura->dia_vencimiento }}</small>
                       @endif
+                      <small class="text-muted">
+                        Día {{ $factura->dia_vencimiento }}
+                        @if($factura->monto_estimado > 0)
+                          · $ {{ number_format($factura->monto_estimado, 0, ',', '.') }}
+                        @endif
+                      </small>
                     </td>
 
                     {{-- Celda por mes --}}
@@ -440,6 +444,7 @@ $(function() {
                               data-nombre="{{ e($factura->nombre) }}"
                               data-categoria="{{ e($factura->categoria) }}"
                               data-descripcion="{{ e($factura->descripcion) }}"
+                              data-referencia="{{ e($factura->referencia) }}"
                               data-dia="{{ $factura->dia_vencimiento }}"
                               data-monto="{{ $factura->monto_estimado }}"
                               data-correo="{{ e($factura->correo_notificacion) }}"
@@ -496,10 +501,18 @@ $(function() {
               </datalist>
             </div>
           </div>
-          <div class="form-group">
-            <label class="small font-weight-bold">Descripción</label>
-            <textarea id="fdescripcion" name="descripcion" class="form-control form-control-sm" rows="2"
-                      placeholder="Descripción opcional…"></textarea>
+          <div class="form-row">
+            <div class="form-group col-md-8">
+              <label class="small font-weight-bold">Descripción</label>
+              <textarea id="fdescripcion" name="descripcion" class="form-control form-control-sm" rows="2"
+                        placeholder="Descripción opcional…"></textarea>
+            </div>
+            <div class="form-group col-md-4">
+              <label class="small font-weight-bold">N° Línea / Contrato / Referencia</label>
+              <input id="freferencia" name="referencia" type="text" class="form-control form-control-sm"
+                     placeholder="Ej: 573001234567">
+              <small class="text-muted">Número de referencia para el pago</small>
+            </div>
           </div>
           <div class="form-row">
             <div class="form-group col-md-4">
@@ -528,7 +541,7 @@ $(function() {
             <input id="fcorreo" name="correo_notificacion" type="email"
                    class="form-control form-control-sm"
                    placeholder="correo@ejemplo.com (opcional)">
-            <small class="text-muted">Si se configura, recibirá emails automáticos de recordatorio.</small>
+            <small class="text-muted">Puede ingresar varios correos separados por coma: <em>a@x.com, b@x.com</em></small>
           </div>
           <div class="d-flex justify-content-end mt-3 pt-3 border-top">
             <button type="button" class="btn btn-secondary btn-sm mr-2" data-dismiss="modal">

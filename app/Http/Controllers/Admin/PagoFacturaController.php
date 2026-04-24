@@ -57,9 +57,10 @@ class PagoFacturaController extends Controller
             'nombre'               => 'required|string|max:100',
             'categoria'            => 'nullable|string|max:60',
             'descripcion'          => 'nullable|string',
+            'referencia'           => 'nullable|string|max:100',
             'dia_vencimiento'      => 'required|integer|min:1|max:31',
             'monto_estimado'       => 'nullable|numeric|min:0',
-            'correo_notificacion'  => 'nullable|email|max:150',
+            'correo_notificacion'  => 'nullable|string',
             'dias_aviso'           => 'nullable|integer|min:1|max:30',
         ]);
 
@@ -81,9 +82,10 @@ class PagoFacturaController extends Controller
             'nombre'               => 'required|string|max:100',
             'categoria'            => 'nullable|string|max:60',
             'descripcion'          => 'nullable|string',
+            'referencia'           => 'nullable|string|max:100',
             'dia_vencimiento'      => 'required|integer|min:1|max:31',
             'monto_estimado'       => 'nullable|numeric|min:0',
-            'correo_notificacion'  => 'nullable|email|max:150',
+            'correo_notificacion'  => 'nullable|string',
             'dias_aviso'           => 'nullable|integer|min:1|max:30',
         ]);
 
