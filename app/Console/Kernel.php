@@ -24,7 +24,8 @@ class Kernel extends ConsoleKernel
      */
     protected function schedule(Schedule $schedule)
     {
-        // (Vacío: las tareas se ejecutan directamente desde cron del servidor)
+        // Recordatorios de pagos: cada día a las 8am
+        $schedule->command('pagos:recordatorios')->dailyAt('08:00');
     }
 
     /**
