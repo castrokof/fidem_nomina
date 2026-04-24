@@ -3,6 +3,7 @@
 namespace App\Http\Controllers\Admin;
 
 use App\Http\Controllers\Controller;
+use App\PagoCategoria;
 use App\PagoFactura;
 use App\PagoNotificacion;
 use App\PagoRegistro;
@@ -11,19 +12,31 @@ use Illuminate\Http\Request;
 
 class PagoFacturaController extends Controller
 {
+    private function validationRules()
+    {
+        return [
+            'nombre'              => 'required|string|max:100',
+            'categoria'           => 'nullable|string|max:80',
+            'descripcion'         => 'nullable|string',
+            'referencia'          => 'nullable|string|max:100',
+            'sede'                => 'nullable|string|max:100',
+            'dia_vencimiento'     => 'required|integer|min:1|max:31',
+            'monto_estimado'      => 'nullable|numeric|min:0',
+            'correo_notificacion' => 'nullable|string',
+            'dias_aviso'          => 'nullable|integer|min:1|max:30',
+        ];
+    }
+
     /** Vista principal: calendario de pagos */
     public function index(Request $request)
     {
-        $anio   = (int) ($request->get('anio', date('Y')));
-        $hoy    = Carbon::today();
-        $meses  = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+        $anio  = (int) ($request->get('anio', date('Y')));
+        $hoy   = Carbon::today();
+        $meses = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
 
         $facturas = PagoFactura::where('activo', true)
-            ->orderBy('categoria')
-            ->orderBy('nombre')
-            ->get();
+            ->orderBy('categoria')->orderBy('nombre')->get();
 
-        // Asegurar que existan registros para los 12 meses del año
         foreach ($facturas as $factura) {
             for ($m = 1; $m <= 12; $m++) {
                 PagoRegistro::firstOrCreate(
@@ -33,40 +46,30 @@ class PagoFacturaController extends Controller
             }
         }
 
-        // Cargar registros indexados [factura_id][mes]
         $registrosRaw = PagoRegistro::with('factura')
             ->whereHas('factura', function ($q) { $q->where('activo', true); })
-            ->where('anio', $anio)
-            ->get();
+            ->where('anio', $anio)->get();
 
         $registros = [];
         foreach ($registrosRaw as $r) {
             $registros[$r->factura_id][$r->mes] = $r;
         }
 
-        // Conteo de notificaciones no leídas
+        $categorias    = PagoCategoria::orderBy('nombre')->pluck('nombre');
         $totalNoLeidas = PagoNotificacion::where('leido', false)->count();
 
-        return view('pagos.index', compact('facturas', 'registros', 'anio', 'meses', 'hoy', 'totalNoLeidas'));
+        return view('pagos.index', compact(
+            'facturas', 'registros', 'anio', 'meses', 'hoy', 'totalNoLeidas', 'categorias'
+        ));
     }
 
     /** Crear factura */
     public function store(Request $request)
     {
-        $data = $request->validate([
-            'nombre'               => 'required|string|max:100',
-            'categoria'            => 'nullable|string|max:60',
-            'descripcion'          => 'nullable|string',
-            'referencia'           => 'nullable|string|max:100',
-            'dia_vencimiento'      => 'required|integer|min:1|max:31',
-            'monto_estimado'       => 'nullable|numeric|min:0',
-            'correo_notificacion'  => 'nullable|string',
-            'dias_aviso'           => 'nullable|integer|min:1|max:30',
-        ]);
-
-        $data['dias_aviso']    = $data['dias_aviso'] ?? 3;
-        $data['monto_estimado']= $data['monto_estimado'] ?? 0;
-        $data['created_by']    = auth()->id();
+        $data = $request->validate($this->validationRules());
+        $data['dias_aviso']     = $data['dias_aviso'] ?? 3;
+        $data['monto_estimado'] = $data['monto_estimado'] ?? 0;
+        $data['created_by']     = auth()->id();
 
         $factura = PagoFactura::create($data);
 
@@ -77,37 +80,22 @@ class PagoFacturaController extends Controller
     public function update(Request $request, $id)
     {
         $factura = PagoFactura::findOrFail($id);
-
-        $data = $request->validate([
-            'nombre'               => 'required|string|max:100',
-            'categoria'            => 'nullable|string|max:60',
-            'descripcion'          => 'nullable|string',
-            'referencia'           => 'nullable|string|max:100',
-            'dia_vencimiento'      => 'required|integer|min:1|max:31',
-            'monto_estimado'       => 'nullable|numeric|min:0',
-            'correo_notificacion'  => 'nullable|string',
-            'dias_aviso'           => 'nullable|integer|min:1|max:30',
-        ]);
-
-        $factura->update($data);
+        $factura->update($request->validate($this->validationRules()));
 
         return response()->json(['success' => true, 'message' => 'Factura actualizada correctamente.']);
     }
 
-    /** Desactivar factura (soft-delete lógico) */
+    /** Desactivar factura */
     public function destroy($id)
     {
-        $factura = PagoFactura::findOrFail($id);
-        $factura->update(['activo' => false]);
-
+        PagoFactura::findOrFail($id)->update(['activo' => false]);
         return response()->json(['success' => true, 'message' => 'Factura eliminada.']);
     }
 
-    /** Marcar registro mensual como pagado */
+    /** Marcar pago mensual */
     public function marcarPagado(Request $request, $id)
     {
         $registro = PagoRegistro::findOrFail($id);
-
         $data = $request->validate([
             'fecha_pago'   => 'nullable|date',
             'monto_pagado' => 'nullable|numeric|min:0',
@@ -115,36 +103,37 @@ class PagoFacturaController extends Controller
         ]);
 
         $registro->update([
-            'estado'      => 'pagado',
-            'fecha_pago'  => $data['fecha_pago']   ?? Carbon::today(),
-            'monto_pagado'=> $data['monto_pagado'] ?? $registro->factura->monto_estimado,
-            'notas'       => $data['notas']        ?? null,
+            'estado'       => 'pagado',
+            'fecha_pago'   => $data['fecha_pago']   ?? Carbon::today(),
+            'monto_pagado' => $data['monto_pagado'] ?? $registro->factura->monto_estimado,
+            'notas'        => $data['notas']        ?? null,
         ]);
 
         return response()->json(['success' => true, 'message' => 'Pago registrado correctamente.']);
     }
 
-    /** Revertir pago a pendiente */
+    /** Revertir pago */
     public function revertirPago($id)
     {
-        $registro = PagoRegistro::findOrFail($id);
-        $registro->update([
-            'estado'       => 'pendiente',
-            'fecha_pago'   => null,
-            'monto_pagado' => null,
+        PagoRegistro::findOrFail($id)->update([
+            'estado' => 'pendiente', 'fecha_pago' => null, 'monto_pagado' => null,
         ]);
-
         return response()->json(['success' => true, 'message' => 'Pago revertido a pendiente.']);
     }
 
-    /** Notificaciones no leídas (AJAX) */
+    /** Crear categoría (AJAX) */
+    public function storeCategoria(Request $request)
+    {
+        $request->validate(['nombre' => 'required|string|max:80|unique:pagos_categorias,nombre']);
+        $cat = PagoCategoria::create(['nombre' => trim($request->nombre)]);
+        return response()->json(['success' => true, 'nombre' => $cat->nombre]);
+    }
+
+    /** Notificaciones no leídas */
     public function notificaciones()
     {
         $notifs = PagoNotificacion::with('factura')
-            ->where('leido', false)
-            ->orderByDesc('created_at')
-            ->take(20)
-            ->get()
+            ->where('leido', false)->orderByDesc('created_at')->take(20)->get()
             ->map(function ($n) {
                 return [
                     'id'      => $n->id,
@@ -155,13 +144,10 @@ class PagoFacturaController extends Controller
                 ];
             });
 
-        return response()->json([
-            'total' => $notifs->count(),
-            'items' => $notifs,
-        ]);
+        return response()->json(['total' => $notifs->count(), 'items' => $notifs]);
     }
 
-    /** Marcar notificación como leída */
+    /** Marcar notificación leída */
     public function marcarNotificacionLeida($id)
     {
         if ($id === 'all') {
@@ -169,7 +155,6 @@ class PagoFacturaController extends Controller
         } else {
             PagoNotificacion::findOrFail($id)->update(['leido' => true]);
         }
-
         return response()->json(['success' => true]);
     }
 }
