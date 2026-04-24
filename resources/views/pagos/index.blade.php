@@ -530,12 +530,14 @@ $(function() {
                    placeholder="correo@ejemplo.com (opcional)">
             <small class="text-muted">Si se configura, recibirá emails automáticos de recordatorio.</small>
           </div>
-        </div>
-        <div class="modal-footer">
-          <button type="button" class="btn btn-secondary btn-sm" data-dismiss="modal">Cancelar</button>
-          <button type="submit" class="btn btn-primary btn-sm">
-            <i class="fas fa-save"></i> Guardar
-          </button>
+          <div class="d-flex justify-content-end mt-3 pt-3 border-top">
+            <button type="button" class="btn btn-secondary btn-sm mr-2" data-dismiss="modal">
+              <i class="fas fa-times"></i> Cancelar
+            </button>
+            <button type="submit" class="btn btn-primary btn-sm">
+              <i class="fas fa-save"></i> Guardar
+            </button>
+          </div>
         </div>
       </form>
     </div>
