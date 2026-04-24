@@ -36,6 +36,9 @@ class DatabaseSeeder extends Seeder
             $this->call(PlantillaCISeeder::class);
             $this->call(MenuCIFidemSeeder::class);
 
+            // Seeder del módulo Agenda de Pagos
+            $this->call(AgendaPagosMenuSeeder::class);
+
     }
 
     protected function truncateTablas(array $tablas){
