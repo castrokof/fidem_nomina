@@ -528,7 +528,7 @@ $(function() {
                   </div>
                   @if($factura->descripcion)
                     <div class="f-desc" title="{{ e($factura->descripcion) }}">
-                      {{ Str::limit($factura->descripcion, 45) }}
+                      {{ \Illuminate\Support\Str::limit($factura->descripcion, 45) }}
                     </div>
                   @endif
                 </td>

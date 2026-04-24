@@ -513,7 +513,7 @@ Route::get('consentimientos/crear-desde-agenda/{agenda_id}','ConsentimientoContr
     Route::post('agenda-sync/reintentar/{id}', 'AgendaSyncController@reintentarFallido')->name('agenda.sync.reintentar');
 });
 
-Route::prefix('rh/contratacion')->middleware('superadmin')->group(function () {
+Route::prefix('rh/contratacion')->middleware('superEditor')->group(function () {
     Route::get('/', 'RH\ContratacionController@index')->name('rh.contratacion.index');
     Route::post('/', 'RH\ContratacionController@store')->name('rh.contratacion.store');
     Route::get('/{candidato}', 'RH\ContratacionController@show')->name('rh.contratacion.show');

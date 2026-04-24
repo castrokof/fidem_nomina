@@ -15,9 +15,10 @@ class CreatePagosFacturasTable extends Migration
             $table->text('descripcion')->nullable();
             $table->unsignedTinyInteger('dia_vencimiento'); // 1–31
             $table->decimal('monto_estimado', 12, 2)->default(0);
-            $table->string('correo_notificacion', 150)->nullable();
+            $table->text('correo_notificacion')->nullable();
             $table->unsignedTinyInteger('dias_aviso')->default(3);
             $table->boolean('activo')->default(true);
+            $table->string('referencia', 100)->nullable();
             $table->unsignedBigInteger('created_by')->nullable();
             $table->timestamps();
         });
