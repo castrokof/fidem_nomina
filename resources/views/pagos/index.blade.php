@@ -401,20 +401,16 @@ $(function() {
                         if ($esFuturo && $estadoCalc !== 'pagado') $estadoCalc = 'futuro';
 
                         $claseEstado = "estado-{$estadoCalc}";
-                        $icono = match($estadoCalc) {
-                            'pagado'    => '<i class="fas fa-check ico"></i>',
-                            'vencido'   => '<i class="fas fa-exclamation-triangle ico"></i>',
-                            'proximo'   => '<i class="fas fa-bell ico"></i>',
-                            'futuro'    => '',
-                            default     => '',
-                        };
-                        $titulo = match($estadoCalc) {
-                            'pagado'  => 'Pagado' . ($reg->fecha_pago ? ' el ' . $reg->fecha_pago->format('d/m/Y') : ''),
-                            'vencido' => 'VENCIDO — sin registrar',
-                            'proximo' => 'Próximo a vencer',
-                            'futuro'  => 'Mes futuro',
-                            default   => 'Pendiente',
-                        };
+                        if ($estadoCalc === 'pagado')       { $icono = '<i class="fas fa-check ico"></i>'; }
+                        elseif ($estadoCalc === 'vencido')  { $icono = '<i class="fas fa-exclamation-triangle ico"></i>'; }
+                        elseif ($estadoCalc === 'proximo')  { $icono = '<i class="fas fa-bell ico"></i>'; }
+                        else                                { $icono = ''; }
+
+                        if ($estadoCalc === 'pagado')       { $titulo = 'Pagado' . ($reg && $reg->fecha_pago ? ' el ' . $reg->fecha_pago->format('d/m/Y') : ''); }
+                        elseif ($estadoCalc === 'vencido')  { $titulo = 'VENCIDO — sin registrar'; }
+                        elseif ($estadoCalc === 'proximo')  { $titulo = 'Próximo a vencer'; }
+                        elseif ($estadoCalc === 'futuro')   { $titulo = 'Mes futuro'; }
+                        else                                { $titulo = 'Pendiente'; }
                       @endphp
                       <td class="col-mes p-1">
                         @if($reg)
