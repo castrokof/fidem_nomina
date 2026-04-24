@@ -6,6 +6,7 @@ use App\Http\Controllers\Paliativos\FidemContigoController;
 use App\Http\Controllers\Admin\PacienteController;
 use App\Http\Controllers\Admin\ConsentimientoController;
 use App\Http\Controllers\Admin\PerfilController;
+use App\Http\Controllers\Admin\PagoFacturaController;
 /*
 |--------------------------------------------------------------------------
 | Web Routes
@@ -519,6 +520,18 @@ Route::prefix('rh/contratacion')->middleware('superadmin')->group(function () {
     Route::post('/checklist/toggle', 'RH\ContratacionController@toggleItem')->name('rh.contratacion.toggle');
     Route::post('/{candidato}/fase', 'RH\ContratacionController@avanzarFase')->name('rh.contratacion.fase');
     Route::delete('/{candidato}', 'RH\ContratacionController@destroy')->name('rh.contratacion.destroy');
+});
+
+// ── Módulo: Agenda de Pagos ──────────────────────────────────────────────────
+Route::prefix('pagos')->name('pagos.')->middleware(['auth'])->group(function () {
+    Route::get('/',                               [PagoFacturaController::class, 'index'])->name('index');
+    Route::post('/facturas',                      [PagoFacturaController::class, 'store'])->name('facturas.store');
+    Route::put('/facturas/{id}',                  [PagoFacturaController::class, 'update'])->name('facturas.update');
+    Route::delete('/facturas/{id}',               [PagoFacturaController::class, 'destroy'])->name('facturas.destroy');
+    Route::post('/registros/{id}/pagar',          [PagoFacturaController::class, 'marcarPagado'])->name('registros.pagar');
+    Route::post('/registros/{id}/revertir',       [PagoFacturaController::class, 'revertirPago'])->name('registros.revertir');
+    Route::get('/notificaciones',                 [PagoFacturaController::class, 'notificaciones'])->name('notificaciones');
+    Route::post('/notificaciones/{id}/leer',      [PagoFacturaController::class, 'marcarNotificacionLeida'])->name('notificaciones.leer');
 });
 
 
