@@ -193,7 +193,8 @@ Movimientos de Medicamentos Controlados
                             <thead>
                                 <tr>
                                     <th width="3%"></th>
-                                    <th width="8%"><i class="fas fa-calendar"></i> Fecha</th>
+                                    <th width="8%">Id</th>
+                                    <th width="8%"><i class="fas fa-calendar"></i> Fecha Creación</th>
                                     <th width="18%"><i class="fas fa-capsules"></i> Medicamento</th>
                                     <th width="8%" class="text-center"><i class="fas fa-exchange-alt"></i> Tipo</th>
                                     <th width="15%"><i class="fas fa-truck"></i> Proveedor</th>
@@ -202,6 +203,7 @@ Movimientos de Medicamentos Controlados
                                     <th width="8%" class="text-center"><i class="fas fa-minus"></i> Salida</th>
                                     <th width="8%" class="text-center"><i class="fas fa-warehouse"></i> Saldo</th>
                                     <th width="12%" class="text-center"><i class="fas fa-info-circle"></i> Detalles</th>
+                                    
                                 </tr>
                             </thead>
                             <tbody>
@@ -355,7 +357,8 @@ $(document).ready(function() {
                 defaultContent: '',
                 width: '3%'
             },
-            { data: 'fecha', name: 'fecha', width: '8%' },
+            { data: 'id', name: 'id', width: '8%' },
+            { data: 'created_at', name: 'created_at', width: '8%' },
             { data: 'medicamento', name: 'medicamentoControlado.nombre', width: '18%', orderable: false },
             { data: 'tipo_movimiento', name: 'tipo_movimiento', width: '8%', className: 'text-center' },
             { data: 'proveedor', name: 'proveedor', width: '15%' },
