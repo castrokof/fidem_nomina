@@ -97,8 +97,7 @@ $(document).ready(function () {
     $('#btn-buscar').on('click', buscar);
     $('#f_q').on('keydown', function (e) { if (e.key === 'Enter') buscar(); });
 
-    // Cargar automáticamente con la fecha de hoy
-    $('#f_fecha').val(new Date().toISOString().split('T')[0]);
+    // Cargar automáticamente al abrir
     buscar();
 
     // ── Ver imagen en modal ───────────────────────────────────────────────────
@@ -156,7 +155,8 @@ $(document).ready(function () {
             <div class="row align-items-end">
                 <div class="col-md-3">
                     <label class="small mb-1">Fecha de la cita</label>
-                    <input type="date" id="f_fecha" class="form-control form-control-sm">
+                    <input type="date" id="f_fecha" class="form-control form-control-sm"
+                        value="{{ request('fecha', date('Y-m-d')) }}">
                 </div>
                 <div class="col-md-5">
                     <label class="small mb-1">Buscar paciente (nombre o cédula)</label>
