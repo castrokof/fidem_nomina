@@ -80,11 +80,11 @@ $(document).ready(function() {
     // ── Filtros ──────────────────────────────────────────────────────────────
     function buscar() {
         const params = {
-            cedula:      $('#f_cedula').val().trim(),
-            factura:     $('#f_factura').val().trim(),
-            empresa:     $('#f_empresa').val().trim(),
-            fecha_desde: $('#f_fecha_desde').val(),
-            fecha_hasta: $('#f_fecha_hasta').val(),
+            cedula:      ($('#f_cedula').val()      || '').trim(),
+            factura:     ($('#f_factura').val()     || '').trim(),
+            empresa:     ($('#f_empresa').val()     || '').trim(),
+            fecha_desde: $('#f_fecha_desde').val()  || '',
+            fecha_hasta: $('#f_fecha_hasta').val()  || '',
         };
         $.ajax({
             url: '{{ route("validaciones.index") }}',
