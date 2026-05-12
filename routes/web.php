@@ -507,12 +507,12 @@ Route::get('consentimientos/crear-desde-agenda/{agenda_id}','ConsentimientoContr
         ->name('consentimientos.ajax.plantillas');
 
     // Validación de Derechos
-    Route::get('validaciones-derechos',                          [ValidacionDerechoController::class, 'index'])->name('validaciones.index');
-    Route::get('validaciones-derechos/crear',                    [ValidacionDerechoController::class, 'create'])->name('validaciones.create');
-    Route::post('validaciones-derechos',                         [ValidacionDerechoController::class, 'store'])->name('validaciones.store');
-    Route::get('validaciones-derechos/{id}/imagen',              [ValidacionDerechoController::class, 'imagen'])->name('validaciones.imagen');
-    Route::delete('validaciones-derechos/{id}',                  [ValidacionDerechoController::class, 'destroy'])->name('validaciones.destroy');
-    Route::get('ajax/validaciones/buscar-agenda',                [ValidacionDerechoController::class, 'ajaxBuscarAgenda'])->name('validaciones.ajax.agenda');
+    Route::get('validaciones-derechos',               [ValidacionDerechoController::class, 'index'])->name('validaciones.index');
+    Route::get('validaciones-derechos/crear',         [ValidacionDerechoController::class, 'create'])->name('validaciones.create');
+    Route::post('validaciones-derechos',              [ValidacionDerechoController::class, 'store'])->name('validaciones.store');
+    Route::get('validaciones-derechos/{id}/imagen',   [ValidacionDerechoController::class, 'imagen'])->name('validaciones.imagen');
+    Route::delete('validaciones-derechos/{id}',       [ValidacionDerechoController::class, 'destroy'])->name('validaciones.destroy');
+    Route::get('ajax/validaciones/agenda',            [ValidacionDerechoController::class, 'ajaxAgenda'])->name('validaciones.ajax.agenda');
 
     // Rutas para sincronización de Agenda CI
     Route::get('agenda-sync', 'AgendaSyncController@index')->name('agenda.sync.index');

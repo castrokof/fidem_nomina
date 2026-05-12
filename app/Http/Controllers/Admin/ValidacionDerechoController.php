@@ -10,63 +10,72 @@ use Illuminate\Support\Facades\Auth;
 
 class ValidacionDerechoController extends Controller
 {
-    // ── Listado ─────────────────────────────────────────────────────────────
+    // ── Índice ───────────────────────────────────────────────────────────────
 
-    public function index(Request $request)
+    public function index()
     {
-        if ($request->ajax()) {
-            return $this->ajaxListar($request);
-        }
         return view('validaciones_derechos.index');
     }
 
-    private function ajaxListar(Request $request)
+    // ── AJAX: agenda del día / búsqueda por paciente ─────────────────────────
+
+    public function ajaxAgenda(Request $request)
     {
-        $query = ValidacionDerecho::query();
+        $q     = trim($request->input('q', ''));
+        $fecha = $request->input('fecha', now()->format('Y-m-d'));
 
-        if ($request->filled('cedula')) {
-            $query->where('paciente_cedula', 'like', '%' . $request->cedula . '%');
-        }
-        if ($request->filled('factura')) {
-            $query->where('numero_factura', 'like', '%' . $request->factura . '%');
-        }
-        if ($request->filled('empresa')) {
-            $query->where('empresafac', 'like', '%' . $request->empresa . '%');
-        }
-        if ($request->filled('fecha_desde')) {
-            $query->whereDate('created_at', '>=', $request->fecha_desde);
-        }
-        if ($request->filled('fecha_hasta')) {
-            $query->whereDate('created_at', '<=', $request->fecha_hasta);
+        $query = AgendaCI::query();
+
+        if (strlen($q) >= 2) {
+            $query->where(function ($sub) use ($q) {
+                $sub->where('paciente_cedula', 'like', '%' . $q . '%')
+                    ->orWhere('paciente_nombre', 'like', '%' . $q . '%');
+            });
         }
 
-        $registros = $query->orderByDesc('created_at')->limit(500)->get();
+        if (!empty($fecha)) {
+            $query->whereDate('fecha', $fecha);
+        }
 
-        $data = $registros->map(function ($r) {
+        $citas = $query->orderBy('fecha')->limit(300)->get();
+
+        // Validaciones ya guardadas para estos registros de agenda
+        $ids          = $citas->pluck('id');
+        $validaciones = ValidacionDerecho::whereIn('agenda_ci_id', $ids)
+            ->get()
+            ->keyBy('agenda_ci_id');
+
+        return response()->json($citas->map(function ($c) use ($validaciones) {
+            $val  = isset($validaciones[$c->id]) ? $validaciones[$c->id] : null;
+            $hora = $c->fecha ? \Carbon\Carbon::parse($c->fecha)->format('H:i') : '-';
+
             return [
-                'id'                => $r->id,
-                'paciente_nombre'   => $r->paciente_nombre ?? '-',
-                'paciente_tipo_doc' => $r->paciente_tipo_doc ?? '',
-                'paciente_cedula'   => $r->paciente_cedula ?? '-',
-                'estado_afiliacion' => $r->estado_afiliacion ?? '-',
-                'numero_factura'    => $r->numero_factura ?? '-',
-                'empresafac'        => $r->empresafac ?? '-',
-                'fecha_atencion'    => $r->fecha_atencion ? $r->fecha_atencion->format('d/m/Y') : '-',
-                'created_at_sort'   => $r->created_at ? $r->created_at->timestamp : 0,
-                'created_by_nombre' => $r->created_by_nombre ?? '-',
-                'imagen_url'        => route('validaciones.imagen', $r->id),
-                'eliminar_url'      => route('validaciones.destroy', $r->id),
+                'agenda_id'         => $c->id,
+                'hora'              => $hora,
+                'paciente_nombre'   => $c->paciente_nombre ?? '-',
+                'paciente_cedula'   => ($c->paciente_tipo_doc ?? 'CC') . ' ' . ($c->paciente_cedula ?? '-'),
+                'empresafac'        => $c->empresafac ?? '-',
+                'cups_descripcion'  => $c->cups_descripcion ?? '-',
+                'numero_factura'    => $c->numero_factura ?? '-',
+                'validado'          => $val !== null,
+                'estado_afiliacion' => $val ? ($val->estado_afiliacion ?? '') : '',
+                'imagen_url'        => $val ? route('validaciones.imagen', $val->id) : null,
+                'validacion_id'     => $val ? $val->id : null,
+                'eliminar_url'      => $val ? route('validaciones.destroy', $val->id) : null,
+                'crear_url'         => route('validaciones.create') . '?agenda_id=' . $c->id,
             ];
-        });
-
-        return response()->json($data);
+        }));
     }
 
     // ── Formulario de creación ───────────────────────────────────────────────
 
-    public function create()
+    public function create(Request $request)
     {
-        return view('validaciones_derechos.create');
+        $agenda = null;
+        if ($request->filled('agenda_id')) {
+            $agenda = AgendaCI::find($request->agenda_id);
+        }
+        return view('validaciones_derechos.create', compact('agenda'));
     }
 
     // ── Guardar ─────────────────────────────────────────────────────────────
@@ -81,14 +90,11 @@ class ValidacionDerechoController extends Controller
 
         $imagenBase64 = $request->input('imagen_base64');
 
-        // Validar que sea una imagen base64 válida
         if (!preg_match('#^data:image/(png|jpeg|jpg|gif|webp);base64,#i', $imagenBase64)) {
             return back()->withErrors(['imagen_base64' => 'El archivo adjunto no es una imagen válida.'])->withInput();
         }
 
-        // Decodificar y guardar la imagen
-        $imagenData = preg_replace('#^data:image/\w+;base64,#i', '', $imagenBase64);
-        $imagenData = base64_decode($imagenData);
+        $imagenData = base64_decode(preg_replace('#^data:image/\w+;base64,#i', '', $imagenBase64));
 
         if ($imagenData === false) {
             return back()->withErrors(['imagen_base64' => 'No se pudo procesar la imagen.'])->withInput();
@@ -101,12 +107,10 @@ class ValidacionDerechoController extends Controller
 
         $cedula        = preg_replace('/[^a-zA-Z0-9]/', '', $request->input('paciente_cedula', 'sin_cedula'));
         $nombreArchivo = ($request->input('agenda_ci_id', 'sa')) . '_' . $cedula . '_' . time() . '.png';
-        $rutaAbsoluta  = $carpeta . '/' . $nombreArchivo;
-        file_put_contents($rutaAbsoluta, $imagenData);
+        file_put_contents($carpeta . '/' . $nombreArchivo, $imagenData);
 
         $imagenPath = 'validaciones_derechos/' . now()->format('Y/m') . '/' . $nombreArchivo;
 
-        // Datos del usuario actual
         $usuario       = Auth::user();
         $usuarioNombre = trim(
             ($usuario->pnombre ?? '') . ' ' .
@@ -134,16 +138,17 @@ class ValidacionDerechoController extends Controller
             'ip_registro'       => $request->ip(),
         ]);
 
-        return redirect()->route('validaciones.index')
-            ->with('success', 'Validación de derechos guardada correctamente.');
+        // Regresar a la agenda del mismo día si venimos desde ahí
+        $fechaRetorno = $request->input('fecha_agenda', now()->format('Y-m-d'));
+        return redirect()->route('validaciones.index', ['fecha' => $fechaRetorno])
+            ->with('success', 'Validación guardada correctamente.');
     }
 
     // ── Ver imagen ──────────────────────────────────────────────────────────
 
     public function imagen($id)
     {
-        $registro = ValidacionDerecho::findOrFail($id);
-
+        $registro     = ValidacionDerecho::findOrFail($id);
         $rutaAbsoluta = storage_path('app/' . $registro->imagen_path);
 
         if (!file_exists($rutaAbsoluta)) {
@@ -160,9 +165,9 @@ class ValidacionDerechoController extends Controller
 
     public function destroy($id)
     {
-        $registro = ValidacionDerecho::findOrFail($id);
-
+        $registro     = ValidacionDerecho::findOrFail($id);
         $rutaAbsoluta = storage_path('app/' . $registro->imagen_path);
+
         if (file_exists($rutaAbsoluta)) {
             unlink($rutaAbsoluta);
         }
@@ -175,55 +180,5 @@ class ValidacionDerechoController extends Controller
 
         return redirect()->route('validaciones.index')
             ->with('success', 'Registro eliminado.');
-    }
-
-    // ── AJAX: buscar agenda por cédula o nombre ──────────────────────────────
-
-    public function ajaxBuscarAgenda(Request $request)
-    {
-        $q     = trim($request->input('q', ''));
-        $fecha = $request->input('fecha', '');
-
-        if (strlen($q) < 3 && empty($fecha)) {
-            return response()->json([]);
-        }
-
-        $query = AgendaCI::query();
-
-        if (!empty($q)) {
-            $query->where(function ($sub) use ($q) {
-                $sub->where('paciente_cedula', 'like', '%' . $q . '%')
-                    ->orWhere('paciente_nombre', 'like', '%' . $q . '%')
-                    ->orWhere('numero_factura',  'like', '%' . $q . '%');
-            });
-        }
-
-        if (!empty($fecha)) {
-            $query->whereDate('fecha', $fecha);
-        }
-
-        $citas = $query->orderByDesc('fecha')->limit(30)->get([
-            'id', 'id_registro', 'paciente_nombre', 'paciente_cedula', 'paciente_tipo_doc',
-            'fecha', 'numero_factura', 'atencion_factura', 'contrato',
-            'empresafac', 'cups_codigo', 'cups_descripcion',
-        ]);
-
-        return response()->json($citas->map(function ($c) {
-            $fecha = $c->fecha ? \Carbon\Carbon::parse($c->fecha)->format('d/m/Y H:i') : '';
-            return [
-                'id'                => $c->id,
-                'label'             => $c->paciente_nombre . ' — ' . $c->paciente_cedula . ' — ' . $fecha,
-                'paciente_nombre'   => $c->paciente_nombre,
-                'paciente_tipo_doc' => $c->paciente_tipo_doc ?? 'CC',
-                'paciente_cedula'   => $c->paciente_cedula,
-                'fecha'             => $c->fecha ? \Carbon\Carbon::parse($c->fecha)->format('Y-m-d') : '',
-                'numero_factura'    => $c->numero_factura ?? '',
-                'atencion_factura'  => $c->atencion_factura ?? '',
-                'contrato'          => $c->contrato ?? '',
-                'empresafac'        => $c->empresafac ?? '',
-                'cups_codigo'       => $c->cups_codigo ?? '',
-                'cups_descripcion'  => $c->cups_descripcion ?? '',
-            ];
-        }));
     }
 }
