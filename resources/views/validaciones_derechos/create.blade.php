@@ -6,7 +6,7 @@
 
 @section("styles")
 <style>
-/* ── Zona de carga de imagen ── */
+/* ── Zona de carga ── */
 #zona-imagen {
     border: 2px dashed #adb5bd;
     border-radius: 10px;
@@ -18,62 +18,197 @@
     position: relative;
     min-height: 160px;
 }
-#zona-imagen.dragover {
-    border-color: #007bff;
-    background: #e8f0fe;
-}
-#zona-imagen.tiene-imagen {
-    border-style: solid;
-    border-color: #28a745;
-    padding: 8px;
-    background: #fff;
-}
+#zona-imagen.dragover  { border-color: #007bff; background: #e8f0fe; }
+#zona-imagen.tiene-imagen { border-style: solid; border-color: #28a745; padding: 8px; background: #fff; }
 #zona-imagen .placeholder-text { color: #6c757d; }
 #zona-imagen .placeholder-text i { font-size: 2.5rem; display: block; margin-bottom: 8px; color: #adb5bd; }
-#preview-imagen {
-    max-width: 100%;
-    max-height: 400px;
-    border-radius: 6px;
-    display: none;
-}
-#btn-limpiar-imagen {
-    position: absolute;
-    top: 8px; right: 8px;
-    display: none;
-    z-index: 10;
-}
+#preview-imagen { max-width: 100%; max-height: 380px; border-radius: 6px; display: none; }
+#btn-limpiar-imagen { position: absolute; top: 8px; right: 8px; display: none; z-index: 10; }
 #zona-imagen.tiene-imagen #btn-limpiar-imagen { display: inline-block; }
-#zona-imagen.tiene-imagen .placeholder-text    { display: none; }
-#zona-imagen.tiene-imagen #preview-imagen      { display: block; margin: 0 auto; }
+#zona-imagen.tiene-imagen .placeholder-text   { display: none; }
+#zona-imagen.tiene-imagen #preview-imagen     { display: block; margin: 0 auto; }
 
-/* ── Toast de pegado ── */
+/* ── OCR Status ── */
+#ocr-panel {
+    display: none;
+    border-radius: 0 0 8px 8px;
+    border: 1px solid #dee2e6;
+    border-top: none;
+    background: #fff;
+    padding: 10px 14px;
+    font-size: 13px;
+}
+#ocr-progress-bar { transition: width .3s; }
+.ocr-campo-ok  { animation: flashGreen .8s ease; }
+@keyframes flashGreen {
+    0%   { background-color: #d4edda; }
+    100% { background-color: transparent; }
+}
+.badge-ocr {
+    font-size: 10px; font-weight: 600; vertical-align: middle;
+    background: #17a2b8; color: #fff; border-radius: 4px;
+    padding: 1px 5px; margin-left: 4px;
+}
+
+/* ── Toast ── */
 #toast-pegar {
     position: fixed; bottom: 20px; right: 20px;
     background: #343a40; color: #fff;
     padding: 10px 18px; border-radius: 8px;
     font-size: 13px; z-index: 9999;
-    display: none; opacity: 0;
-    transition: opacity .3s;
+    display: none; opacity: 0; transition: opacity .3s;
 }
 </style>
 @endsection
 
 @section('scripts')
+<script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js"></script>
 <script>
 $(document).ready(function() {
 
-    const zona        = document.getElementById('zona-imagen');
-    const preview     = document.getElementById('preview-imagen');
-    const inputB64    = document.getElementById('imagen_base64');
-    const btnLimpiar  = document.getElementById('btn-limpiar-imagen');
-    const toast       = document.getElementById('toast-pegar');
+    const zona       = document.getElementById('zona-imagen');
+    const preview    = document.getElementById('preview-imagen');
+    const inputB64   = document.getElementById('imagen_base64');
+    const btnLimpiar = document.getElementById('btn-limpiar-imagen');
+    const toast      = document.getElementById('toast-pegar');
 
-    // ── Helpers ──────────────────────────────────────────────────────────────
+    // ── OCR ──────────────────────────────────────────────────────────────────
+    function mostrarPanelOCR(estado) {
+        // estado: 'loading' | 'ok' | 'error' | 'hidden'
+        const panel = document.getElementById('ocr-panel');
+        const barra = document.getElementById('ocr-barra');
+        const texto = document.getElementById('ocr-texto');
+        const spin  = document.getElementById('ocr-spinner');
+        const ok    = document.getElementById('ocr-ok-icon');
+        const err   = document.getElementById('ocr-err-icon');
+
+        panel.style.display = estado === 'hidden' ? 'none' : 'block';
+        spin.style.display  = estado === 'loading' ? 'inline-block' : 'none';
+        ok.style.display    = estado === 'ok'      ? 'inline-block' : 'none';
+        err.style.display   = estado === 'error'   ? 'inline-block' : 'none';
+        if (estado === 'loading') {
+            barra.style.width = '0%';
+            barra.className = 'progress-bar progress-bar-striped progress-bar-animated bg-info';
+            texto.textContent = 'Iniciando OCR…';
+        }
+    }
+
+    function setProgreso(pct, msg) {
+        const barra = document.getElementById('ocr-barra');
+        const texto = document.getElementById('ocr-texto');
+        barra.style.width = pct + '%';
+        texto.textContent = msg;
+    }
+
+    async function ejecutarOCR(dataUrl) {
+        mostrarPanelOCR('loading');
+        try {
+            const resultado = await Tesseract.recognize(dataUrl, 'spa', {
+                logger: function(m) {
+                    if (m.status === 'loading tesseract core') setProgreso(5,  'Cargando motor OCR…');
+                    if (m.status === 'initializing tesseract')  setProgreso(15, 'Inicializando…');
+                    if (m.status === 'loading language traineddata') setProgreso(30, 'Descargando modelo de idioma…');
+                    if (m.status === 'initializing api')        setProgreso(50, 'Preparando análisis…');
+                    if (m.status === 'recognizing text')        setProgreso(50 + Math.round(m.progress * 45), 'Reconociendo texto… ' + Math.round(m.progress * 100) + '%');
+                }
+            });
+
+            setProgreso(100, 'Analizando resultado…');
+            const campos = parsearTextoOCR(resultado.data.text);
+            aplicarCamposOCR(campos);
+
+            const n = Object.keys(campos).length;
+            document.getElementById('ocr-barra').className = 'progress-bar bg-success';
+            document.getElementById('ocr-texto').textContent = n > 0
+                ? 'OCR completado — ' + n + ' campo(s) detectado(s). Revise y corrija si es necesario.'
+                : 'OCR completado — no se detectaron campos con etiquetas claras. Complete manualmente.';
+            mostrarPanelOCR('ok');
+
+        } catch (e) {
+            console.error('OCR error:', e);
+            document.getElementById('ocr-texto').textContent = 'Error en OCR. Complete los campos manualmente.';
+            mostrarPanelOCR('error');
+        }
+    }
+
+    // ── Parser de texto OCR ───────────────────────────────────────────────────
+    function parsearTextoOCR(texto) {
+        const res   = {};
+        const upper = texto.toUpperCase();
+
+        // Estado de afiliación — busca la palabra exacta
+        const estados = ['ACTIVO', 'SUSPENDIDO', 'INACTIVO', 'RETIRADO', 'PENDIENTE'];
+        for (var i = 0; i < estados.length; i++) {
+            if (upper.indexOf(estados[i]) !== -1) {
+                res.estado_afiliacion = estados[i];
+                break;
+            }
+        }
+
+        // Tipo de documento — etiqueta explícita o nombre completo
+        var mTipo = upper.match(/TIPO\s*(?:DE\s*)?DOC(?:UMENTO)?\s*[:\-]?\s*(CC|TI|CE|RC|PA|NIT|AS|MS)/);
+        if (mTipo) {
+            res.tipo_doc = mTipo[1];
+        } else if (/C[EÉ]DULA\s*DE\s*CIUDADAN/.test(upper))  { res.tipo_doc = 'CC'; }
+        else if (/TARJETA\s*DE\s*IDENTIDAD/.test(upper))     { res.tipo_doc = 'TI'; }
+        else if (/C[EÉ]DULA\s*(?:DE\s*)?EXTRANJER/.test(upper)) { res.tipo_doc = 'CE'; }
+        else if (/REGISTRO\s*CIVIL/.test(upper))             { res.tipo_doc = 'RC'; }
+        else if (/PASAPORTE/.test(upper))                    { res.tipo_doc = 'PA'; }
+
+        // Número de documento — etiqueta + dígitos
+        var patronesDoc = [
+            /(?:N[°oúO]?\.?\s*(?:DE\s*)?DOCUMENTO|C[EÉ]DULA|DOCUMENTO|NO\.?\s*IDENTIFICACION|NO\.?\s*ID)\s*[:\-]?\s*(\d{5,12})/i,
+            /\bCC\s*[:\-#]?\s*(\d{6,12})\b/i,
+            /\bTI\s*[:\-#]?\s*(\d{6,12})\b/i,
+        ];
+        for (var j = 0; j < patronesDoc.length; j++) {
+            var mDoc = texto.match(patronesDoc[j]);
+            if (mDoc) { res.cedula = mDoc[1]; break; }
+        }
+
+        // Nombre del paciente — línea que sigue a una etiqueta conocida
+        var patronesNombre = [
+            /(?:NOMBRE\s*(?:DEL?\s*)?(?:PACIENTE|AFILIADO|USUARIO)?|AFILIADO\s*:|PACIENTE\s*:)\s*[:\-]?\s*([A-ZÁÉÍÓÚÑÜ][A-ZÁÉÍÓÚÑÜ ,\.\-]{4,70})/i,
+            /(?:NOMBRE\s*COMPLETO)\s*[:\-]?\s*([A-ZÁÉÍÓÚÑÜ][A-ZÁÉÍÓÚÑÜ ,\.\-]{4,70})/i,
+        ];
+        for (var k = 0; k < patronesNombre.length; k++) {
+            var mNom = texto.match(patronesNombre[k]);
+            if (mNom) {
+                var nombre = mNom[1].split('\n')[0].trim().replace(/\s{2,}/g, ' ');
+                if (nombre.length > 4) { res.nombre = nombre; break; }
+            }
+        }
+
+        return res;
+    }
+
+    // ── Aplicar campos detectados (solo si el campo está vacío) ───────────────
+    function aplicarCamposOCR(campos) {
+        function setOCR(id, valor, esSelect) {
+            if (!valor) return;
+            var el = document.getElementById(id);
+            if (!el || el.value.trim() !== '') return; // no pisar lo que ya se llenó
+            el.value = valor;
+            el.parentElement.classList.add('ocr-campo-ok');
+            // Agregar badge OCR
+            var label = el.previousElementSibling;
+            if (label && !label.querySelector('.badge-ocr')) {
+                label.innerHTML += '<span class="badge-ocr">OCR</span>';
+            }
+        }
+        if (campos.nombre)          setOCR('paciente_nombre', campos.nombre);
+        if (campos.tipo_doc)        setOCR('paciente_tipo_doc', campos.tipo_doc, true);
+        if (campos.cedula)          setOCR('paciente_cedula', campos.cedula);
+        if (campos.estado_afiliacion) setOCR('estado_afiliacion', campos.estado_afiliacion);
+    }
+
+    // ── Mostrar imagen + disparar OCR ─────────────────────────────────────────
     function mostrarImagen(dataUrl) {
         preview.src = dataUrl;
         inputB64.value = dataUrl;
         zona.classList.add('tiene-imagen');
         preview.style.display = 'block';
+        ejecutarOCR(dataUrl);
     }
 
     function limpiarImagen() {
@@ -81,6 +216,19 @@ $(document).ready(function() {
         inputB64.value = '';
         zona.classList.remove('tiene-imagen');
         preview.style.display = 'none';
+        mostrarPanelOCR('hidden');
+        // Quitar badges OCR
+        document.querySelectorAll('.badge-ocr').forEach(function(b) { b.remove(); });
+    }
+
+    function procesarArchivo(file) {
+        if (!file || !file.type.startsWith('image/')) {
+            alert('El archivo debe ser una imagen (PNG, JPEG, etc.).');
+            return;
+        }
+        var reader = new FileReader();
+        reader.onload = function(e) { mostrarImagen(e.target.result); };
+        reader.readAsDataURL(file);
     }
 
     function mostrarToast(msg) {
@@ -93,23 +241,9 @@ $(document).ready(function() {
         }, 2500);
     }
 
-    function procesarArchivo(file) {
-        if (!file || !file.type.startsWith('image/')) {
-            alert('El archivo debe ser una imagen (PNG, JPEG, etc.).');
-            return;
-        }
-        const reader = new FileReader();
-        reader.onload = function(e) { mostrarImagen(e.target.result); };
-        reader.readAsDataURL(file);
-    }
+    // ── Eventos de la zona de imagen ─────────────────────────────────────────
+    btnLimpiar.addEventListener('click', function(e) { e.stopPropagation(); limpiarImagen(); });
 
-    // ── Botón limpiar ────────────────────────────────────────────────────────
-    btnLimpiar.addEventListener('click', function(e) {
-        e.stopPropagation();
-        limpiarImagen();
-    });
-
-    // ── Click en zona → abrir selector de archivo ────────────────────────────
     zona.addEventListener('click', function(e) {
         if (e.target === btnLimpiar || btnLimpiar.contains(e.target)) return;
         if (zona.classList.contains('tiene-imagen')) return;
@@ -121,49 +255,39 @@ $(document).ready(function() {
         this.value = '';
     });
 
-    // ── Drag & Drop ──────────────────────────────────────────────────────────
-    zona.addEventListener('dragover', function(e) {
-        e.preventDefault();
-        zona.classList.add('dragover');
-    });
-    zona.addEventListener('dragleave', function() {
-        zona.classList.remove('dragover');
-    });
+    zona.addEventListener('dragover',  function(e) { e.preventDefault(); zona.classList.add('dragover'); });
+    zona.addEventListener('dragleave', function()  { zona.classList.remove('dragover'); });
     zona.addEventListener('drop', function(e) {
         e.preventDefault();
         zona.classList.remove('dragover');
-        const file = e.dataTransfer.files[0];
-        procesarArchivo(file);
+        procesarArchivo(e.dataTransfer.files[0]);
     });
 
-    // ── Pegar desde portapapeles (Ctrl+V / Cmd+V) ────────────────────────────
     document.addEventListener('paste', function(e) {
-        const items = e.clipboardData ? e.clipboardData.items : [];
-        for (let i = 0; i < items.length; i++) {
+        var items = e.clipboardData ? e.clipboardData.items : [];
+        for (var i = 0; i < items.length; i++) {
             if (items[i].type.startsWith('image/')) {
-                const blob = items[i].getAsFile();
-                procesarArchivo(blob);
-                mostrarToast('✅ Pantallazo pegado desde el portapapeles');
+                procesarArchivo(items[i].getAsFile());
+                mostrarToast('✅ Pantallazo pegado — ejecutando OCR…');
                 return;
             }
         }
     });
 
-    // ── Búsqueda en agenda (AJAX) ─────────────────────────────────────────────
-    let timer = null;
+    // ── Búsqueda en agenda ────────────────────────────────────────────────────
+    var timer = null;
 
     function buscarEnAgenda() {
-        const q     = $('#buscar_agenda').val().trim();
-        const fecha = $('#buscar_fecha').val();
+        var q     = $('#buscar_agenda').val().trim();
+        var fecha = $('#buscar_fecha').val();
         if (q.length < 3 && !fecha) { $('#resultados-agenda').hide(); return; }
-
         clearTimeout(timer);
         timer = setTimeout(function() {
             $.ajax({
                 url:  '{{ route("validaciones.ajax.agenda") }}',
                 data: { q: q, fecha: fecha },
                 success: function(items) {
-                    const ul = $('#lista-agenda').empty();
+                    var ul = $('#lista-agenda').empty();
                     if (!items.length) {
                         ul.append('<li class="list-group-item text-muted small">Sin resultados.</li>');
                     } else {
@@ -171,7 +295,7 @@ $(document).ready(function() {
                             ul.append(
                                 $('<li class="list-group-item list-group-item-action py-2 small" style="cursor:pointer">')
                                     .text(item.label)
-                                    .on('click', function() { llenarDatos(item); })
+                                    .on('click', function() { llenarDesdeAgenda(item); })
                             );
                         });
                     }
@@ -184,7 +308,7 @@ $(document).ready(function() {
     $('#buscar_agenda').on('input', buscarEnAgenda);
     $('#buscar_fecha').on('change', buscarEnAgenda);
 
-    function llenarDatos(item) {
+    function llenarDesdeAgenda(item) {
         $('#agenda_ci_id').val(item.id);
         $('#paciente_nombre').val(item.paciente_nombre);
         $('#paciente_tipo_doc').val(item.paciente_tipo_doc || 'CC');
@@ -198,19 +322,15 @@ $(document).ready(function() {
         $('#cups_descripcion').val(item.cups_descripcion);
         $('#resultados-agenda').hide();
         $('#buscar_agenda').val(item.paciente_nombre + ' — ' + item.paciente_cedula);
-        // Resaltar sección de datos
         $('#card-datos-cita').addClass('border-success');
         setTimeout(function() { $('#card-datos-cita').removeClass('border-success'); }, 1500);
     }
 
-    // Cerrar lista al hacer click fuera
     $(document).on('click', function(e) {
-        if (!$(e.target).closest('#bloque-busqueda').length) {
-            $('#resultados-agenda').hide();
-        }
+        if (!$(e.target).closest('#bloque-busqueda').length) $('#resultados-agenda').hide();
     });
 
-    // ── Validación antes de enviar ────────────────────────────────────────────
+    // ── Validación ────────────────────────────────────────────────────────────
     $('#form-validacion').on('submit', function(e) {
         if (!inputB64.value) {
             e.preventDefault();
@@ -232,7 +352,7 @@ $(document).ready(function() {
         </a>
         <div>
             <h4 class="mb-0"><i class="fas fa-shield-alt text-primary mr-2"></i>Nueva Validación de Derechos</h4>
-            <small class="text-muted">Adjunte el pantallazo de validación y vincúlelo a una cita de la agenda.</small>
+            <small class="text-muted">Adjunte el pantallazo — el OCR intentará completar los campos automáticamente.</small>
         </div>
     </div>
 
@@ -242,41 +362,65 @@ $(document).ready(function() {
         </div>
     @endif
 
-    <form id="form-validacion" action="{{ route('validaciones.store') }}" method="POST" enctype="multipart/form-data">
+    <form id="form-validacion" action="{{ route('validaciones.store') }}" method="POST">
         @csrf
-
-        {{-- Input oculto y selector de archivo --}}
         <input type="hidden" id="imagen_base64" name="imagen_base64">
-        <input type="file" id="archivo-input" accept="image/*" style="display:none">
+        <input type="file"   id="archivo-input" accept="image/*" style="display:none">
 
         <div class="row">
 
-            {{-- Columna izquierda: imagen + observaciones --}}
+            {{-- ── Columna izquierda: imagen ── --}}
             <div class="col-lg-6 mb-3">
 
                 <div class="card shadow-sm">
-                    <div class="card-header py-2 font-weight-bold">
-                        <i class="fas fa-image mr-1 text-primary"></i> Pantallazo de validación
-                        <span class="text-danger">*</span>
+                    <div class="card-header py-2 d-flex align-items-center justify-content-between">
+                        <span class="font-weight-bold">
+                            <i class="fas fa-image mr-1 text-primary"></i> Pantallazo de validación
+                            <span class="text-danger">*</span>
+                        </span>
+                        <span class="badge badge-info" style="font-size:10px">
+                            <i class="fas fa-magic mr-1"></i>OCR automático
+                        </span>
                     </div>
-                    <div class="card-body">
-                        {{-- Zona de carga --}}
+                    <div class="card-body pb-0">
                         <div id="zona-imagen">
-                            <button type="button" id="btn-limpiar-imagen" class="btn btn-sm btn-danger rounded-circle"
-                                title="Quitar imagen" style="width:28px;height:28px;padding:0;line-height:1;">
+                            <button type="button" id="btn-limpiar-imagen"
+                                class="btn btn-sm btn-danger rounded-circle"
+                                title="Quitar imagen"
+                                style="width:28px;height:28px;padding:0;line-height:1;">
                                 <i class="fas fa-times" style="font-size:11px"></i>
                             </button>
                             <div class="placeholder-text">
                                 <i class="fas fa-clipboard-check"></i>
                                 <strong>Pegue el pantallazo aquí</strong><br>
-                                <span class="small">Ctrl+V · arrastre una imagen · o haga clic para seleccionar archivo</span>
+                                <span class="small">
+                                    <kbd>Ctrl+V</kbd> &nbsp;·&nbsp; arrastre una imagen &nbsp;·&nbsp; o haga clic para seleccionar archivo
+                                </span>
                             </div>
                             <img id="preview-imagen" src="" alt="Pantallazo">
                         </div>
-                        <small class="text-muted d-block mt-2">
-                            <i class="fas fa-info-circle mr-1"></i>
-                            Copie el pantallazo al portapapeles y presione <kbd>Ctrl+V</kbd> en cualquier parte de la página,
-                            o arrastre el archivo directamente sobre el recuadro.
+
+                        {{-- Panel de progreso OCR --}}
+                        <div id="ocr-panel">
+                            <div class="d-flex align-items-center mb-1">
+                                <span class="spinner-border spinner-border-sm text-info mr-2" id="ocr-spinner" style="display:none"></span>
+                                <i class="fas fa-check-circle text-success mr-2" id="ocr-ok-icon"  style="display:none"></i>
+                                <i class="fas fa-exclamation-circle text-danger mr-2" id="ocr-err-icon" style="display:none"></i>
+                                <span id="ocr-texto" class="small text-muted"></span>
+                            </div>
+                            <div class="progress" style="height:5px;">
+                                <div id="ocr-barra" class="progress-bar" role="progressbar" style="width:0%"></div>
+                            </div>
+                            <small class="text-muted d-block mt-1">
+                                <i class="fas fa-info-circle"></i>
+                                Los campos marcados <span class="badge-ocr">OCR</span> fueron completados automáticamente — revíselos antes de guardar.
+                            </small>
+                        </div>
+                    </div>
+                    <div class="card-footer bg-transparent py-2">
+                        <small class="text-muted">
+                            <i class="fas fa-keyboard mr-1"></i>
+                            Copie el pantallazo y presione <kbd>Ctrl+V</kbd> en cualquier parte de la página.
                         </small>
                     </div>
                 </div>
@@ -292,7 +436,7 @@ $(document).ready(function() {
                 </div>
             </div>
 
-            {{-- Columna derecha: búsqueda en agenda + datos --}}
+            {{-- ── Columna derecha: agenda + datos ── --}}
             <div class="col-lg-6 mb-3">
 
                 {{-- Búsqueda en agenda --}}
@@ -314,51 +458,58 @@ $(document).ready(function() {
                                         value="{{ date('Y-m-d') }}">
                                 </div>
                             </div>
-                            <div id="resultados-agenda" class="position-absolute w-100" style="z-index:200; display:none; top:100%; left:0">
-                                <ul id="lista-agenda" class="list-group shadow-sm" style="max-height:220px;overflow-y:auto;border-radius:0 0 6px 6px;"></ul>
+                            <div id="resultados-agenda" class="position-absolute w-100"
+                                style="z-index:200;display:none;top:100%;left:0">
+                                <ul id="lista-agenda" class="list-group shadow-sm"
+                                    style="max-height:220px;overflow-y:auto;border-radius:0 0 6px 6px;"></ul>
                             </div>
                         </div>
                         <small class="text-muted mt-1 d-block">
                             <i class="fas fa-info-circle mr-1"></i>
-                            Seleccione la cita correspondiente para auto-llenar los datos. Si no aparece, puede ingresarlos manualmente.
+                            Seleccione la cita para auto-llenar los datos. Si no aparece, complétalos manualmente o déjelos que el OCR los detecte.
                         </small>
                         <input type="hidden" id="agenda_ci_id" name="agenda_ci_id">
                     </div>
                 </div>
 
-                {{-- Datos de la cita --}}
-                <div class="card shadow-sm" id="card-datos-cita" style="transition: border-color .5s">
+                {{-- Datos del paciente / cita --}}
+                <div class="card shadow-sm" id="card-datos-cita" style="transition:border-color .5s">
                     <div class="card-header py-2 font-weight-bold">
                         <i class="fas fa-user-injured mr-1 text-warning"></i> Datos del paciente / cita
                     </div>
                     <div class="card-body">
                         <div class="row">
+                            {{-- Nombre --}}
                             <div class="col-6 mb-2">
                                 <label class="small mb-1">Nombre del paciente</label>
                                 <input type="text" id="paciente_nombre" name="paciente_nombre"
                                     class="form-control form-control-sm"
                                     value="{{ old('paciente_nombre') }}" placeholder="Nombre completo">
                             </div>
+                            {{-- Tipo doc --}}
                             <div class="col-2 mb-2">
                                 <label class="small mb-1">Tipo doc.</label>
-                                <select id="paciente_tipo_doc" name="paciente_tipo_doc" class="form-control form-control-sm">
+                                <select id="paciente_tipo_doc" name="paciente_tipo_doc"
+                                    class="form-control form-control-sm">
                                     @foreach(['CC'=>'CC','TI'=>'TI','CE'=>'CE','RC'=>'RC','PA'=>'PA','MS'=>'MS','AS'=>'AS'] as $v=>$l)
                                         <option value="{{ $v }}" {{ old('paciente_tipo_doc','CC') === $v ? 'selected' : '' }}>{{ $l }}</option>
                                     @endforeach
                                 </select>
                             </div>
+                            {{-- Documento --}}
                             <div class="col-4 mb-2">
                                 <label class="small mb-1">Documento</label>
                                 <input type="text" id="paciente_cedula" name="paciente_cedula"
                                     class="form-control form-control-sm"
                                     value="{{ old('paciente_cedula') }}" placeholder="Número de documento">
                             </div>
+                            {{-- Estado afiliación --}}
                             <div class="col-4 mb-2">
                                 <label class="small mb-1">Estado de afiliación</label>
                                 <input type="text" id="estado_afiliacion" name="estado_afiliacion"
-                                    class="form-control form-control-sm @error('estado_afiliacion') is-invalid @enderror"
+                                    class="form-control form-control-sm"
                                     value="{{ old('estado_afiliacion') }}"
-                                    placeholder="ACTIVO, SUSPENDIDO, INACTIVO…"
+                                    placeholder="ACTIVO, SUSPENDIDO…"
                                     list="estados-afiliacion-list">
                                 <datalist id="estados-afiliacion-list">
                                     <option value="ACTIVO">
@@ -369,36 +520,42 @@ $(document).ready(function() {
                                     <option value="NO APLICA">
                                 </datalist>
                             </div>
+                            {{-- Fecha atención --}}
                             <div class="col-4 mb-2">
                                 <label class="small mb-1">Fecha atención</label>
                                 <input type="date" id="fecha_atencion" name="fecha_atencion"
                                     class="form-control form-control-sm"
                                     value="{{ old('fecha_atencion', date('Y-m-d')) }}">
                             </div>
+                            {{-- N° Factura --}}
                             <div class="col-4 mb-2">
                                 <label class="small mb-1">N° Factura</label>
                                 <input type="text" id="numero_factura" name="numero_factura"
                                     class="form-control form-control-sm"
                                     value="{{ old('numero_factura') }}" placeholder="Factura">
                             </div>
+                            {{-- Atención factura --}}
                             <div class="col-4 mb-2">
                                 <label class="small mb-1">Atención factura</label>
                                 <input type="text" id="atencion_factura" name="atencion_factura"
                                     class="form-control form-control-sm"
                                     value="{{ old('atencion_factura') }}" placeholder="Atención">
                             </div>
+                            {{-- Empresa / EPS --}}
                             <div class="col-6 mb-2">
                                 <label class="small mb-1">Empresa / EPS</label>
                                 <input type="text" id="empresafac" name="empresafac"
                                     class="form-control form-control-sm"
                                     value="{{ old('empresafac') }}" placeholder="EPS o aseguradora">
                             </div>
+                            {{-- Contrato --}}
                             <div class="col-6 mb-2">
                                 <label class="small mb-1">Contrato</label>
                                 <input type="text" id="contrato" name="contrato"
                                     class="form-control form-control-sm"
                                     value="{{ old('contrato') }}" placeholder="Contrato">
                             </div>
+                            {{-- CUPS --}}
                             <div class="col-3 mb-2">
                                 <label class="small mb-1">CUPS</label>
                                 <input type="text" id="cups_codigo" name="cups_codigo"
