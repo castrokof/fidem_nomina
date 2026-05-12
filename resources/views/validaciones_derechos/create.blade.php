@@ -187,6 +187,7 @@ $(document).ready(function() {
     function llenarDatos(item) {
         $('#agenda_ci_id').val(item.id);
         $('#paciente_nombre').val(item.paciente_nombre);
+        $('#paciente_tipo_doc').val(item.paciente_tipo_doc || 'CC');
         $('#paciente_cedula').val(item.paciente_cedula);
         $('#fecha_atencion').val(item.fecha);
         $('#numero_factura').val(item.numero_factura);
@@ -332,17 +333,41 @@ $(document).ready(function() {
                     </div>
                     <div class="card-body">
                         <div class="row">
-                            <div class="col-8 mb-2">
+                            <div class="col-6 mb-2">
                                 <label class="small mb-1">Nombre del paciente</label>
                                 <input type="text" id="paciente_nombre" name="paciente_nombre"
                                     class="form-control form-control-sm"
                                     value="{{ old('paciente_nombre') }}" placeholder="Nombre completo">
                             </div>
+                            <div class="col-2 mb-2">
+                                <label class="small mb-1">Tipo doc.</label>
+                                <select id="paciente_tipo_doc" name="paciente_tipo_doc" class="form-control form-control-sm">
+                                    @foreach(['CC'=>'CC','TI'=>'TI','CE'=>'CE','RC'=>'RC','PA'=>'PA','MS'=>'MS','AS'=>'AS'] as $v=>$l)
+                                        <option value="{{ $v }}" {{ old('paciente_tipo_doc','CC') === $v ? 'selected' : '' }}>{{ $l }}</option>
+                                    @endforeach
+                                </select>
+                            </div>
                             <div class="col-4 mb-2">
-                                <label class="small mb-1">Cédula</label>
+                                <label class="small mb-1">Documento</label>
                                 <input type="text" id="paciente_cedula" name="paciente_cedula"
                                     class="form-control form-control-sm"
-                                    value="{{ old('paciente_cedula') }}" placeholder="Documento">
+                                    value="{{ old('paciente_cedula') }}" placeholder="Número de documento">
+                            </div>
+                            <div class="col-4 mb-2">
+                                <label class="small mb-1">Estado de afiliación</label>
+                                <input type="text" id="estado_afiliacion" name="estado_afiliacion"
+                                    class="form-control form-control-sm @error('estado_afiliacion') is-invalid @enderror"
+                                    value="{{ old('estado_afiliacion') }}"
+                                    placeholder="ACTIVO, SUSPENDIDO, INACTIVO…"
+                                    list="estados-afiliacion-list">
+                                <datalist id="estados-afiliacion-list">
+                                    <option value="ACTIVO">
+                                    <option value="SUSPENDIDO">
+                                    <option value="INACTIVO">
+                                    <option value="RETIRADO">
+                                    <option value="PENDIENTE">
+                                    <option value="NO APLICA">
+                                </datalist>
                             </div>
                             <div class="col-4 mb-2">
                                 <label class="small mb-1">Fecha atención</label>

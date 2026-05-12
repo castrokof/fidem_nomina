@@ -27,12 +27,12 @@ $(document).ready(function() {
         dtInstance = $('#tablaValidaciones').DataTable({
             language: { url: '//cdn.datatables.net/plug-ins/1.10.21/i18n/Spanish.json',
                 emptyTable: '<i class="fas fa-filter mr-1"></i> Use los filtros para buscar registros.' },
-            order: [[6, 'desc']],
+            order: [[7, 'desc']],
             pageLength: 25,
             columnDefs: [
                 { targets: '_all', defaultContent: '' },
                 {
-                    targets: 6,
+                    targets: 7,
                     render: function(data, type) {
                         if (type === 'sort' || type === 'type') return data;
                         if (!data) return '-';
@@ -41,7 +41,15 @@ $(document).ready(function() {
                              + ' ' + d.toLocaleTimeString('es-CO', { hour:'2-digit', minute:'2-digit', hour12:false });
                     }
                 },
-                { targets: [0, 8], orderable: false }
+                {
+                    targets: 4,
+                    render: function(data) {
+                        if (!data || data === '-') return '-';
+                        var cls = data === 'ACTIVO' ? 'success' : (data === 'SUSPENDIDO' || data === 'INACTIVO' || data === 'RETIRADO' ? 'danger' : 'secondary');
+                        return '<span class="badge badge-' + cls + '">' + data + '</span>';
+                    }
+                },
+                { targets: [0, 9], orderable: false }
             ]
         });
     }
@@ -54,8 +62,9 @@ $(document).ready(function() {
                 dtInstance.row.add([
                     '<img src="' + r.imagen_url + '" class="img-thumb" data-url="' + r.imagen_url + '" title="Ver pantallazo">',
                     r.paciente_nombre,
-                    r.paciente_cedula,
+                    (r.paciente_tipo_doc ? '<span class="badge badge-light border">' + r.paciente_tipo_doc + '</span> ' : '') + r.paciente_cedula,
                     r.numero_factura,
+                    r.estado_afiliacion,
                     r.empresafac,
                     r.fecha_atencion,
                     r.created_at_sort,
@@ -181,8 +190,9 @@ $(document).ready(function() {
                         <tr>
                             <th>Imagen</th>
                             <th>Paciente</th>
-                            <th>Cédula</th>
+                            <th>Tipo / Documento</th>
                             <th>Factura</th>
+                            <th>Estado afiliación</th>
                             <th>Empresa / EPS</th>
                             <th>Fecha atención</th>
                             <th>Guardado</th>

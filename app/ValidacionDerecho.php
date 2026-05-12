@@ -11,7 +11,9 @@ class ValidacionDerecho extends Model
     protected $fillable = [
         'agenda_ci_id',
         'paciente_nombre',
+        'paciente_tipo_doc',
         'paciente_cedula',
+        'estado_afiliacion',
         'numero_factura',
         'atencion_factura',
         'contrato',

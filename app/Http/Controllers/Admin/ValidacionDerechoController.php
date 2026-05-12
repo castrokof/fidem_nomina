@@ -44,16 +44,18 @@ class ValidacionDerechoController extends Controller
 
         $data = $registros->map(function ($r) {
             return [
-                'id'               => $r->id,
-                'paciente_nombre'  => $r->paciente_nombre ?? '-',
-                'paciente_cedula'  => $r->paciente_cedula ?? '-',
-                'numero_factura'   => $r->numero_factura ?? '-',
-                'empresafac'       => $r->empresafac ?? '-',
-                'fecha_atencion'   => $r->fecha_atencion ? $r->fecha_atencion->format('d/m/Y') : '-',
-                'created_at_sort'  => $r->created_at ? $r->created_at->timestamp : 0,
-                'created_by_nombre'=> $r->created_by_nombre ?? '-',
-                'imagen_url'       => route('validaciones.imagen', $r->id),
-                'eliminar_url'     => route('validaciones.destroy', $r->id),
+                'id'                => $r->id,
+                'paciente_nombre'   => $r->paciente_nombre ?? '-',
+                'paciente_tipo_doc' => $r->paciente_tipo_doc ?? '',
+                'paciente_cedula'   => $r->paciente_cedula ?? '-',
+                'estado_afiliacion' => $r->estado_afiliacion ?? '-',
+                'numero_factura'    => $r->numero_factura ?? '-',
+                'empresafac'        => $r->empresafac ?? '-',
+                'fecha_atencion'    => $r->fecha_atencion ? $r->fecha_atencion->format('d/m/Y') : '-',
+                'created_at_sort'   => $r->created_at ? $r->created_at->timestamp : 0,
+                'created_by_nombre' => $r->created_by_nombre ?? '-',
+                'imagen_url'        => route('validaciones.imagen', $r->id),
+                'eliminar_url'      => route('validaciones.destroy', $r->id),
             ];
         });
 
@@ -115,7 +117,9 @@ class ValidacionDerechoController extends Controller
         ValidacionDerecho::create([
             'agenda_ci_id'      => $request->input('agenda_ci_id') ?: null,
             'paciente_nombre'   => $request->input('paciente_nombre'),
+            'paciente_tipo_doc' => $request->input('paciente_tipo_doc'),
             'paciente_cedula'   => $request->input('paciente_cedula'),
+            'estado_afiliacion' => $request->input('estado_afiliacion'),
             'numero_factura'    => $request->input('numero_factura'),
             'atencion_factura'  => $request->input('atencion_factura'),
             'contrato'          => $request->input('contrato'),
@@ -199,7 +203,7 @@ class ValidacionDerechoController extends Controller
         }
 
         $citas = $query->orderByDesc('fecha')->limit(30)->get([
-            'id', 'id_registro', 'paciente_nombre', 'paciente_cedula',
+            'id', 'id_registro', 'paciente_nombre', 'paciente_cedula', 'paciente_tipo_doc',
             'fecha', 'numero_factura', 'atencion_factura', 'contrato',
             'empresafac', 'cups_codigo', 'cups_descripcion',
         ]);
@@ -207,17 +211,18 @@ class ValidacionDerechoController extends Controller
         return response()->json($citas->map(function ($c) {
             $fecha = $c->fecha ? \Carbon\Carbon::parse($c->fecha)->format('d/m/Y H:i') : '';
             return [
-                'id'               => $c->id,
-                'label'            => $c->paciente_nombre . ' — ' . $c->paciente_cedula . ' — ' . $fecha,
-                'paciente_nombre'  => $c->paciente_nombre,
-                'paciente_cedula'  => $c->paciente_cedula,
-                'fecha'            => $c->fecha ? \Carbon\Carbon::parse($c->fecha)->format('Y-m-d') : '',
-                'numero_factura'   => $c->numero_factura ?? '',
-                'atencion_factura' => $c->atencion_factura ?? '',
-                'contrato'         => $c->contrato ?? '',
-                'empresafac'       => $c->empresafac ?? '',
-                'cups_codigo'      => $c->cups_codigo ?? '',
-                'cups_descripcion' => $c->cups_descripcion ?? '',
+                'id'                => $c->id,
+                'label'             => $c->paciente_nombre . ' — ' . $c->paciente_cedula . ' — ' . $fecha,
+                'paciente_nombre'   => $c->paciente_nombre,
+                'paciente_tipo_doc' => $c->paciente_tipo_doc ?? 'CC',
+                'paciente_cedula'   => $c->paciente_cedula,
+                'fecha'             => $c->fecha ? \Carbon\Carbon::parse($c->fecha)->format('Y-m-d') : '',
+                'numero_factura'    => $c->numero_factura ?? '',
+                'atencion_factura'  => $c->atencion_factura ?? '',
+                'contrato'          => $c->contrato ?? '',
+                'empresafac'        => $c->empresafac ?? '',
+                'cups_codigo'       => $c->cups_codigo ?? '',
+                'cups_descripcion'  => $c->cups_descripcion ?? '',
             ];
         }));
     }
