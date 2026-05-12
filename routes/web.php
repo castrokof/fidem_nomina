@@ -7,6 +7,7 @@ use App\Http\Controllers\Admin\PacienteController;
 use App\Http\Controllers\Admin\ConsentimientoController;
 use App\Http\Controllers\Admin\PerfilController;
 use App\Http\Controllers\Admin\PagoFacturaController;
+use App\Http\Controllers\Admin\ValidacionDerechoController;
 /*
 |--------------------------------------------------------------------------
 | Web Routes
@@ -504,6 +505,14 @@ Route::get('consentimientos/crear-desde-agenda/{agenda_id}','ConsentimientoContr
     
     Route::get('admin/ajax/plantillas-por-especialidad/{especialidad_id}', 'ConsentimientoController@ajaxPlantillasPorEspecialidad')
         ->name('consentimientos.ajax.plantillas');
+
+    // Validación de Derechos
+    Route::get('validaciones-derechos',                          [ValidacionDerechoController::class, 'index'])->name('validaciones.index');
+    Route::get('validaciones-derechos/crear',                    [ValidacionDerechoController::class, 'create'])->name('validaciones.create');
+    Route::post('validaciones-derechos',                         [ValidacionDerechoController::class, 'store'])->name('validaciones.store');
+    Route::get('validaciones-derechos/{id}/imagen',              [ValidacionDerechoController::class, 'imagen'])->name('validaciones.imagen');
+    Route::delete('validaciones-derechos/{id}',                  [ValidacionDerechoController::class, 'destroy'])->name('validaciones.destroy');
+    Route::get('ajax/validaciones/buscar-agenda',                [ValidacionDerechoController::class, 'ajaxBuscarAgenda'])->name('validaciones.ajax.agenda');
 
     // Rutas para sincronización de Agenda CI
     Route::get('agenda-sync', 'AgendaSyncController@index')->name('agenda.sync.index');
