@@ -36,6 +36,9 @@ class DatabaseSeeder extends Seeder
             // Seeder del módulo Agenda de Pagos
             $this->call(AgendaPagosMenuSeeder::class);
 
+            // Seeder del módulo Validación de Derechos
+            $this->call(ValidacionDerechosMenuSeeder::class);
+
     }
 
     protected function truncateTablas(array $tablas){
