@@ -53,3 +53,5 @@ Route::middleware('auth')->prefix('pacientes')->group(function () {
     // Obtener contexto completo para Claude AI
     Route::get('/contexto-claude', 'Api\PacienteApiController@obtenerContextoClaude');
 });
+
+

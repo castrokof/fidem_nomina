@@ -67,6 +67,7 @@ class Kernel extends HttpKernel
         'farmacia' => \App\Http\Middleware\PermisoFarmacia::class,
         'signed' => \Illuminate\Routing\Middleware\ValidateSignature::class,
         'throttle' => \Illuminate\Routing\Middleware\ThrottleRequests::class,
+        'cors'  => \App\Http\Middleware\CorsMiddleware::class,
         
         
     ];

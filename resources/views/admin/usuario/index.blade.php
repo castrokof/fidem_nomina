@@ -50,6 +50,9 @@
                                 <th>Activo</th>
                                 <th>Rol</th>
                                 <th>Fecha de creacion</th>
+                                @if(session()->get('rol_id') == 1)
+                                <th>API Token</th>
+                                @endif
 
                             </tr>
                         </thead>
@@ -375,6 +378,17 @@
                                 data: 'created_at',
                                 name: 'created_at'
                             },
+                            @if(session()->get('rol_id') == 1)
+                            {
+                                data: 'api_token',
+                                name: 'api_token',
+                                orderable: false,
+                                render: function(data) {
+                                    if (!data) return '<span class="text-muted">—</span>';
+                                    return '<span title="' + data + '">' + data.substring(0, 12) + '…</span>';
+                                }
+                            },
+                            @endif
 
                         ],
 
@@ -628,7 +642,14 @@
                         'required', false);
                     $('#remenber_token').val(data.result.remenber_token).prop('disabled',
                         true).prop('required', false);
-                    $('#hidden_id').val(id)
+                    $('#hidden_id').val(id);
+                    if (data.result.api_token) {
+                        $('#api_token').val(data.result.api_token);
+                        $('#api_token_group').show();
+                    } else {
+                        $('#api_token').val('');
+                        $('#api_token_group').hide();
+                    }
                     $('.card-title').text('Editar usuario');
                     $('#action_button').val('Edit');
                     $('#action').val('Edit');
@@ -736,6 +757,35 @@
             }
         });
 
+
+        $(document).on('click', '#copy_api_token', function() {
+            var token = $('#api_token').val();
+            if (!token) return;
+
+            function execCopy(text) {
+                var $tmp = $('<textarea style="position:fixed;top:-9999px;left:-9999px;width:1px;height:1px;opacity:0;">').val(text).appendTo('body');
+                $tmp[0].focus();
+                $tmp[0].select();
+                var ok = false;
+                try { ok = document.execCommand('copy'); } catch(e) {}
+                $tmp.remove();
+                if (ok) {
+                    Swal.fire({ icon: 'success', title: 'Token copiado', timer: 1000, showConfirmButton: false });
+                } else {
+                    Swal.fire({ icon: 'info', title: 'Copia manual', html: '<input class="form-control" value="' + text + '" onclick="this.select()">', showConfirmButton: true });
+                }
+            }
+
+            if (navigator.clipboard && window.isSecureContext) {
+                navigator.clipboard.writeText(token)
+                    .then(function() {
+                        Swal.fire({ icon: 'success', title: 'Token copiado', timer: 1000, showConfirmButton: false });
+                    })
+                    .catch(function() { execCopy(token); });
+            } else {
+                execCopy(token);
+            }
+        });
 
         });
 

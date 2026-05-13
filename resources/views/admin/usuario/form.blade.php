@@ -101,6 +101,18 @@
         </select>
     </div>
 
-
+    @if(session()->get('rol_id') == 1)
+    <div class="col-lg-6" id="api_token_group" style="display:none;">
+        <label for="api_token" class="col-xs-4 control-label">API Token</label>
+        <div class="input-group">
+            <input type="text" name="api_token" id="api_token" class="form-control" readonly>
+            <div class="input-group-append">
+                <button type="button" class="btn btn-outline-secondary" id="copy_api_token" title="Copiar token">
+                    <i class="fas fa-copy"></i>
+                </button>
+            </div>
+        </div>
+    </div>
+    @endif
 
 </div>

@@ -39,7 +39,8 @@ class Usuario extends Authenticatable
         'celular',
         'observacion',
         'ips',
-        'activo'
+        'activo',
+        'api_token',
 
     ];
 

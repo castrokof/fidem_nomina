@@ -24,6 +24,41 @@ if (version_compare(PHP_VERSION, '7.2.0', '>=')) {
 }
 
 
+Route::group([
+    'prefix'     => 'api',
+    'middleware' => ['cors', 'auth:api'],
+], function () {
+
+    // ── Guardar nueva consulta (desde el plugin Chrome) ──────────────────────
+    Route::post('validaciones-boxalud',
+        'Api\ValidacionBoxaludController@store');
+
+    // ── Consultas del día actual ──────────────────────────────────────────────
+    Route::get('validaciones-boxalud/hoy',
+        'Api\ValidacionBoxaludController@hoy');
+
+    // ── Verificar duplicado del día ───────────────────────────────────────────
+    Route::get('validaciones-boxalud/existe-hoy/{documento}',
+        'Api\ValidacionBoxaludController@existeHoy');
+
+    // ── Historial de un documento ─────────────────────────────────────────────
+    Route::get('validaciones-boxalud/historial/{documento}',
+        'Api\ValidacionBoxaludController@historial');
+
+    // ── Reporte por rango de fechas ───────────────────────────────────────────
+    // Parámetros opcionales: ?desde=2026-05-01&hasta=2026-05-31
+    Route::get('validaciones-boxalud/reporte',
+        'Api\ValidacionBoxaludController@reporte');
+
+    // ── Detalle de una consulta ───────────────────────────────────────────────
+    Route::get('validaciones-boxalud/{id}',
+        'Api\ValidacionBoxaludController@show');
+
+    // ── Descargar screenshot de una consulta ──────────────────────────────────
+    Route::get('validaciones-boxalud/{id}/screenshot',
+        'Api\ValidacionBoxaludController@descargarScreenshot');
+
+});
 
 
 /* RUTAS IMAGENES TEXTO */
@@ -505,6 +540,12 @@ Route::get('consentimientos/crear-desde-agenda/{agenda_id}','ConsentimientoContr
     
     Route::get('admin/ajax/plantillas-por-especialidad/{especialidad_id}', 'ConsentimientoController@ajaxPlantillasPorEspecialidad')
         ->name('consentimientos.ajax.plantillas');
+
+    // Pacientes Boxalud — vista web
+    Route::get('validaciones-boxalud',                          'ValidacionBoxaludWebController@index')->name('boxalud.index');
+    Route::get('validaciones-boxalud/historial/{documento}',    'ValidacionBoxaludWebController@historialPaciente')->name('boxalud.historial');
+    Route::get('validaciones-boxalud/{id}/detalle',             'ValidacionBoxaludWebController@detalle')->name('boxalud.detalle');
+    Route::get('validaciones-boxalud/{id}/screenshot',          'ValidacionBoxaludWebController@screenshot')->name('boxalud.screenshot');
 
     // Validación de Derechos
     Route::get('validaciones-derechos',                          [ValidacionDerechoController::class, 'index'])->name('validaciones.index');
